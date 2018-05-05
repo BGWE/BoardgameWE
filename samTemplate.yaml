@@ -14,3 +14,16 @@ Resources:
           Properties:
             Path: /TimeResource
             Method: GET
+
+  GetGameFunction:
+      Type: AWS::Serverless::Function
+      Properties:
+        Handler: getGame.handler
+        Runtime: nodejs6.10
+        CodeUri: ./
+        Events:
+          GetGameAPI:
+            Type: Api
+            Properties:
+              Path: /game
+              Method: GET
