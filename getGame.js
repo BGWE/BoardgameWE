@@ -32,7 +32,7 @@ exports.handler = function(event, context, callback) {
     console.log('Received event:', JSON.stringify(event, null, 2));
 
     if (!event.pathParameters) {
-        return_error("No Game ID provided.");
+        return_error("No Game ID provided (no pathParameters).");
     }
 
     if (!("pathParameters" in event)) {
