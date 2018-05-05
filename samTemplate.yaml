@@ -25,5 +25,5 @@ Resources:
           GetGameAPI:
             Type: Api
             Properties:
-              Path: /game
+              Path: /game/{gameid}
               Method: GET
