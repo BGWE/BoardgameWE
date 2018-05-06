@@ -21,6 +21,23 @@ describe('common/API', function() {
 
 describe('dynamo/dynamo', function () {
     let _dynamo = require('../dynamo/dynamo');
+    describe('Query parameters', function () {
+        it('should create a correctly formatted dictionnary for the parameters', function () {
+            let params = _dynamo.build_query_parameters('games', 169786, 'superkey');
+
+            console.log(params);
+
+            assert.typeOf(params, 'Object');
+            expect(params).to.deep.equal({
+                TableName: 'games',
+                KeyConditionExpression: `superkey = :k`,
+                ExpressionAttributeValues: {
+                    ":k": 169786
+                }
+            });
+        });
+    });
+
     describe('Query DynamoDB', function () {
         it('should query a table with the value of the partition key only', function () {
             return _dynamo.query('games', 169786, 'bggid', function (err, data) {

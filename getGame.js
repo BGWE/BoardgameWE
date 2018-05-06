@@ -46,7 +46,7 @@ exports.handler = function(event, context, callback) {
     let docClient = new AWS.DynamoDB.DocumentClient();
 
     let table = "games";
-    _dynamo.query(table, "bggid", event.pathParameters.gameid, function (err, data) {
+    _dynamo.query(table, event.pathParameters.gameid, "bggid", function (err, data) {
         if (err) {
             console.error("Unable to read table. Error JSON:", JSON.stringify(err, null, 2));
             callback(null, _api.build_response(err.statusCode, err.message))

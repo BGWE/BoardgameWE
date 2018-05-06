@@ -18,7 +18,7 @@ function build_parameters(table, key_value, key_name) {
 function build_query_parameters(table, key_value, key_name) {
     return {
         TableName: table,
-        KeyConditionExpression: `bggid = :k`,
+        KeyConditionExpression: `${key_name} = :k`,
         ExpressionAttributeValues: {
             ":k": key_value
         }
@@ -52,3 +52,4 @@ function query(table, key_value, key_name, callback) {
 exports.get = get;
 exports.query = query;
 exports.build_parameters = build_parameters;
+exports.build_query_parameters = build_query_parameters;
