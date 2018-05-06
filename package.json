@@ -15,5 +15,8 @@
   "bugs": {
     "url": "https://github.com/FServais/BoardgameWE/issues"
   },
-  "homepage": "https://github.com/FServais/BoardgameWE#readme"
+  "homepage": "https://github.com/FServais/BoardgameWE#readme",
+  "dependencies": {
+    "aws-sdk": "^2.233.1"
+  }
 }
