@@ -36,7 +36,8 @@ exports.handler = function(event, context, callback) {
     let gameid = null;
 
     try {
-        gameid = parseInt(event.pathParameters)
+        console.log(`Received game ID: ${event.pathParameters.gameid}`);
+        gameid = parseInt(event.pathParameters.gameid);
     } catch (e) {
         console.log(e);
         callback(null, _api.build_response(400, {"message": "Game ID format is not valid."}))
