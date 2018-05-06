@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "mocha"
   },
   "repository": {
     "type": "git",
@@ -17,6 +17,8 @@
   },
   "homepage": "https://github.com/FServais/BoardgameWE#readme",
   "dependencies": {
-    "aws-sdk": "^2.233.1"
+    "aws-sdk": "^2.233.1",
+    "chai": "^4.1.2",
+    "mocha": "^5.1.1"
   }
 }
