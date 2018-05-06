@@ -9,6 +9,7 @@ AWS.config.update({
 console.log('AWS configured');
 
 let _api = require('./common/api');
+let _dynamo = require('./dynamo/dynamo');
 
 exports.handler = function(event, context, callback) {
     console.log('Handler');
@@ -36,17 +37,7 @@ exports.handler = function(event, context, callback) {
     let docClient = new AWS.DynamoDB.DocumentClient();
 
     let table = "games";
-
-    let params = {
-        TableName: table,
-        Key: {
-            "bggid": event.pathParameters.gameid
-        }
-    };
-
-    console.log("Params:", JSON.stringify(params, null, 2));
-
-    docClient.get(params, function(err, data) {
+    _dynamo.query(table, "bggid", event.pathParameters.gameid, function (err, data) {
         if (err) {
             console.error("Unable to read table. Error JSON:", JSON.stringify(err, null, 2));
             callback(null, _api.build_response(err.statusCode, err.message))
@@ -56,5 +47,4 @@ exports.handler = function(event, context, callback) {
             callback(null, _api.build_response(200, {"games": data.Items}))
         }
     });
-
 };
