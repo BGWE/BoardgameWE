@@ -33,6 +33,15 @@ exports.handler = function(event, context, callback) {
         return_error("No Game ID provided.");
     }
 
+    let gameid = null;
+
+    try {
+        gameid = parseInt(event.pathParameters)
+    } catch (e) {
+        console.log(e);
+        callback(null, _api.build_response(400, {"message": "Game ID format is not valid."}))
+    }
+
 
     let docClient = new AWS.DynamoDB.DocumentClient();
 
