@@ -27,4 +27,4 @@ Resources:
             Properties:
               Path: /game/{gameid}
               Method: GET
-        Policies: AWSLambdaDynamoDBExecutionRole
+        Policies: AmazonDynamoDBReadOnlyAccess
