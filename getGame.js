@@ -8,18 +8,7 @@ AWS.config.update({
 
 console.log('AWS configured');
 
-
-function build_response(statusCode, body, isBase64Encoded) {
-    let resp = {};
-    resp.statusCode = statusCode;
-    resp.headers = {"Content-Type": "application/json"};
-    resp.isBase64Encoded = false;
-
-    if (body !== undefined) resp.body=JSON.stringify(body);
-    if (isBase64Encoded !== undefined) resp.isBase64Encoded=isBase64Encoded;
-
-    return resp;
-}
+let _api = require('./common/api');
 
 exports.handler = function(event, context, callback) {
     console.log('Handler');
@@ -60,11 +49,11 @@ exports.handler = function(event, context, callback) {
     docClient.get(params, function(err, data) {
         if (err) {
             console.error("Unable to read table. Error JSON:", JSON.stringify(err, null, 2));
-            callback(null, build_response(err.statusCode, err.message))
+            callback(null, _api.build_response(err.statusCode, err.message))
         } else {
             console.log("Scan succeeded:", JSON.stringify(data, null, 2));
-            console.log("Response: ", JSON.stringify(build_response(200, {"games": data.Items}), null, 2));
-            callback(null, build_response(200, {"games": data.Items}))
+            console.log("Response: ", JSON.stringify(_api.build_response(200, {"games": data.Items}), null, 2));
+            callback(null, _api.build_response(200, {"games": data.Items}))
         }
     });
 
