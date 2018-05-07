@@ -39,12 +39,8 @@ function get(table, key_value, key_name) {
 }
 
 function query(table, key_value, key_name, callback) {
-    console.log('Query...');
     let docClient = new AWS.DynamoDB.DocumentClient();
     let params = build_query_parameters(table, key_value, key_name);
-
-    console.log(`Params:`);
-    console.log(params);
 
     docClient.query(params, callback);
 }
