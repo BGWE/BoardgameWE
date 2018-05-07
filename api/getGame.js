@@ -1,15 +1,7 @@
 console.log('Loading function');
 
-let AWS = require('aws-sdk');
-AWS.config.update({
-    region: "eu-west-1",
-    endpoint: "https://dynamodb.eu-west-1.amazonaws.com"
-});
-
-console.log('AWS configured');
-
-let _api = require('./common/api');
-let _dynamo = require('./dynamo/dynamo');
+let _api = require('../common/api');
+let _dynamo = require('../dynamo/dynamo');
 
 exports.handler = function(event, context, callback) {
     console.log('Handler');
@@ -35,16 +27,13 @@ exports.handler = function(event, context, callback) {
 
     let gameid = null;
 
-    try {
-        console.log(`Received game ID: ${event.pathParameters.gameid}`);
-        gameid = parseInt(event.pathParameters.gameid);
-    } catch (e) {
-        console.log(e);
+
+    console.log(`Received game ID: ${event.pathParameters.gameid}`);
+    gameid = parseInt(event.pathParameters.gameid);
+    if (!gameid) {
+        console.log(`Failed to parse Game ID: ${gameid}`);
         callback(null, _api.build_response(400, {"message": "Game ID format is not valid."}))
     }
-
-
-    let docClient = new AWS.DynamoDB.DocumentClient();
 
     let table = "games";
     _dynamo.query(table, gameid, "bggid", function (err, data) {
@@ -53,8 +42,8 @@ exports.handler = function(event, context, callback) {
             callback(null, _api.build_response(err.statusCode, err.message))
         } else {
             console.log("Scan succeeded:", JSON.stringify(data, null, 2));
-            console.log("Response: ", JSON.stringify(_api.build_response(200, {"games": data.Items}), null, 2));
-            callback(null, _api.build_response(200, {"games": data.Items}))
+            console.log("Response: ", JSON.stringify(_api.build_response(200, {"data": data.Items[0]}), null, 2));
+            callback(null, _api.build_response(200, {"data": data.Items[0]}))
         }
     });
 };
