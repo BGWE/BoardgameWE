@@ -7,7 +7,7 @@ Resources:
       Properties:
         Handler: getGame.handler
         Runtime: nodejs6.10
-        CodeUri: ./
+        CodeUri: ./api
         Events:
           GetGameAPI:
             Type: Api
@@ -15,3 +15,16 @@ Resources:
               Path: /game/{gameid}
               Method: GET
         Policies: AmazonDynamoDBReadOnlyAccess
+
+  SearchtGameFunction:
+        Type: AWS::Serverless::Function
+        Properties:
+          Handler: searchGame.handler
+          Runtime: nodejs6.10
+          CodeUri: ./api
+          Events:
+            GetGameAPI:
+              Type: Api
+              Properties:
+                Path: /game/_search/{name}
+                Method: GET
