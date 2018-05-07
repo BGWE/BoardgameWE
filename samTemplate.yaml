@@ -16,7 +16,7 @@ Resources:
               Method: GET
         Policies: AmazonDynamoDBReadOnlyAccess
 
-  SearchtGameFunction:
+  SearchGameFunction:
         Type: AWS::Serverless::Function
         Properties:
           Handler: searchGame.handler
