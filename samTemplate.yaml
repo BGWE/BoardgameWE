@@ -5,9 +5,9 @@ Resources:
   GetGameFunction:
       Type: AWS::Serverless::Function
       Properties:
-        Handler: getGame.handler
+        Handler: api/getGame.handler
         Runtime: nodejs8.10
-        CodeUri: ./api
+        CodeUri: ./
         Events:
           GetGameAPI:
             Type: Api
@@ -19,9 +19,9 @@ Resources:
   SearchGameFunction:
         Type: AWS::Serverless::Function
         Properties:
-          Handler: searchGame.handler
+          Handler: api/searchGame.handler
           Runtime: nodejs8.10
-          CodeUri: ./api
+          CodeUri: ./
           Events:
             GetGameAPI:
               Type: Api
