@@ -6,14 +6,14 @@ AWS.config.update({
 
 let _api = require('../common/api');
 
-function build_parameters(table, key_value, key_name) {
-    return {
-        TableName: table,
-        Key: {
-            key_name: key_value
-        }
-    }
-}
+// function build_parameters(table, key_value, key_name) {
+//     return {
+//         TableName: table,
+//         Key: {
+//             key_name: key_value
+//         }
+//     }
+// }
 
 function build_query_parameters(table, key_value, key_name) {
     return {
@@ -25,18 +25,18 @@ function build_query_parameters(table, key_value, key_name) {
     }
 }
 
-function get(table, key_value, key_name) {
-    let docClient = new AWS.DynamoDB.DocumentClient();
-    let params = build_parameters(table, key_value, key_name);
-
-    docClient.get(params, function (err, data) {
-        if (err) {
-            throw new Error(err);
-        } else {
-            return data;
-        }
-    });
-}
+// function get(table, key_value, key_name) {
+//     let docClient = new AWS.DynamoDB.DocumentClient();
+//     let params = build_parameters(table, key_value, key_name);
+//
+//     docClient.get(params, function (err, data) {
+//         if (err) {
+//             throw new Error(err);
+//         } else {
+//             return data;
+//         }
+//     });
+// }
 
 function query(table, key_value, key_name, callback) {
     let docClient = new AWS.DynamoDB.DocumentClient();
@@ -45,7 +45,7 @@ function query(table, key_value, key_name, callback) {
     docClient.query(params, callback);
 }
 
-exports.get = get;
+// exports.get = get;
 exports.query = query;
-exports.build_parameters = build_parameters;
+// exports.build_parameters = build_parameters;
 exports.build_query_parameters = build_query_parameters;

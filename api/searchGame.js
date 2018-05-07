@@ -80,7 +80,7 @@ exports.handler = function(event, context, callback) {
 
     console.log('Received event:', JSON.stringify(event, null, 2));
 
-    if (!event.pathParameters) {
+    if (!event.hasOwnProperty('pathParameters')) {
         return_error("No game provided (no pathParameters).");
     }
 
@@ -88,7 +88,7 @@ exports.handler = function(event, context, callback) {
         return_error("No pathParameters provided.");
     }
 
-    if (!("name" in event.pathParameters)) {
+    if (!(event.pathParameters.hasOwnProperty('name'))) {
         return_error("No Game name provided.");
     }
 
