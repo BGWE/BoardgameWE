@@ -78,6 +78,11 @@ describe('dynamo/dynamo', function () {
     describe('Query DynamoDB', function () {
         it('should query a table with the value of the partition key only', function (done) {
             return _dynamo.query('games', 169786, 'bggid', function (err, data) {
+                assert(err == null, 'err is not null: ' + err);
+
+                console.log(err);
+                console.log(data);
+
                 expect(data).to.deep.equal({ Items: [ { name: 'Scythe', bggid: 169786, bggscore: 8.3 } ],
                     Count: 1,
                     ScannedCount: 1 }

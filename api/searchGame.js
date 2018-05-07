@@ -47,15 +47,12 @@ function format_response(callback) {
             let games = [];
 
             result.items.item.forEach(function (_item) {
-                console.log(JSON.stringify(_item));
                 games.push({
                     'name': get_game_name_from_item(_item),
                     'year': get_game_year_from_item(_item),
                     'id': get_game_id_from_item(_item)
                 })
             });
-
-            console.dir(games);
 
             callback(null, games);
         });
