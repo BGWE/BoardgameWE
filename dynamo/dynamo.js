@@ -6,7 +6,15 @@ AWS.config.update({
 
 let _api = require('../common/api');
 
-const GAMES_TABLE_KEY_NAME = 'bggid';
+const GAMES_TABLE_KEY_NAME = 'id';
+const GAMES_TABLE_SORT_KEY_NAME = 'bggid';
+
+function build_get_parameters(table, keys_values) {
+    return {
+        TableName: table,
+        Key: keys_values
+    };
+}
 
 function build_put_parameters(table, item) {
     return {
@@ -25,18 +33,18 @@ function build_query_parameters(table, key_value, key_name) {
     }
 }
 
-// function get(table, key_value, key_name) {
-//     let docClient = new AWS.DynamoDB.DocumentClient();
-//     let params = build_parameters(table, key_value, key_name);
-//
-//     docClient.get(params, function (err, data) {
-//         if (err) {
-//             throw new Error(err);
-//         } else {
-//             return data;
-//         }
-//     });
-// }
+function get(table, keys_values, callback) {
+    let docClient = new AWS.DynamoDB.DocumentClient();
+    let params = build_get_parameters(table, keys_values);
+
+    docClient.get(params, function (err, data) {
+        if (err) { callback(err); return; }
+
+        callback(null, data);
+
+        return data;
+    });
+}
 
 function query(table, key_value, key_name, callback) {
     let docClient = new AWS.DynamoDB.DocumentClient();
@@ -63,11 +71,23 @@ function put(table, body, callback) {
 
         callback(null, "Item added")
     })
-
 }
 
-// exports.get = get;
+function delete_item(table, keys_values, callback) {
+    let docClient = new AWS.DynamoDB.DocumentClient();
+    let params = build_get_parameters(table, keys_values);
+
+    docClient.delete(params, function (err, data) {
+        if (err) { callback(err, null); }
+
+        callback(null, "Item deleted")
+    });
+}
+
+exports.get = get;
 exports.put = put;
 exports.query = query;
+exports.delete_item = delete_item;
+exports.build_get_parameters = build_get_parameters;
 exports.build_put_parameters = build_put_parameters;
 exports.build_query_parameters = build_query_parameters;

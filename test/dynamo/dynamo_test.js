@@ -5,6 +5,17 @@ let should = require("chai").should;
 
 let _dynamo = require('../../dynamo/dynamo');
 describe('Build parameters', function () {
+    it('should create a correctly formatted dictionary get item parameters', function () {
+        let payload = {'a': 1, 'b': '2'};
+        let params = _dynamo.build_get_parameters('games', {'a': 1, 'b': '2'});
+
+        assert.typeOf(params, 'Object');
+        expect(params).to.deep.equal({
+            TableName: 'games',
+            Key: payload
+        });
+    });
+
     it('should create a correctly formatted dictionary query parameters', function () {
         let params = _dynamo.build_query_parameters('games', 169786, 'superkey');
 
@@ -35,7 +46,7 @@ describe('Build parameters', function () {
 
 describe('DynamoDB interaction', function () {
     let test_table = 'games_test';
-    let test_body = { name: 'TestGame', bggid: 111111, bggscore: 10 };
+    let test_body = { name: 'TestGame', id: "d73f7252-6387-4c65-bf00-bcf4b9c2e86c", bggid: "111111", bggscore: 10, year: 2017};
     let false_test_body = { name: 'TestGame', bggscore: 10 };
 
     it('should put an item in a table', function (done) {
@@ -56,17 +67,41 @@ describe('DynamoDB interaction', function () {
         })
     });
 
-    it('should query a table with the value of the partition key only', function (done) {
-        return _dynamo.query(test_table, 169786, 'bggid', function (err, data) {
+    it('should get an item from a table with the value of the partition key and the range key', function (done) {
+        return _dynamo.get(test_table, {id: test_body.id, bggid: test_body.bggid}, function (err, data) {
             assert(err == null, 'err is not null: ' + err);
 
             console.log(err);
             console.log(data);
 
-            expect(data).to.deep.equal({ Items: [ { name: 'Scythe', bggid: 169786, bggscore: 8.3 } ],
+            expect(data).to.deep.equal({ Item: test_body });
+            done();
+        });
+    });
+
+    it('should query a table with the value of the partition key only', function (done) {
+        return _dynamo.query(test_table, test_body.id, 'id', function (err, data) {
+            assert(err == null, 'err is not null: ' + err);
+
+            console.log(err);
+            console.log(data);
+
+            expect(data).to.deep.equal({ Items: [ test_body ],
                 Count: 1,
                 ScannedCount: 1 }
             );
+            done();
+        });
+    });
+
+    it('should get an item from a table with the value of the partition key and the range key', function (done) {
+        return _dynamo.delete_item(test_table, {id: test_body.id, bggid: test_body.bggid}, function (err, data) {
+            assert(err == null, 'err is not null: ' + err);
+
+            console.log(err);
+            console.log(data);
+
+            expect(data).to.deep.equal("Item deleted");
             done();
         });
     });
