@@ -52,3 +52,14 @@ describe('Build response', function() {
         });
     });
 });
+
+describe('Validate payload', function () {
+    let keys = ['a', 'b', 'c', 'd'];
+    it('should validate if payload if correctly formed', function () {
+        let d = {'a': 1, 'b': 2, 'c': 3, 'd': 4};
+
+        let res =_api.validate_payload(d, keys);
+
+        expect(res).to.be.a('null');
+    });
+});
