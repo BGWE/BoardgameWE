@@ -6,14 +6,14 @@ AWS.config.update({
 
 let _api = require('../common/api');
 
-// function build_parameters(table, key_value, key_name) {
-//     return {
-//         TableName: table,
-//         Key: {
-//             key_name: key_value
-//         }
-//     }
-// }
+const GAMES_TABLE_KEY_NAME = 'bggid';
+
+function build_put_parameters(table, item) {
+    return {
+        TableName: table,
+        Item: item
+    }
+}
 
 function build_query_parameters(table, key_value, key_name) {
     return {
@@ -45,7 +45,29 @@ function query(table, key_value, key_name, callback) {
     docClient.query(params, callback);
 }
 
+// Add an element to DynanoDB
+// callback = (err, resp) => ()
+function put(table, body, callback) {
+    // Check if id is present
+
+    if (!body.hasOwnProperty(GAMES_TABLE_KEY_NAME)) {
+        callback(new Error("Game ID (" + GAMES_TABLE_KEY_NAME + ") not found in the body: " + JSON.stringify(body)), null);
+        return;
+    }
+
+    let docClient = new AWS.DynamoDB.DocumentClient();
+    let params = build_put_parameters(table, body);
+
+    docClient.put(params, function (err, data) {
+        if (err) { callback(err, null); }
+
+        callback(null, "Item added")
+    })
+
+}
+
 // exports.get = get;
+exports.put = put;
 exports.query = query;
-// exports.build_parameters = build_parameters;
+exports.build_put_parameters = build_put_parameters;
 exports.build_query_parameters = build_query_parameters;
