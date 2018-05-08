@@ -1,17 +1,5 @@
-
-console.log('Loading api...');
-try {
-    let _api = require('../common/api');
-} catch (e) {
-    console.log(err)
-}
-
-console.log('Loading dynamo...');
-try {
-    let _dynamo = require('../dynamo/dynamo');
-} catch (e) {
-    console.log(err)
-}
+let _api = require('../common/api');
+let _dynamo = require('../dynamo/dynamo');
 
 
 exports.handler = function(event, context, callback) {
