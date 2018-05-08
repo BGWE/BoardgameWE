@@ -62,4 +62,13 @@ describe('Validate payload', function () {
 
         expect(res).to.be.a('null');
     });
+
+    it('should warn if payload if not correctly formed (missing key)', function () {
+        let d = {'a': 1, 'b': 2, 'c': 3};
+
+        let res =_api.validate_payload(d, keys);
+
+        expect(res).to.not.have.members(['a', 'b', 'c']);
+        expect(res).to.have.members(['d']);
+    });
 });

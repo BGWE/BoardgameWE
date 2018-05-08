@@ -36,12 +36,22 @@ describe('Build parameters', function () {
 describe('DynamoDB interaction', function () {
     let test_table = 'games_test';
     let test_body = { name: 'TestGame', bggid: 111111, bggscore: 10 };
+    let false_test_body = { name: 'TestGame', bggscore: 10 };
 
     it('should put an item in a table', function (done) {
         return _dynamo.put(test_table, test_body, function (err, data) {
             assert(err == null, 'err is not null: ' + err);
 
             expect(data).to.equal("Item added");
+            done();
+        })
+    });
+
+    it('should not put an item in a table if key is missing', function (done) {
+        return _dynamo.put(test_table, false_test_body, function (err, data) {
+            assert(data == null, 'data is not null: ' + err);
+
+            expect(err).not.to.be.null;
             done();
         })
     });
