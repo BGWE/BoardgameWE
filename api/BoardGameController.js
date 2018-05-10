@@ -1,10 +1,11 @@
 
 const db = require("db.js");
+const bgg = require("util/bgg.js");
 let sequelize = db.getSequelize();
 
 exports.getBoardGame = function(req, res) {
     const BoardGame = sequelize.import("models/boardgame");
-    BoardGame.findById(req.params.bgid, function(err, boardGame) {
+    BoardGame.findById(parseInt(req.params.bgid), function(err, boardGame) {
         if (err) {
             res.send(err);
         }
@@ -17,7 +18,23 @@ exports.updateBoardGame = function(req, res) {
 };
 
 exports.addBoardGame = function(req, res) {
-    // TODO
+    // load info from board game geek
+    const bggId = parseInt(req.params.bggid);
+    bgg.get(bggId, function (err, game) {
+        if (err || game.length !== 1) {
+            res.statusCode(404).send(err);
+        }
+
+        const BoardGame = sequelize.import("models/boardgame");
+        BoardGame.build({
+            name: game.name,
+            bgg_id: bggId,
+            bgg_score: game.score,
+            gameplay_video_url: ""
+        }).save()
+          .then(() => { res.status(200).send(); })
+          .error((err) => { res.status(500).send(err); });
+    });
 };
 
 exports.getBoardGames = function(req, res) {
