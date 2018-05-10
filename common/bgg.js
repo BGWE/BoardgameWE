@@ -32,7 +32,7 @@ function format_search_response(callback) {
             result.items.item.forEach(function (_item) {
                 games.push({
                     'name': get_game_name_from_item(_item),
-                    'year': get_attribute(get_tag(_item, 'yearpublished')[0], 'value'),
+                    'year': get_attribute_from_tag(_item, 'yearpublished', 'value'),
                     'id': get_attribute(_item, 'id')
                 })
             });
@@ -52,9 +52,22 @@ function format_get_response(callback) {
             if (err) {console.log(err); return;}
             let game = {};
 
+            const TAGS_WITH_CONTENT = ['thumbnail', 'image', 'description'];
+            const SINGLE_TAGS = ['yearpublished', 'minplayers', 'maxplayers', 'playingtime', 'minplaytime', 'maxplaytime'];
+
+            console.log('========');
+
+
             result.items.item.forEach(function (_item) {
-                console.log('====');
-                console.dir(_item);
+                TAGS_WITH_CONTENT.forEach(function (tag) {
+                    console.log('Getting ' + tag);
+                    game[tag] = get_tag(_item, tag);
+                });
+
+                SINGLE_TAGS.forEach(function (tag) {
+                    console.log('Getting ' + tag);
+                    game[tag] = get_attribute_from_tag(_item, tag, 'value');
+                });
             });
 
             callback(null, game);

@@ -85,6 +85,8 @@ describe('Get boardgame function', function () {
             assert(err == null, 'err is not null');
             assert(game, 'Response is empty');
 
+            console.dir(game);
+
             done();
         })
     });
