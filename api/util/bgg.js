@@ -85,13 +85,15 @@ function format_get_response(callback) {
 }
 
 function get_rating(_json) {
-    if (_json.hasOwnProperty("statistics") &&
-        _json["statistics"].hasOwnProperty("ratings") &&
-        _json["average"]) {
-        return parseFloat(_json["statistics"]["ratings"]["average"]);
+    if (_json.hasOwnProperty("statistics") && _json.statistics.length > 0 &&
+        _json.statistics[0].hasOwnProperty("ratings") && _json.statistics[0].ratings.length > 0 &&
+        _json.statistics[0].ratings[0].hasOwnProperty("average") && _json.statistics[0].ratings[0].average.length > 0) {
+        return parseFloat(get_attribute(_json.statistics[0].ratings[0].average[0], "value"));
     }
     throw new Error("Cannot access average score from returned _json.")
 }
+
+
 
 function get_attribute(_json, attribute) {
     if (_json.hasOwnProperty('$') && _json.$.hasOwnProperty(attribute)) return _json.$[attribute];
