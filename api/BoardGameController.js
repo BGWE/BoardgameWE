@@ -7,7 +7,7 @@ exports.getBoardGame = function(req, res) {
     const BoardGame = sequelize.import("models/boardgame");
     BoardGame.findById(parseInt(req.params.bgid), function(err, boardGame) {
         if (err) {
-            res.send(err);
+            res.status(404).send(err);
         }
         res.json(boardGame);
     })
