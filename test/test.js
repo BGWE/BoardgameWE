@@ -12,5 +12,5 @@ describe('Top', function () {
     importTest('dynamo/dynamo', './dynamo/dynamo_test');
     importTest('common/API', './common/api_test');
     importTest('common/bgg', './common/bgg_test');
-    importTest('api/searchGame', './api/searchGame_test')
+    // importTest('api/searchGame', './api/searchGame_test')
 });
