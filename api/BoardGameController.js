@@ -1,6 +1,15 @@
 
+const db = require("db.js");
+let sequelize = db.getSequelize();
+
 exports.getBoardGame = function(req, res) {
-    // TODO
+    const BoardGame = sequelize.import("models/boardgame");
+    BoardGame.findById(req.params.bgid, function(err, boardGame) {
+        if (err) {
+            res.send(err);
+        }
+        res.json(boardGame);
+    })
 };
 
 exports.updateBoardGame = function(req, res) {
