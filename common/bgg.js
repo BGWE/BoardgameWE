@@ -54,19 +54,23 @@ function format_get_response(callback) {
 
             const TAGS_WITH_CONTENT = ['thumbnail', 'image', 'description'];
             const SINGLE_TAGS = ['yearpublished', 'minplayers', 'maxplayers', 'playingtime', 'minplaytime', 'maxplaytime'];
-
-            console.log('========');
-
+            const LINK_TAGS_TYPE = ['boardgamecategory', 'boardgamemechanic', 'boardgamefamily', 'boardgameexpansion'];
 
             result.items.item.forEach(function (_item) {
                 TAGS_WITH_CONTENT.forEach(function (tag) {
-                    console.log('Getting ' + tag);
                     game[tag] = get_tag(_item, tag);
                 });
 
                 SINGLE_TAGS.forEach(function (tag) {
-                    console.log('Getting ' + tag);
                     game[tag] = get_attribute_from_tag(_item, tag, 'value');
+                });
+
+                LINK_TAGS_TYPE.forEach(function (type) {
+                    let tags = get_tags_for_attribute(_item, 'link', 'type', type);
+
+                    game[type] = tags.map(function (tag) {
+                        return tag.$.value;
+                    })
                 });
             });
 
@@ -94,6 +98,14 @@ function get_attribute_from_tag(_json, tag_name, attribute) {
     return get_attribute(get_tag(_json, tag_name)[0], attribute)
 }
 
+function get_tags_for_attribute(_json, tag, attribute, attribute_value){
+    let tags = get_tag(_json, tag);
+
+    return tags.filter(function (_tag) {
+        return _tag.hasOwnProperty('$') && _tag.$.hasOwnProperty(attribute) && _tag.$[attribute] === attribute_value;
+    });
+}
+
 function get_game_name_from_item(_json) {
     if (_json.hasOwnProperty('name')) {
         if (_json['name'].length > 1) {
@@ -116,4 +128,5 @@ exports.search = search;
 exports.get_attribute = get_attribute;
 exports.get_tag = get_tag;
 exports.get_attribute_from_tag = get_attribute_from_tag;
+exports.get_tags_for_attribute = get_tags_for_attribute;
 exports.get_game_name_from_item = get_game_name_from_item;

@@ -16,7 +16,7 @@ Resources:
               Method: GET
         Policies: AmazonDynamoDBReadOnlyAccess
 
-  SearchGameFunction:
+  SearchBGGGameFunction:
         Type: AWS::Serverless::Function
         Properties:
           Handler: api/searchGame.handler
@@ -26,5 +26,18 @@ Resources:
             GetGameAPI:
               Type: Api
               Properties:
-                Path: /game/_search/{name}
-                Method: GET
+                Path: /bgg/_search
+                Method: POST
+
+  GetBGGGameFunction:
+          Type: AWS::Serverless::Function
+          Properties:
+            Handler: api/getGame.handler
+            Runtime: nodejs8.10
+            CodeUri: ./
+            Events:
+              GetGameAPI:
+                Type: Api
+                Properties:
+                  Path: /bgg/{id}
+                  Method: GET
