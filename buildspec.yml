@@ -8,12 +8,5 @@ phases:
     commands:
       - npm test
 
-  build:
-    commands:
-      - aws cloudformation package --template-file samTemplate.yaml --s3-bucket boardgame-we-backend
-                                   --output-template-file outputSamTemplate.yaml
 artifacts:
   type: zip
-  files:
-    - samTemplate.yaml
-    - outputSamTemplate.yaml
