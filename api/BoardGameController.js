@@ -1,6 +1,6 @@
 
-const db = require("db.js");
-const bgg = require("util/bgg.js");
+const db = require("./db");
+const bgg = require("./util/bgg");
 let sequelize = db.getSequelize();
 
 exports.getBoardGame = function(req, res) {
