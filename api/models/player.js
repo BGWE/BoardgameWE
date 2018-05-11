@@ -8,7 +8,10 @@ module.exports = (sequelize, DataTypes) => {
     }
   }, {});
   Player.associate = function(models) {
-    // associations can be defined here
+      models.Player.hasMany(models.GamePlayer, {
+          onDelete: "CASCADE",
+          foreignKey: "id_player"
+      })
   };
   return Player;
 };

@@ -1,22 +1,25 @@
 'use strict';
 module.exports = (sequelize, DataTypes) => {
-  const BoardGame = sequelize.import("BoardGame");
   var Game = sequelize.define('Game', {
-    id_board_game: {
-        type: Sequelize.INTEGER,
-        references: {
-            model: BoardGame,
-            key: 'id',
-            deferrable: Sequelize.Deferrable.INITIALLY_IMMEDIATE
-        }
-    },
     duration: {
         type: DataTypes.INTEGER,
-        min: 0
+        validate: {min: 0},
+        allowNull: true
+    },
+    id_board_game: {
+        type: DataTypes.INTEGER
     }
   }, {});
+
   Game.associate = function(models) {
-    // associations can be defined here
+      models.Game.hasOne(models.BoardGame, {
+          foreignKey: "id",
+          sourceKey: "id_board_game"  // supported in only from version 5.0.0.beta5
+      });
+      models.Game.hasMany(models.GamePlayer, {
+          onDelete: "CASCADE",
+          foreignKey: "id_game"
+      });
   };
   return Game;
 };

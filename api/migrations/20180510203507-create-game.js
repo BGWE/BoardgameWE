@@ -11,7 +11,12 @@ module.exports = {
       },
       id_board_game: {
           type: Sequelize.INTEGER,
-          references: { model: 'BoardGames', key: 'id' }
+          onDelete: "CASCADE",
+          allowNull: false,
+          references: {
+              model: 'BoardGames',
+              key: 'id'
+          }
       },
       duration: {
         type: Sequelize.INTEGER

@@ -1,28 +1,27 @@
 'use strict';
 module.exports = (sequelize, DataTypes) => {
-  const Game = sequelize.import("Game");
-  const Player = sequelize.import("Player");
   var GamePlayer = sequelize.define('GamePlayer', {
+    rank: {
+        type: DataTypes.INTEGER,
+        validate: {min: 0}
+    },
     id_player: {
-        type: Sequelize.INTEGER,
-        references: {
-            model: Player,
-            key: 'id',
-            deferrable: Sequelize.Deferrable.INITIALLY_IMMEDIATE
-        }
+        type: DataTypes.INTEGER
     },
     id_game: {
-        type: Sequelize.INTEGER,
-        references: {
-            model: Game,
-            key: 'id',
-            deferrable: Sequelize.Deferrable.INITIALLY_IMMEDIATE
-        }
-    },
-    rank: DataTypes.INTEGER
+        type: DataTypes.INTEGER
+    }
   }, {});
   GamePlayer.associate = function(models) {
-    // associations can be defined here
+      models.GamePlayer.belongsTo(models.Player, {
+          onDelete: "CASCADE",
+          foreignKey: "id_player"
+      });
+
+      models.GamePlayer.belongsTo(models.Game, {
+          onDelete: "CASCADE",
+          foreignKey: "id_game"
+      });
   };
   return GamePlayer;
 };

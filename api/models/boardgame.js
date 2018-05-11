@@ -47,7 +47,10 @@ module.exports = (sequelize, DataTypes) => {
         family: DataTypes.STRING,
     }, {});
     BoardGame.associate = function(models) {
-        // associations can be defined here
+        models.BoardGame.hasMany(models.Game, {
+            onDelete: "CASCADE",
+            foreignKey: "id_board_game"
+        })
     };
     return BoardGame;
 };
