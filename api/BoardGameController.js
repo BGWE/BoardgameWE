@@ -1,6 +1,7 @@
 
 const db = require("./db");
 const bgg = require("./util/bgg");
+const util = require("./util/util");
 let sequelize = db.getSequelize();
 
 exports.getBoardGame = function(req, res) {
@@ -47,7 +48,19 @@ exports.addBoardGame = function(req, res) {
             name: game.name,
             bgg_id: bggId,
             bgg_score: game.score,
-            gameplay_video_url: ""
+            gameplay_video_url: "",
+            min_players: parseInt(game.minplayers),
+            max_players: parseInt(game.maxplayers),
+            min_playing_time: parseInt(game.maxplaytime),
+            max_playing_time: parseInt(game.minplaytime),
+            playing_time: parseInt(game.playingtime),
+            thumbnail: game.thumbnail[0],
+            image: game.image[0],
+            description: game.description[0],
+            year_published: parseInt(game.yearpublished),
+            category: util.listToString(game.boardgamecategory),
+            mechanic: util.listToString(game.boardgamemechanic),
+            family: util.listToString(game.boardgamefamily)
         }).save()
           .then(() => { res.sendStatus(200); })
           .error((err) => { res.status(500).send(err); });
