@@ -62,7 +62,7 @@ exports.addBoardGame = function(req, res) {
             mechanic: util.listToString(game.boardgamemechanic),
             family: util.listToString(game.boardgamefamily)
         }).save()
-          .then(() => { res.sendStatus(200); })
+          .then((game) => { res.status(200).json(game); })
           .error((err) => { res.status(500).send(err); });
     });
 };
@@ -70,7 +70,7 @@ exports.addBoardGame = function(req, res) {
 exports.getBoardGames = function(req, res) {
     const BoardGame = sequelize.import("models/boardgame");
     BoardGame.findAll()
-        .then((boardGames) => { res.json(boardGames); })
+        .then((boardGames) => { res.json({"board_games": boardGames}); })
         .error((err) => { res.status(500).send(err); });
 };
 
