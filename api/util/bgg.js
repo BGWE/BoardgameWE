@@ -29,13 +29,15 @@ function format_search_response(callback) {
 
             let games = [];
 
-            result.items.item.forEach(function (_item) {
-                games.push({
-                    'name': get_game_name_from_item(_item),
-                    'year': get_attribute_from_tag(_item, 'yearpublished', 'value'),
-                    'id': get_attribute(_item, 'id')
-                })
-            });
+            if (result.items.hasOwnProperty("item")) {
+                result.items.item.forEach(function (_item) {
+                    games.push({
+                        'name': get_game_name_from_item(_item),
+                        'year': get_attribute_from_tag_or_null(_item, 'yearpublished', 'value'),
+                        'id': get_attribute(_item, 'id')
+                    })
+                });
+            }
 
             callback(null, games);
         });
@@ -110,6 +112,14 @@ function get_tag(_json, tag_name) {
 
 function get_attribute_from_tag(_json, tag_name, attribute) {
     return get_attribute(get_tag(_json, tag_name)[0], attribute)
+}
+
+function get_attribute_from_tag_or_null(_json, tag_name, attribute) {
+    try {
+        return get_attribute(get_tag(_json, tag_name)[0], attribute)
+    } catch (e) {
+        return null;
+    }
 }
 
 function get_tags_for_attribute(_json, tag, attribute, attribute_value){
