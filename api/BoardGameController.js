@@ -5,12 +5,14 @@ let sequelize = db.getSequelize();
 
 exports.getBoardGame = function(req, res) {
     const BoardGame = sequelize.import("models/boardgame");
-    BoardGame.findById(parseInt(req.params.bgid), function(err, boardGame) {
-        if (err) {
+    BoardGame.findById(parseInt(req.params.bgid))
+        .then(function(boardGame) {
+            res.json(boardGame);
+        })
+        .catch(function (err) {
+            console.log(err);
             res.status(404).send(err);
-        }
-        res.json(boardGame);
-    })
+        });
 };
 
 exports.updateBoardGame = function(req, res) {
@@ -33,7 +35,7 @@ exports.addBoardGame = function(req, res) {
             bgg_score: game.score,
             gameplay_video_url: ""
         }).save()
-          .then(() => { res.status(200).send(); })
+          .then(() => { res.sendStatus(200); })
           .error((err) => { res.status(500).send(err); });
     });
 };
