@@ -1,13 +1,30 @@
+const db = require("./db");
+const bgg = require("./util/bgg");
+let sequelize = db.getSequelize();
+
 exports.addPlayer = function (req, res) {
-// TODO
+    const Player = sequelize.import("models/player");
+    let newPlayer = Player.build({
+        email: req.body.email, name: req.body.name
+    });
+    console.dir(newPlayer);
+    newPlayer.save()
+        .then(() => {res.status(200).json(newPlayer);})
+        .catch((err) => {res.status(400).send(err);});
 };
 
 exports.getPlayer = function (req, res) {
-    // TODO
+    const Player = sequelize.import("models/player");
+    Player.findById(parseInt(req.params.pid))
+        .then((player) => {res.status(200).json(player);})
+        .catch((err) => {res.status(404).send(err);});
 };
 
 exports.getPlayers = function (req, res) {
-    // TODO
+    const Player = sequelize.import("models/player");
+    Player.findAll()
+        .then((players) => {res.status(200).json(players);})
+        .catch((err) => {res.status(404).send(err);});
 };
 
 
