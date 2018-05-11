@@ -3,15 +3,43 @@ module.exports = (sequelize, DataTypes) => {
     var BoardGame = sequelize.define('BoardGame', {
         name: DataTypes.STRING,
         bgg_id: DataTypes.INTEGER,
-        bgg_score: DataTypes.FLOAT,
-        gameplay_video_url: DataTypes.STRING,
-        min_players: DataTypes.INTEGER,
-        max_players: DataTypes.INTEGER,
-        min_playing_time: DataTypes.INTEGER,
-        max_playing_time: DataTypes.INTEGER,
-        playing_time: DataTypes.INTEGER,
-        thumbnail: DataTypes.STRING,
-        image: DataTypes.STRING,
+        bgg_score: {
+            type: DataTypes.FLOAT,
+            validate: {min: 0.0, max: 10.0}
+        },
+        gameplay_video_url: {
+            type: DataTypes.STRING,
+            allowNull: true,
+            validate: {isUrl: true}
+        },
+        min_players: {
+            type: DataTypes.INTEGER,
+            validate: {min: 1}
+        },
+        max_players: {
+            type: DataTypes.INTEGER,
+            validate: {min: 1}
+        },
+        min_playing_time: {
+            type: DataTypes.INTEGER,
+            validate: {min: 1}
+        },
+        max_playing_time: {
+            type: DataTypes.INTEGER,
+            validate: {min: 1}
+        },
+        playing_time: {
+            type: DataTypes.INTEGER,
+            validate: {min: 1}
+        },
+        thumbnail: {
+            type: DataTypes.STRING,
+            validate: {isUrl: true}
+        },
+        image: {
+            type: DataTypes.STRING,
+            validate: {isUrl: true}
+        },
         description: DataTypes.TEXT,
         year_published: DataTypes.INTEGER,
         category: DataTypes.STRING,

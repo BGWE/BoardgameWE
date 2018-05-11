@@ -10,7 +10,10 @@ module.exports = (sequelize, DataTypes) => {
             deferrable: Sequelize.Deferrable.INITIALLY_IMMEDIATE
         }
     },
-    duration: DataTypes.INTEGER
+    duration: {
+        type: DataTypes.INTEGER,
+        min: 0
+    }
   }, {});
   Game.associate = function(models) {
     // associations can be defined here
