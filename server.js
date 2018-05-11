@@ -15,6 +15,9 @@ app.get('/', function (req, res) {
    res.send('Hello Ro!');
 });
 
+let routes = require('./api/routes');
+routes(app);
+
 app.listen(port, hostname, () => {
     console.log(`Server running at http://${hostname}:${port}/`);
 });
