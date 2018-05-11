@@ -6,6 +6,9 @@ module.exports = function(app) {
     const GameController = require("./GameController");
 
     // Board games
+    app.route("/board_game/search")
+        .get(BoardGameController.searchBoardGames);
+
     app.route("/board_game/:bgid")
         .get(BoardGameController.getBoardGame)
         .post(BoardGameController.updateBoardGame);
@@ -15,9 +18,6 @@ module.exports = function(app) {
 
     app.route("/board_games")
         .get(BoardGameController.getBoardGames);
-
-    app.route("/board_game/search")
-        .get(BoardGameController.searchBoardGames);
 
     // Player
     app.route("/player")

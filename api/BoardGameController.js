@@ -14,7 +14,7 @@ exports.getBoardGame = function(req, res) {
 };
 
 exports.updateBoardGame = function(req, res) {
-    res.status(200).send("coming soon..")
+    res.status(200).send("coming soon..");
 };
 
 exports.addBoardGame = function(req, res) {
@@ -41,10 +41,14 @@ exports.addBoardGame = function(req, res) {
 };
 
 exports.getBoardGames = function(req, res) {
+    res.status(200).send("coming soon..");
+};
+
+exports.searchBoardGames = function(req, res) {
     const searchQuery = req.query.q;
     console.log(searchQuery);
-    if (q == null || q.length > 0) {
-        res.status(400).send("Invalid search query.");
+    if (searchQuery == null || searchQuery.length === 0) {
+        res.status(400).send("Invalid search query " + searchQuery + ".");
         return;
     }
     bgg.search(searchQuery, function(err, games) {
@@ -55,10 +59,6 @@ exports.getBoardGames = function(req, res) {
         console.log(games);
         res.status(200).json(games);
     });
-};
-
-exports.searchBoardGames = function(req, res) {
-    res.status(200).send("coming soon..")
 };
 
 // let _api = require('../common/api');
