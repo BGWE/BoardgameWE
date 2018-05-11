@@ -1,5 +1,6 @@
 
 module.exports = {
+    use_env_variable: true,
     development: {
         username: process.env.DB_USERNAME,
         password: process.env.DB_PASSWORD,

@@ -12,13 +12,15 @@ module.exports = (sequelize, DataTypes) => {
   }, {});
 
   Game.associate = function(models) {
-      models.Game.hasOne(models.BoardGame, {
-          foreignKey: "id",
-          sourceKey: "id_board_game"  // supported in only from version 5.0.0.beta5
-      });
+      // models.Game.hasOne(models.BoardGame, {
+      //     foreignKey: "id",
+      //     sourceKey: "id_board_game"  // supported in only from version 5.0.0.beta5
+      // });
       models.Game.hasMany(models.GamePlayer, {
           onDelete: "CASCADE",
-          foreignKey: "id_game"
+          foreignKey: "id_game",
+          sourceKey: "id",
+          as: "players"
       });
   };
   return Game;

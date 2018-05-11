@@ -1,9 +1,9 @@
-const db = require("./db");
+
 const bgg = require("./util/bgg");
-let sequelize = db.getSequelize();
+const db = require("./models/index");
 
 exports.addPlayer = function (req, res) {
-    const Player = sequelize.import("models/player");
+    const Player = db.sequelize.import("models/player");
     Player.build({
         email: req.body.email, name: req.body.name
     }).save()
@@ -12,14 +12,14 @@ exports.addPlayer = function (req, res) {
 };
 
 exports.getPlayer = function (req, res) {
-    const Player = sequelize.import("models/player");
+    const Player = db.sequelize.import("models/player");
     Player.findById(parseInt(req.params.pid))
         .then((player) => {res.status(200).json(player);})
         .catch((err) => {res.status(404).send(err);});
 };
 
 exports.getPlayers = function (req, res) {
-    const Player = sequelize.import("models/player");
+    const Player = db.sequelize.import("models/player");
     Player.findAll()
         .then((players) => {res.status(200).json(players);})
         .catch((err) => {res.status(404).send(err);});

@@ -1,12 +1,10 @@
 
-const db = require("./db");
+const db = require("./models/index");
 const bgg = require("./util/bgg");
 const util = require("./util/util");
-let sequelize = db.getSequelize();
 
 exports.getBoardGame = function(req, res) {
-    const BoardGame = sequelize.import("models/boardgame");
-    BoardGame.findById(parseInt(req.params.bgid))
+    db.BoardGame.findById(parseInt(req.params.bgid))
         .then(function(boardGame) {
             res.json(boardGame);
         })
@@ -22,8 +20,7 @@ exports.updateBoardGame = function(req, res) {
         return;
     }
 
-    const BoardGame = sequelize.import("models/boardgame");
-    BoardGame.findById(parseInt(req.params.bgid))
+    db.BoardGame.findById(parseInt(req.params.bgid))
         .then(function(boardGame) {
             boardGame.gameplay_video_url = url;
             boardGame.save()
@@ -43,8 +40,7 @@ exports.addBoardGame = function(req, res) {
             res.status(404).send(err);
             return;
         }
-        const BoardGame = sequelize.import("models/boardgame");
-        BoardGame.build({
+        db.BoardGame.build({
             name: game.name,
             bgg_id: bggId,
             bgg_score: game.score,
@@ -68,8 +64,7 @@ exports.addBoardGame = function(req, res) {
 };
 
 exports.getBoardGames = function(req, res) {
-    const BoardGame = sequelize.import("models/boardgame");
-    BoardGame.findAll()
+    db.BoardGame.findAll()
         .then((boardGames) => { res.json({"board_games": boardGames}); })
         .error((err) => { res.status(500).send(err); });
 };

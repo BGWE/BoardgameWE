@@ -11,7 +11,7 @@ module.exports = (sequelize, DataTypes) => {
       models.Player.hasMany(models.GamePlayer, {
           onDelete: "CASCADE",
           foreignKey: "id_player"
-      })
+      });
   };
   return Player;
 };

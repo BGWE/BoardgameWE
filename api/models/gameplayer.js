@@ -12,18 +12,16 @@ module.exports = (sequelize, DataTypes) => {
         type: DataTypes.INTEGER
     }
   }, {});
+  GamePlayer.associate = function(models) {
+      models.GamePlayer.belongsTo(models.Player, {
+          onDelete: "CASCADE",
+          foreignKey: "id_player"
+      });
 
-  const Game = sequelize.import("./game");
-  const Player = sequelize.import("./player");
-  GamePlayer.belongsTo(Player, {
-    onDelete: "CASCADE",
-    foreignKey: "id_player"
-  });
-
-  GamePlayer.belongsTo(Game, {
-    onDelete: "CASCADE",
-    foreignKey: "id_game"
-  });
-
+      models.GamePlayer.belongsTo(models.Game, {
+          onDelete: "CASCADE",
+          foreignKey: "id_game"
+      });
+  };
   return GamePlayer;
 };
