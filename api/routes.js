@@ -1,6 +1,5 @@
 'use strict';
 
-const express = require("express");
 module.exports = function(app) {
     const BoardGameController = require("./BoardGameController");
     const PlayerController = require("./PlayerController");

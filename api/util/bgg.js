@@ -13,7 +13,7 @@ function search(boardgame_name, callback) {
 }
 
 function get(boardgame_id, callback) {
-    let url_variables = {id: boardgame_id};
+    let url_variables = {id: boardgame_id, stats: 1};
     request(
         {url: BGG_ROOT_PATH + 'thing', qs: url_variables},
         format_get_response(callback)
@@ -72,6 +72,9 @@ function format_get_response(callback) {
                         return tag.$.value;
                     })
                 });
+
+                game["name"] = get_game_name_from_item(_item);
+                game["score"] = get_rating(_item);
             });
 
             callback(null, game);
@@ -80,6 +83,17 @@ function format_get_response(callback) {
 
     return _format_response
 }
+
+function get_rating(_json) {
+    if (_json.hasOwnProperty("statistics") && _json.statistics.length > 0 &&
+        _json.statistics[0].hasOwnProperty("ratings") && _json.statistics[0].ratings.length > 0 &&
+        _json.statistics[0].ratings[0].hasOwnProperty("average") && _json.statistics[0].ratings[0].average.length > 0) {
+        return parseFloat(get_attribute(_json.statistics[0].ratings[0].average[0], "value"));
+    }
+    throw new Error("Cannot access average score from returned _json.")
+}
+
+
 
 function get_attribute(_json, attribute) {
     if (_json.hasOwnProperty('$') && _json.$.hasOwnProperty(attribute)) return _json.$[attribute];
@@ -130,3 +144,4 @@ exports.get_tag = get_tag;
 exports.get_attribute_from_tag = get_attribute_from_tag;
 exports.get_tags_for_attribute = get_tags_for_attribute;
 exports.get_game_name_from_item = get_game_name_from_item;
+exports.get_rating = get_rating;
