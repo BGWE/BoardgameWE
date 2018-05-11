@@ -22,9 +22,7 @@ exports.addBoardGame = function(req, res) {
     const bggId = parseInt(req.params.bggid);
     console.log("bggid:" + bggId);
     bgg.get(bggId, function (err, game) {
-        console.log("err:" + err);
-        console.log("game:" + game);
-        if (err || game.length !== 1) {
+        if (err) {
             res.status(404).send(err);
         }
 
