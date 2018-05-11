@@ -14,7 +14,7 @@ exports.getBoardGame = function(req, res) {
 };
 
 exports.updateBoardGame = function(req, res) {
-    // TODO
+    res.status(200).send("coming soon..")
 };
 
 exports.addBoardGame = function(req, res) {
@@ -22,7 +22,7 @@ exports.addBoardGame = function(req, res) {
     const bggId = parseInt(req.params.bggid);
     bgg.get(bggId, function (err, game) {
         if (err || game.length !== 1) {
-            res.statusCode(404).send(err);
+            res.status(404).send(err);
         }
 
         const BoardGame = sequelize.import("models/boardgame");
@@ -38,11 +38,21 @@ exports.addBoardGame = function(req, res) {
 };
 
 exports.getBoardGames = function(req, res) {
-    // TODO
+    const searchQuery = req.query.q;
+    if (q == null || q.length > 0) {
+        res.status(400).send("Invalid search query.");
+        return;
+    }
+    bgg.search(searchQuery, function(err, games) {
+        if (err) {
+            res.status(500).send(err);
+        }
+        res.status(200).json(games);
+    })
 };
 
 exports.searchBoardGames = function(req, res) {
-    // TODO
+    res.status(200).send("coming soon..")
 };
 
 // let _api = require('../common/api');
@@ -83,7 +93,7 @@ exports.searchBoardGames = function(req, res) {
 //     _dynamo.query(table, gameid, "bggid", function (err, data) {
 //         if (err) {
 //             console.error("Unable to read table. Error JSON:", JSON.stringify(err, null, 2));
-//             callback(null, _api.build_response(err.statusCode, err.message))
+//             callback(null, _api.build_response(err.status, err.message))
 //         } else {
 //             console.log("Scan succeeded:", JSON.stringify(data, null, 2));
 //             console.log("Response: ", JSON.stringify(_api.build_response(200, {"data": data.Items[0]}), null, 2));
