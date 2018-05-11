@@ -48,7 +48,7 @@ exports.addBoardGame = function(req, res) {
             name: game.name,
             bgg_id: bggId,
             bgg_score: game.score,
-            gameplay_video_url: "",
+            gameplay_video_url: null,
             min_players: parseInt(game.minplayers),
             max_players: parseInt(game.maxplayers),
             min_playing_time: parseInt(game.maxplaytime),
