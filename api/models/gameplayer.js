@@ -15,12 +15,14 @@ module.exports = (sequelize, DataTypes) => {
   GamePlayer.associate = function(models) {
       models.GamePlayer.belongsTo(models.Player, {
           onDelete: "CASCADE",
-          foreignKey: "id_player"
+          foreignKey: "id_player",
+          as: "player"
       });
 
       models.GamePlayer.belongsTo(models.Game, {
           onDelete: "CASCADE",
-          foreignKey: "id_game"
+          foreignKey: "id_game",
+          as: "game"
       });
   };
   return GamePlayer;

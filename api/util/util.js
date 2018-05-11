@@ -10,3 +10,15 @@ exports.listToString = (list) => {
     }
     return str;
 };
+
+exports.toDictMapping = (arr, field) => {
+    let object = {};
+    for (let i in arr) {
+        if (!arr.hasOwnProperty(i)) {
+            continue;
+        }
+        let item = arr[i];
+        object[item[field]] = item;
+    }
+    return object;
+};

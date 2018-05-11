@@ -1,4 +1,5 @@
 const db = require("./models/index");
+const util = require("./util/util");
 
 
 exports.buildFullGame = (gameId, callback) => {
@@ -7,9 +8,8 @@ exports.buildFullGame = (gameId, callback) => {
         db.BoardGame.findById(game.id_board_game)
         .then((boardGame) => {
             let withBoardGame = Object.assign({board_game: boardGame.dataValues}, game.dataValues);
-            db.GamePlayer.findAll({where: {id_game: game.id}, include: [db.Player]})
+            db.GamePlayer.findAll({where: {id_game: game.id}, include: [{model: db.Player, as: "player"}]})
             .then((players) => {
-                console.log(players);
                 callback(Object.assign({players: players}, withBoardGame), null);
             }).catch((err) => {console.log(err); callback(withBoardGame, err);});
         }).catch((err) => {callback(game, err);});
@@ -37,7 +37,6 @@ exports.addGame = function (req, res) {
                 individualHooks: true
             }).then(() => {
                 exports.buildFullGame(game.id, (fullGame, err) => {
-                    console.log(fullGame);
                     console.log(err);
                     if (err) {
                         res.status(500).send(err);
@@ -50,9 +49,47 @@ exports.addGame = function (req, res) {
 };
 
 exports.getGames = function (req, res) {
-    db.Game.findAll({include: [{"all": true}]})
-        .then((games) => {res.status(200).json({"games": games});})
-        .catch((err) => {console.log(err); res.status(500).send(err);});
+    db.GamePlayer.findAll({include: [{model: db.Game, as: "game"}, {model: db.Player, as: "player"}]})
+    .then((gamePlayers) => {
+        let playedBoardGames = gamePlayers.map((game) => { return game.dataValues.game.id_board_game; });
+        db.BoardGame.findAll({where: {id: playedBoardGames}})
+            .then((boardGames) => {
+                let gameMap = {};
+                let boardGameMap = util.toDictMapping(boardGames, "id");
+                for (let i in gamePlayers) {
+                    if (!gamePlayers.hasOwnProperty(i)) {
+                        continue;
+                    }
+                    let gamePlayer = gamePlayers[i];
+                    let idGame = gamePlayer.id_game;
+                    if (!gameMap.hasOwnProperty(idGame)) {
+                        gameMap[idGame] = Object.assign({
+                            players: [],
+                            board_game: boardGameMap[gamePlayer.game.id_board_game].dataValues
+                        }, gamePlayer.game.dataValues);
+                    }
+                    gameMap[idGame].players.push({
+                        rank: gamePlayer.rank,
+                        id_player: gamePlayer.id_player,
+                        player: gamePlayer.player,
+                        id_game: gamePlayer.id_game
+                    });
+                }
+
+                // extract object
+                let gameList = [];
+                for (let game in gameMap) {
+                    gameList.push(gameMap[game]);
+                }
+
+                res.status(200).json({"games": gameList});
+            })
+            .catch((err) => {
+                console.log(err);
+                res.status(500).send(err);
+            });
+    })
+    .catch((err) => {console.log(err); res.status(500).send(err);});
 };
 
 exports.getGame = function (req, res) {
