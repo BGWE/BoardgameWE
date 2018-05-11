@@ -20,7 +20,10 @@ exports.updateBoardGame = function(req, res) {
 exports.addBoardGame = function(req, res) {
     // load info from board game geek
     const bggId = parseInt(req.params.bggid);
+    console.log("bggid:" + bggId);
     bgg.get(bggId, function (err, game) {
+        console.log("err:" + err);
+        console.log("game:" + game);
         if (err || game.length !== 1) {
             res.status(404).send(err);
         }
@@ -39,16 +42,19 @@ exports.addBoardGame = function(req, res) {
 
 exports.getBoardGames = function(req, res) {
     const searchQuery = req.query.q;
+    console.log(searchQuery);
     if (q == null || q.length > 0) {
         res.status(400).send("Invalid search query.");
         return;
     }
     bgg.search(searchQuery, function(err, games) {
+        console.log(err);
         if (err) {
             res.status(500).send(err);
         }
+        console.log(games);
         res.status(200).json(games);
-    })
+    });
 };
 
 exports.searchBoardGames = function(req, res) {
