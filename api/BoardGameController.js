@@ -10,24 +10,38 @@ exports.getBoardGame = function(req, res) {
             res.json(boardGame);
         })
         .catch(function (err) {
-            console.log(err);
             res.status(404).send(err);
         });
 };
 
 exports.updateBoardGame = function(req, res) {
-    res.status(200).send("coming soon..");
+    const url = req.body.video_url;
+    if (url == null || url.length === 0) {
+        res.status(400).send("Invalid url");
+        return;
+    }
+
+    const BoardGame = sequelize.import("models/boardgame");
+    BoardGame.findById(parseInt(req.params.bgid))
+        .then(function(boardGame) {
+            boardGame.gameplay_video_url = url;
+            boardGame.save()
+                .then(() => {res.sendStatus(200);})
+                .catch((err) => {res.status(500).send(err);})
+        })
+        .catch(function(err) {
+            res.status(404).send(err);
+        });
 };
 
 exports.addBoardGame = function(req, res) {
     // load info from board game geek
     const bggId = parseInt(req.params.bggid);
-    console.log("bggid:" + bggId);
     bgg.get(bggId, function (err, game) {
         if (err) {
             res.status(404).send(err);
+            return;
         }
-
         const BoardGame = sequelize.import("models/boardgame");
         BoardGame.build({
             name: game.name,
@@ -49,64 +63,15 @@ exports.getBoardGames = function(req, res) {
 
 exports.searchBoardGames = function(req, res) {
     const searchQuery = req.query.q;
-    console.log(searchQuery);
     if (searchQuery == null || searchQuery.length === 0) {
         res.status(400).send("Invalid search query " + searchQuery + ".");
         return;
     }
     bgg.search(searchQuery, function(err, games) {
-        console.log(err);
         if (err) {
             res.status(500).send(err);
+            return;
         }
-        console.log(games);
         res.status(200).json(games);
     });
 };
-
-// let _api = require('../common/api');
-// let _dynamo = require('../dynamo/dynamo');
-// exports.handler = function(event, context, callback) {
-//     console.log('Handler');
-//
-//     function return_error(msg) {
-//         console.error(msg);
-//         callback(msg)
-//     }
-//
-//     console.log('Received event:', JSON.stringify(event, null, 2));
-//
-//     if (!event.pathParameters) {
-//         return_error("No Game ID provided (no pathParameters).");
-//     }
-//
-//     if (!("pathParameters" in event)) {
-//         return_error("No pathParameters provided.");
-//     }
-//
-//     if (!("gameid" in event.pathParameters)) {
-//         return_error("No Game ID provided.");
-//     }
-//
-//     let gameid = null;
-//
-//
-//     console.log(`Received game ID: ${event.pathParameters.gameid}`);
-//     gameid = parseInt(event.pathParameters.gameid);
-//     if (!gameid) {
-//         console.log(`Failed to parse Game ID: ${gameid}`);
-//         callback(null, _api.build_response(400, {"message": "Game ID format is not valid."}))
-//     }
-//
-//     let table = "games";
-//     _dynamo.query(table, gameid, "bggid", function (err, data) {
-//         if (err) {
-//             console.error("Unable to read table. Error JSON:", JSON.stringify(err, null, 2));
-//             callback(null, _api.build_response(err.status, err.message))
-//         } else {
-//             console.log("Scan succeeded:", JSON.stringify(data, null, 2));
-//             console.log("Response: ", JSON.stringify(_api.build_response(200, {"data": data.Items[0]}), null, 2));
-//             callback(null, _api.build_response(200, {"data": data.Items[0]}))
-//         }
-//     });
-// };
