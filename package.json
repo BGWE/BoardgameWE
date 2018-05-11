@@ -18,6 +18,7 @@
   "homepage": "https://github.com/FServais/BoardgameWE#readme",
   "dependencies": {
     "aws-sdk": "^2.233.1",
+    "body-parser": "^1.18.2",
     "chai": "^4.1.2",
     "express": "^4.16.3",
     "mocha": "^5.1.1",
