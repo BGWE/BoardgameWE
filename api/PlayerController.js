@@ -4,12 +4,10 @@ let sequelize = db.getSequelize();
 
 exports.addPlayer = function (req, res) {
     const Player = sequelize.import("models/player");
-    let newPlayer = Player.build({
+    Player.build({
         email: req.body.email, name: req.body.name
-    });
-    console.dir(newPlayer);
-    newPlayer.save()
-        .then(() => {res.status(200).json(newPlayer);})
+    }).save()
+        .then((player) => {res.status(200).json(player);})
         .catch((err) => {res.status(400).send(err);});
 };
 
