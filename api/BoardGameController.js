@@ -41,7 +41,10 @@ exports.addBoardGame = function(req, res) {
 };
 
 exports.getBoardGames = function(req, res) {
-    res.status(200).send("coming soon..");
+    const BoardGame = sequelize.import("models/boardgame");
+    BoardGame.findAll()
+        .then((boardGames) => { res.json(boardGames); })
+        .error((err) => { res.status(500).send(err); });
 };
 
 exports.searchBoardGames = function(req, res) {
