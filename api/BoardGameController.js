@@ -9,7 +9,7 @@ exports.getBoardGame = function(req, res) {
             res.json(boardGame);
         })
         .catch(function (err) {
-            res.status(404).send(err);
+            res.status(404).send({error: "err"});
         });
 };
 
@@ -25,10 +25,10 @@ exports.updateBoardGame = function(req, res) {
             boardGame.gameplay_video_url = url;
             boardGame.save()
                 .then((board_game) => {res.status(200).send(board_game);})
-                .catch((err) => {res.status(500).send(err);});
+                .catch((err) => {res.status(500).send({error: "err"});});
         })
         .catch(function(err) {
-            res.status(404).send(err);
+            res.status(404).send({error: "err"});
         });
 };
 
@@ -37,7 +37,7 @@ exports.addBoardGame = function(req, res) {
     const bggId = parseInt(req.params.bggid);
     bgg.get(bggId, function (err, game) {
         if (err) {
-            res.status(404).send(err);
+            res.status(404).send({error: "err"});
             return;
         }
         db.BoardGame.build({
@@ -59,14 +59,14 @@ exports.addBoardGame = function(req, res) {
             family: util.listToString(game.boardgamefamily)
         }).save()
           .then((game) => { res.status(200).json(game); })
-          .error((err) => { res.status(500).send(err); });
+          .error((err) => { res.status(500).send({error: "err"}); });
     });
 };
 
 exports.getBoardGames = function(req, res) {
     db.BoardGame.findAll()
         .then((boardGames) => { res.json({"board_games": boardGames}); })
-        .error((err) => { res.status(500).send(err); });
+        .error((err) => { res.status(500).send({error: "err"}); });
 };
 
 exports.searchBoardGames = function(req, res) {
@@ -77,9 +77,26 @@ exports.searchBoardGames = function(req, res) {
     }
     bgg.search(searchQuery, function(err, games) {
         if (err) {
-            res.status(500).send(err);
+            res.status(500).send({error: "err"});
             return;
         }
         res.status(200).json(games);
     });
+};
+
+exports.deleteBoardGame = function(req, res) {
+    const bgid = parseInt(req.params.bgid);
+    db.Game.findAll({where: {id_board_game: bgid}})
+    .then((games) => {
+        if (games.length > 0) {
+            res.status(400).send({error: "Some games are associated with this board game (id:" + bgid + ")."});
+        } else {
+            db.BoardGame.destroy({
+                where: {id: bgid}
+            })
+            .then(() => {res.status(200).send({"success": true});})
+            .error((err) => {res.status(500).send({error: err});});
+        }
+    })
+    .error((err) => {res.status(500).send({error: err})});
 };

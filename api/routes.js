@@ -11,7 +11,8 @@ module.exports = function(app) {
 
     app.route("/board_game/:bgid")
         .get(BoardGameController.getBoardGame)
-        .post(BoardGameController.updateBoardGame);
+        .post(BoardGameController.updateBoardGame)
+        .delete(BoardGameController.deleteBoardGame);
 
     app.route("/board_game/:bggid")
         .put(BoardGameController.addBoardGame);
