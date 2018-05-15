@@ -73,35 +73,7 @@ exports.addGame = function (req, res) {
 };
 
 exports.rankForGame = function(game) {
-    // sort ranks
-    sorting_fn = (player1, player2) => {
-        if (game.ranking_method === "WIN_LOSE" || game.ranking_method === "POINTS_HIGHER_BETTER") {
-            return player2.rank - player1.rank;
-        } else {
-            return player1.rank - player2.rank;
-        }
-    };
-    let players = game.players.slice(0);
-    players.sort(sorting_fn);
-
-    // generate rank information
-    const best_rank = players.length > 0 ? players[0].rank : 0;
-    let prev_rank = null,
-        prev_natu_rank = 0,
-        prev_skip_rank = 0;
-
-    for (let i = 0; i < players.length; ++i) {
-        if (prev_rank !== players[i].rank) {
-            prev_skip_rank = i + 1;
-            prev_natu_rank = prev_natu_rank + 1;
-        }
-        players[i].score = players[i].rank;
-        players[i].natural_rank = prev_natu_rank;
-        players[i].rank = players[i].natural_rank;
-        players[i].skip_rank = prev_skip_rank;
-        players[i].win = players[i].rank === best_rank;
-    }
-    return players;
+    return util.rank(game.players, (player) => player.rank, game.ranking_method === "POINTS_LOWER_BETTER");
 };
 
 exports.getGamesQuery = function (success_callback, error_callback) {
