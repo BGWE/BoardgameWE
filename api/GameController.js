@@ -125,3 +125,16 @@ exports.getGame = function (req, res) {
         res.status(200).json(fullGame);
     });
 };
+
+exports.deleteGame = function (req, res) {
+    const gid = parseInt(req.params.gid);
+    db.sequelize.transaction((t) => {
+        return db.GamePlayer.destroy({where: {id_game: gid}})
+            .then(() => {
+                db.Game.destroy({where: {id: gid}}, {transaction: t});
+            })
+    })
+    .then(() => {res.status(200).send({success: true});})
+    .error((err) => {res.status(500).send({error: err});});
+};
+

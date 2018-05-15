@@ -39,5 +39,6 @@ module.exports = function(app) {
         .get(GameController.getGames);
 
     app.route("/game/:gid")
-        .get(GameController.getGame);
+        .get(GameController.getGame)
+        .delete(GameController.deleteGame);
 };
