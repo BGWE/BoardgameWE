@@ -8,6 +8,11 @@ module.exports = (sequelize, DataTypes) => {
     },
     id_board_game: {
         type: DataTypes.INTEGER
+    },
+    ranking_method: {
+        type: DataTypes.ENUM("WIN_LOSE", "POINTS_HIGHER_BETTER", "POINTS_LOWER_BETTER"),
+        allowNull: false,
+        defaultValue: "POINTS_LOWER_BETTER"
     }
   }, {});
 
