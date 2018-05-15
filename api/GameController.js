@@ -72,48 +72,55 @@ exports.addGame = function (req, res) {
         }).catch((err) => {res.status(500).send(err)})
 };
 
-exports.getGames = function (req, res) {
+exports.getGamesQuery = function (success_callback, error_callback) {
     db.GamePlayer.findAll({include: [{model: db.Game, as: "game"}, {model: db.Player, as: "player"}]})
-    .then((gamePlayers) => {
-        let playedBoardGames = gamePlayers.map((game) => { return game.dataValues.game.id_board_game; });
-        db.BoardGame.findAll({where: {id: playedBoardGames}})
-            .then((boardGames) => {
-                let gameMap = {};
-                let boardGameMap = util.toDictMapping(boardGames, "id");
-                for (let i in gamePlayers) {
-                    if (!gamePlayers.hasOwnProperty(i)) {
-                        continue;
+        .then((gamePlayers) => {
+            let playedBoardGames = gamePlayers.map((game) => { return game.dataValues.game.id_board_game; });
+            db.BoardGame.findAll({where: {id: playedBoardGames}})
+                .then((boardGames) => {
+                    let gameMap = {};
+                    let boardGameMap = util.toDictMapping(boardGames, "id");
+                    for (let i in gamePlayers) {
+                        if (!gamePlayers.hasOwnProperty(i)) {
+                            continue;
+                        }
+                        let gamePlayer = gamePlayers[i];
+                        let idGame = gamePlayer.id_game;
+                        if (!gameMap.hasOwnProperty(idGame)) {
+                            gameMap[idGame] = Object.assign({
+                                players: [],
+                                board_game: boardGameMap[gamePlayer.game.id_board_game].dataValues
+                            }, gamePlayer.game.dataValues);
+                        }
+                        gameMap[idGame].players.push({
+                            rank: gamePlayer.rank,
+                            id_player: gamePlayer.id_player,
+                            player: gamePlayer.player,
+                            id_game: gamePlayer.id_game
+                        });
                     }
-                    let gamePlayer = gamePlayers[i];
-                    let idGame = gamePlayer.id_game;
-                    if (!gameMap.hasOwnProperty(idGame)) {
-                        gameMap[idGame] = Object.assign({
-                            players: [],
-                            board_game: boardGameMap[gamePlayer.game.id_board_game].dataValues
-                        }, gamePlayer.game.dataValues);
+
+                    // extract object
+                    let gameList = [];
+                    for (let game in gameMap) {
+                        gameList.push(gameMap[game]);
                     }
-                    gameMap[idGame].players.push({
-                        rank: gamePlayer.rank,
-                        id_player: gamePlayer.id_player,
-                        player: gamePlayer.player,
-                        id_game: gamePlayer.id_game
-                    });
-                }
 
-                // extract object
-                let gameList = [];
-                for (let game in gameMap) {
-                    gameList.push(gameMap[game]);
-                }
+                    success_callback(gameList);
+                })
+                .catch((err) => {
+                    console.log(err);
+                    error_callback(err);
+                });
+        })
+        .catch((err) => { error_callback(err); });
+};
 
-                res.status(200).json({"games": gameList});
-            })
-            .catch((err) => {
-                console.log(err);
-                res.status(500).send(err);
-            });
-    })
-    .catch((err) => {console.log(err); res.status(500).send(err);});
+exports.getGames = function (req, res) {
+    exports.getGamesQuery(
+        (gamesList) => { res.status(200).send(gamesList); },
+        (err) => { res.status(500).send(err); }
+    )
 };
 
 exports.getGame = function (req, res) {
