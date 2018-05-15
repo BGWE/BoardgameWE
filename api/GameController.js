@@ -1,6 +1,23 @@
 const db = require("./models/index");
 const util = require("./util/util");
 
+exports.validateRanks = (ranking_method, ranks) => {
+    /**
+     * Validate ranks from the list
+     */
+    if (ranking_method === "WIN_LOSE") {
+        for (let i = 0; i < ranks.length; ++i) {
+            if (ranks[i] !== 0 && ranks[i] !== 1) {
+                return {valid: false, error: "Invalid rank '" + ranks[i] + "'"};
+            }
+        }
+    } else if (ranking_method !== "POINTS_LOWER_BETTER"
+        && ranking_method !== "POINTS_HIGHER_BETTER") {
+        return {valid: false, error: "Invalid ranking method '" + ranking_method + "'"};
+    }
+    return {valid: true};
+};
+
 
 exports.buildFullGame = (gameId, callback) => {
     db.Game.findById(gameId)
@@ -19,20 +36,27 @@ exports.buildFullGame = (gameId, callback) => {
 exports.addGame = function (req, res) {
     const players = req.body.players;
     const id_board_game = req.body.board_game;
+    const ranking_method = req.body.ranking_method;
     const duration = req.body.duration || null;
+    const ranking_validation = exports.validateRanks(ranking_method, players.map((item) => { return item.rank; }));
+    if (!ranking_validation.valid) {
+        res.status(400).send({error: ranking_validation.error});
+        return;
+    }
     db.Game.build({
         id_board_game: id_board_game,
-        duration: duration
+        duration: duration,
+        ranking_method: ranking_method
     }).save()
         .then((game) => {
-            let insertData = players.map((item) => {
+            const playerGameData = players.map((item) => {
                 return {
                     id_game: game.id,
                     rank: item.rank,
                     id_player: item.player
                 };
             });
-            db.GamePlayer.bulkCreate(insertData, {
+            db.GamePlayer.bulkCreate(playerGameData, {
                 returning: true,
                 individualHooks: true
             }).then(() => {

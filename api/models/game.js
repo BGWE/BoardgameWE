@@ -10,9 +10,10 @@ module.exports = (sequelize, DataTypes) => {
         type: DataTypes.INTEGER
     },
     ranking_method: {
-        type: DataTypes.ENUM("WIN_LOSE", "POINTS_HIGHER_BETTER", "POINTS_LOWER_BETTER"),
+        type: DataTypes.ENUM,
         allowNull: false,
-        defaultValue: "POINTS_LOWER_BETTER"
+        values: ["WIN_LOSE", "POINTS_HIGHER_BETTER", "POINTS_LOWER_BETTER"],
+
     }
   }, {});
 
