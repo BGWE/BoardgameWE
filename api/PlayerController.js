@@ -1,5 +1,4 @@
 
-const bgg = require("./util/bgg");
 const db = require("./models/index");
 
 exports.addPlayer = function (req, res) {

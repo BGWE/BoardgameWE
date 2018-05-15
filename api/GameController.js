@@ -38,7 +38,7 @@ exports.addGame = function (req, res) {
     const id_board_game = req.body.board_game;
     const ranking_method = req.body.ranking_method;
     const duration = req.body.duration || null;
-    const ranking_validation = exports.validateRanks(ranking_method, players.map((item) => { return item.rank; }));
+    const ranking_validation = exports.validateRanks(ranking_method, players.map((item) => { return item.score; }));
     if (!ranking_validation.valid) {
         res.status(400).send({error: ranking_validation.error});
         return;
@@ -52,7 +52,7 @@ exports.addGame = function (req, res) {
             const playerGameData = players.map((item) => {
                 return {
                     id_game: game.id,
-                    rank: item.rank,
+                    rank: item.score,
                     id_player: item.player
                 };
             });
@@ -70,6 +70,38 @@ exports.addGame = function (req, res) {
                 });
             })
         }).catch((err) => {res.status(500).send(err)})
+};
+
+exports.rankForGame = function(game) {
+    // sort ranks
+    sorting_fn = (player1, player2) => {
+        if (game.ranking_method === "WIN_LOSE" || game.ranking_method === "POINTS_HIGHER_BETTER") {
+            return player2.rank - player1.rank;
+        } else {
+            return player1.rank - player2.rank;
+        }
+    };
+    let players = game.players.slice(0);
+    players.sort(sorting_fn);
+
+    // generate rank information
+    const best_rank = players.length > 0 ? players[0].rank : 0;
+    let prev_rank = null,
+        prev_natu_rank = 0,
+        prev_skip_rank = 0;
+
+    for (let i = 0; i < players.length; ++i) {
+        if (prev_rank !== players[i].rank) {
+            prev_skip_rank = i + 1;
+            prev_natu_rank = prev_natu_rank + 1;
+        }
+        players[i].score = players[i].rank;
+        players[i].natural_rank = prev_natu_rank;
+        players[i].rank = players[i].natural_rank;
+        players[i].skip_rank = prev_skip_rank;
+        players[i].win = players[i].rank === best_rank;
+    }
+    return players;
 };
 
 exports.getGamesQuery = function (success_callback, error_callback) {
@@ -103,6 +135,7 @@ exports.getGamesQuery = function (success_callback, error_callback) {
                     // extract object
                     let gameList = [];
                     for (let game in gameMap) {
+                        gameMap[game].players = exports.rankForGame(gameMap[game]);
                         gameList.push(gameMap[game]);
                     }
 
@@ -129,6 +162,7 @@ exports.getGame = function (req, res) {
             res.status(404).send(err);
             return;
         }
+        fullGame.players = exports.rankForGame(fullGame);
         res.status(200).json(fullGame);
     });
 };
