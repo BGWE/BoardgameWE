@@ -24,8 +24,8 @@ exports.updateBoardGame = function(req, res) {
         .then(function(boardGame) {
             boardGame.gameplay_video_url = url;
             boardGame.save()
-                .then(() => {res.sendStatus(200);})
-                .catch((err) => {res.status(500).send(err);})
+                .then((board_game) => {res.status(200).send(board_game);})
+                .catch((err) => {res.status(500).send(err);});
         })
         .catch(function(err) {
             res.status(404).send(err);
