@@ -52,7 +52,7 @@ exports.addGame = function (req, res) {
             const playerGameData = players.map((item) => {
                 return {
                     id_game: game.id,
-                    rank: item.score,
+                    score: item.score,
                     id_player: item.player
                 };
             });
@@ -73,7 +73,7 @@ exports.addGame = function (req, res) {
 };
 
 exports.rankForGame = function(game) {
-    return util.rank(game.players, (player) => player.rank, game.ranking_method === "POINTS_LOWER_BETTER");
+    return util.rank(game.players, (player) => player.score, game.ranking_method === "POINTS_LOWER_BETTER");
 };
 
 exports.getGamesQuery = function (success_callback, error_callback) {
@@ -97,7 +97,7 @@ exports.getGamesQuery = function (success_callback, error_callback) {
                             }, gamePlayer.game.dataValues);
                         }
                         gameMap[idGame].players.push({
-                            rank: gamePlayer.rank,
+                            score: gamePlayer.score,
                             id_player: gamePlayer.id_player,
                             player: gamePlayer.player,
                             id_game: gamePlayer.id_game

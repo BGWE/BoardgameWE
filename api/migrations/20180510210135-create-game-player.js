@@ -9,14 +9,14 @@ module.exports = {
         type: Sequelize.INTEGER
       },
       id_player: {
-          type: Sequelize.INTEGER,
-          references: { model: 'Players', key: 'id' }
+        type: Sequelize.INTEGER,
+        references: { model: 'Players', key: 'id' }
       },
       id_game: {
-          type: Sequelize.INTEGER,
-          references: { model: 'Games', key: 'id' }
+        type: Sequelize.INTEGER,
+        references: { model: 'Games', key: 'id' }
       },
-      rank: {
+      score: {
         type: Sequelize.INTEGER
       },
       createdAt: {
@@ -27,6 +27,12 @@ module.exports = {
         allowNull: false,
         type: Sequelize.DATE
       }
+    }, {
+        uniqueKeys: {
+            players_unique_per_game: {
+                fields: ['id_player', 'id_game']
+            }
+        }
     });
   },
   down: (queryInterface, Sequelize) => {

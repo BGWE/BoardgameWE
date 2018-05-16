@@ -1,15 +1,17 @@
 'use strict';
 module.exports = (sequelize, DataTypes) => {
   var GamePlayer = sequelize.define('GamePlayer', {
-    rank: {
+    score: {
         type: DataTypes.INTEGER,
         validate: {min: 0}
     },
     id_player: {
-        type: DataTypes.INTEGER
+        type: DataTypes.INTEGER,
+        unique: 'players_unique_per_game'
     },
     id_game: {
-        type: DataTypes.INTEGER
+        type: DataTypes.INTEGER,
+        unique: 'players_unique_per_game'
     }
   }, {});
   GamePlayer.associate = function(models) {
