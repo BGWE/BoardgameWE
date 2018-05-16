@@ -51,7 +51,7 @@ exports.unique = (data) => {
     data.sort();
     let outputData = [];
     for (let i = 0; i < data.length; ++i) {
-        if (outputData.length === 0 && data[i] !== outputData[outputData.length - 1]) {
+        if (outputData.length === 0 || data[i] !== outputData[outputData.length - 1]) {
             outputData.push(data[i]);
         }
     }
@@ -63,7 +63,7 @@ exports.rankPlayersFromData = (dict, aggregate) => {
     for (let _key in dict.players) {
         if (!dict.players.hasOwnProperty(_key)) { continue; }
         scores.push({
-            score: aggregate(dict.points[_key]),
+            score: dict.points[_key].length === 0 ? 0 : aggregate(dict.points[_key]),
             player: dict.players[_key]
         })
     }
