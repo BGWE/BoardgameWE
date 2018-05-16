@@ -28,7 +28,7 @@ exports.getDefeats = function (games) {
     let victoryPoints = victories.points;
     for (let id_player in victoryPoints) {
         if (!victoryPoints.hasOwnProperty(id_player)) { continue; }
-        defeatPoints[id_player] = victoryPoints[id_player].map((win) => { return !win; });
+        defeatPoints[id_player] = victoryPoints[id_player].map(win => !win ? 1 : 0);
     }
     return {players: victories.players, points: defeatPoints};
 };

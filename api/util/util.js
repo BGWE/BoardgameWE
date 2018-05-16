@@ -33,9 +33,10 @@ exports.rank = (data, score_fn, lower_better) => {
         prev_skip_rank = 0;
 
     for (let i = 0; i < copy.length; ++i) {
-        if (prev_score !== copy[i].rank) {
+        if (prev_score !== copy[i].score) {
             prev_skip_rank = i + 1;
             prev_natu_rank = prev_natu_rank + 1;
+            prev_score = copy[i].score;
         }
         copy[i].score = score_fn(copy[i]);
         copy[i].natural_rank = prev_natu_rank;
