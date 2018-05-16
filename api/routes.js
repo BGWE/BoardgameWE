@@ -4,6 +4,7 @@ module.exports = function(app) {
     const BoardGameController = require("./BoardGameController");
     const PlayerController = require("./PlayerController");
     const GameController = require("./GameController");
+    const StatsController = require("./StatsController");
 
     // Board games
     app.route("/board_game/search")
@@ -41,4 +42,8 @@ module.exports = function(app) {
     app.route("/game/:gid")
         .get(GameController.getGame)
         .delete(GameController.deleteGame);
+
+    // Statistics
+    app.route("/stats/rankings")
+        .get(StatsController.getRankings);
 };
