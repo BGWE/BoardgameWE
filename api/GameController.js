@@ -76,6 +76,10 @@ exports.rankForGame = function(game) {
     return util.rank(game.players, (player) => player.score, game.ranking_method === "POINTS_LOWER_BETTER");
 };
 
+exports.rankForGameWithDataValues = function(game) {
+    return util.rank(game.players.map(a => a.dataValues), (player) => player.score, game.ranking_method === "POINTS_LOWER_BETTER");
+};
+
 exports.getGamesQuery = function (success_callback, error_callback) {
     db.GamePlayer.findAll({include: [{model: db.Game, as: "game"}, {model: db.Player, as: "player"}]})
         .then((gamePlayers) => {
@@ -134,7 +138,7 @@ exports.getGame = function (req, res) {
             res.status(404).send(err);
             return;
         }
-        fullGame.players = exports.rankForGame(fullGame);
+        fullGame.players = exports.rankForGameWithDataValues(fullGame);
         res.status(200).json(fullGame);
     });
 };
