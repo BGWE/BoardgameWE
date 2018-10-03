@@ -1,12 +1,42 @@
 'use strict';
 
+import * as config from "./config/config";
+const jwt = require("jsonwebtoken");
+
 module.exports = function(app) {
     const BoardGameController = require("./BoardGameController");
     const PlayerController = require("./PlayerController");
     const GameController = require("./GameController");
     const StatsController = require("./StatsController");
+    const UserController = require("./UserController");
 
-    // Board games
+    // User routes
+    app.route("/user/register")
+        .post(UserController.register);
+    app.route("/user/login")
+        .post(UserController.signIn);
+
+    // authentication middleware, applied to all except login and register
+    app.use(/^\/(?!user\/register|user\/login).*/, function(req, res, next) {
+        if (!req.headers && !req.headers.authentication && !req.headers.authentication.startsWith("JWT")) {
+            return res.status(403).send({
+                success: false,
+                message: 'No token provided.'
+            });
+        }
+        let token = req.headers.authentication.split(" ")[1].trim();
+        jwt.verify(token, config.jwt_secret_key, function(err, decoded) {
+            if (err) {
+                return res.status(403).json({ success: false, message: 'Failed to authenticate token.' });
+            } else {
+                // if everything is good, save to request for use in other routes
+                req.decoded = decoded;
+                next();
+            }
+        });
+    });
+
+    // Board game
     app.route("/board_game/search")
         .get(BoardGameController.searchBoardGames);
 

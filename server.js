@@ -12,12 +12,6 @@ app.use(cors());
 app.use(bodyParser.json()); // support json encoded bodies
 app.use(bodyParser.urlencoded({ extended: true })); // support encoded bodies
 
-// const app = http.createServer((req, res) => {
-//     res.statusCode = 200;
-//     res.setHeader('Content-Type', 'text/plain');
-//     res.end('Hello World\n');
-// });
-
 app.get('/', function (req, res) {
    res.send('Hello Ro!');
 });
