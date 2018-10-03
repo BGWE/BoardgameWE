@@ -17,17 +17,19 @@
   },
   "homepage": "https://github.com/FServais/BoardgameWE#readme",
   "dependencies": {
-    "aws-sdk": "^2.233.1",
-    "body-parser": "^1.18.2",
-    "chai": "^4.1.2",
+    "aws-sdk": "^2.327.0",
+    "bcryptjs": "^2.4.3",
+    "body-parser": "^1.18.3",
+    "chai": "^4.2.0",
     "cors": "^2.8.4",
     "express": "^4.16.3",
-    "mocha": "^5.1.1",
-    "nyc": "^11.7.3",
-    "pg": "^7.4.3",
-    "request": "^2.85.0",
-    "sequelize": "^4.37.7",
-    "sequelize-cli": "^4.0.0",
+    "jsonwebtoken": "^8.3.0",
+    "mocha": "^5.2.0",
+    "nyc": "^11.9.0",
+    "pg": "^7.5.0",
+    "request": "^2.88.0",
+    "sequelize": "^4.39.0",
+    "sequelize-cli": "^4.1.1",
     "xml2js": "^0.4.19"
   }
 }
