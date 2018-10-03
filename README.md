@@ -4,7 +4,7 @@
 ### Environment variables
 
 - NODE_ENV: determine the environment, among {'production', 'test', 'development'}
-- JWT_KEY: json web token secret key
+- JWT_SECRET_KEY: json web token secret key
 - DB_USERNAME: database user name
 - DB_PASSWORD: database password
 - DB_NAME: database name
