@@ -17,7 +17,7 @@ exports.signIn = function(req, res) {
                 name: user.name, id: user._id
             };
             return res.json({
-                token: jwt.sign(token_payload, config.jwt_secret_key, {expiresIn: "4 days"}) // 4 days
+                token: jwt.sign(token_payload, config.jwt_secret_key, {expiresIn: config.jwt_duration}) // 4 days
             });
         }
     })
