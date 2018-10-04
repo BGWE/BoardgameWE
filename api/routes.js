@@ -36,6 +36,10 @@ module.exports = function(app) {
         });
     });
 
+    // User (protected)
+    app.route("/user/update")
+        .put(UserController.updateUser);
+
     // Board game
     app.route("/board_game/search")
         .get(BoardGameController.searchBoardGames);
