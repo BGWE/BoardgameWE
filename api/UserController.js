@@ -1,6 +1,7 @@
-import * as config from "./config/config";
+const config = require("./config/config.js");
 const db = require("./models/index");
 const jwt = require("jsonwebtoken");
+const bcrypt = require("bcryptjs");
 
 exports.signIn = function(req, res) {
     db.User.findOne({ where:{
@@ -35,7 +36,7 @@ exports.register = function(req, res) {
             user.password = undefined;  // security
             res.status(200).json(user);
         })
-        .error((err) => { res.status(500).send({error: "err"}); });
+        .catch((err) => { res.status(403).send({error: "username or email exists"}); });
 };
 
 exports.loginRequired = function(req, res) {

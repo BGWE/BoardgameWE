@@ -6,11 +6,11 @@ module.exports = (sequelize, DataTypes) => {
     password: DataTypes.STRING,
     email: {
       type: DataTypes.STRING,
-      unique: "unique_player_username"
+      unique: true
     },
     username: {
       type: DataTypes.STRING,
-      unique: "unique_player_username"
+      unique: true
     }
   }, {});
   User.associate = function(models) {

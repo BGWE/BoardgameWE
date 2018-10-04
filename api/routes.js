@@ -1,6 +1,6 @@
 'use strict';
 
-import * as config from "./config/config";
+const config = require("./config/config.js");
 const jwt = require("jsonwebtoken");
 
 module.exports = function(app) {
@@ -18,7 +18,7 @@ module.exports = function(app) {
 
     // authentication middleware, applied to all except login and register
     app.use(/^\/(?!user\/register|user\/login).*/, function(req, res, next) {
-        if (!req.headers && !req.headers.authentication && !req.headers.authentication.startsWith("JWT")) {
+        if (!req.headers || !req.headers.authentication || !req.headers.authentication.startsWith("JWT")) {
             return res.status(403).send({
                 success: false,
                 message: 'No token provided.'
