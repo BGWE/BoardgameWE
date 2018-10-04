@@ -18,13 +18,13 @@ module.exports = function(app) {
 
     // authentication middleware, applied to all except login and register
     app.use(/^\/(?!user\/register|user\/login).*/, function(req, res, next) {
-        if (!req.headers || !req.headers.authentication || !req.headers.authentication.startsWith("JWT")) {
+        let token = UserController.getToken(req);
+        if (!token) {
             return res.status(403).send({
                 success: false,
                 message: 'No token provided.'
             });
         }
-        let token = req.headers.authentication.split(" ")[1].trim();
         jwt.verify(token, config.jwt_secret_key, function(err, decoded) {
             if (err) {
                 return res.status(403).json({ success: false, message: 'Failed to authenticate token.' });
