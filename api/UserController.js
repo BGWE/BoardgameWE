@@ -106,6 +106,16 @@ exports.updateUser = function(req, res) {
         })
 };
 
+/**
+ * Send the current list of games in the library in the response (or a 500 error)
+ * @returns {Promise<Array<Model>>}
+ */
+exports.sendCurrUserGames = function(req, res) {
+    return db.LibraryGame.findAll({where: {id_user: exports.getCurrUserId(req)}})
+        .then(games => { res.status(200).send(games) })
+        .catch(err => { res.status(500).send({error: "err"}) });
+};
+
 
 exports.addLibraryGames = function(req, res) {
     if (!req.body.games) {
@@ -114,14 +124,8 @@ exports.addLibraryGames = function(req, res) {
     let userId = exports.getCurrUserId(req);
     let games = req.body.games.map(g => { return { id_user: userId, id_board_game: g }});
     db.LibraryGame.bulkCreate(games, { ignoreDuplicates: true })
-        .then(() => {
-            db.LibraryGame.findAll({where: {id_user: userId}})
-                .then(games => { res.status(200).send(games) })
-                .catch(err => { res.status(500).send({error: "err"}) });
-        })
-        .catch(err => {
-            res.status(500).send({error: "err"});
-        });
+        .then(() => { return exports.sendCurrUserGames(req, res); })
+        .catch(err => { res.status(500).send({error: "err"}); });
 };
 
 exports.deleteLibraryGames = function(req, res) {
@@ -134,10 +138,6 @@ exports.deleteLibraryGames = function(req, res) {
             id_user: userId,
             id_board_game: req.body.games
         }
-    }).then(() => {
-        db.LibraryGame.findAll({where: {id_user: userId}})
-            .then(games => { res.status(200).send(games) })
-            .catch(err => { res.status(500).send({error: "err"}) });
-        })
-        .catch(err => {res.status(500).send({error: "err"});});
+    }).then(() => { return exports.sendCurrUserGames(req, res); })
+      .catch(err => { res.status(500).send({error: "err"});});
 };
