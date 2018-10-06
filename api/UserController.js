@@ -123,3 +123,21 @@ exports.addLibraryGames = function(req, res) {
             res.status(500).send({error: "err"});
         });
 };
+
+exports.deleteLibraryGames = function(req, res) {
+    if (!req.body.games) {
+        res.status(403).send({error: "missing games field"});
+    }
+    let userId = exports.getCurrUserId(req);
+    db.LibraryGame.destroy({
+        where: {
+            id_user: userId,
+            id_board_game: req.body.games
+        }
+    }).then(() => {
+        db.LibraryGame.findAll({where: {id_user: userId}})
+            .then(games => { res.status(200).send(games) })
+            .catch(err => { res.status(500).send({error: "err"}) });
+        })
+        .catch(err => {res.status(500).send({error: "err"});});
+};
