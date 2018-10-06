@@ -42,8 +42,12 @@ module.exports = function(app) {
 
     // Library
     app.route("/user/library/games")
+        .get(UserController.getCurrentUserLibraryGames)
         .post(UserController.addLibraryGames)
         .delete(UserController.deleteLibraryGames);
+
+    app.route("/user/:uid/library/games")
+        .get(UserController.getUserLibraryGames);
 
     // Board game
     app.route("/board_game/search")

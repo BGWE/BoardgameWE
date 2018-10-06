@@ -107,15 +107,22 @@ exports.updateUser = function(req, res) {
 };
 
 /**
- * Send the current list of games in the library in the response (or a 500 error)
+ * Send the list of games in the library of the currently connected user in the response (or a 500 error)
  * @returns {Promise<Array<Model>>}
  */
 exports.sendCurrUserGames = function(req, res) {
-    return db.LibraryGame.findAll({where: {id_user: exports.getCurrUserId(req)}})
+    return exports.sendUserLibraryGames(exports.getCurrUserId(req), req, res);
+};
+
+/**
+ * Send the current list of games in the library of a given user in the response (or a 500 error)
+ * @returns {Promise<Array<Model>>}
+ */
+exports.sendUserLibraryGames = function(uid, req, res) {
+    return db.LibraryGame.findAll({where: {id_user: uid}})
         .then(games => { res.status(200).send(games) })
         .catch(err => { res.status(500).send({error: "err"}) });
 };
-
 
 exports.addLibraryGames = function(req, res) {
     if (!req.body.games) {
@@ -140,4 +147,12 @@ exports.deleteLibraryGames = function(req, res) {
         }
     }).then(() => { return exports.sendCurrUserGames(req, res); })
       .catch(err => { res.status(500).send({error: "err"});});
+};
+
+exports.getCurrentUserLibraryGames = function(req, res) {
+    return exports.sendCurrUserGames(req, res);
+};
+
+exports.getUserLibraryGames = function(req, res) {
+    return exports.sendUserLibraryGames(req.params.uid, req, res);
 };
