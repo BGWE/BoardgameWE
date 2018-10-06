@@ -19,13 +19,13 @@ module.exports = {
               allowNull: false,
               type: Sequelize.DATE
           }
-      }, {
-          uniqueKeys: {
-              players_unique_per_game: {
-                  fields: ['id_user', 'id_board_game']
-              }
-          }
-      });
+      })
+      .then(() => {
+          return queryInterface.addConstraint('LibraryGames', ['id_user', 'id_board_game'], {
+              type: 'primary key',
+              name: 'library_game_pkey'
+          });
+      })
   },
 
   down: (queryInterface, Sequelize) => {

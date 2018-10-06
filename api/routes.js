@@ -40,6 +40,11 @@ module.exports = function(app) {
     app.route("/user/update")
         .put(UserController.updateUser);
 
+    // Library
+    app.route("/user/library/games")
+        .post(UserController.addLibraryGames)
+        .delete(UserController.deleteLibraryGames);
+
     // Board game
     app.route("/board_game/search")
         .get(BoardGameController.searchBoardGames);

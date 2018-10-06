@@ -24,6 +24,9 @@ exports.getTokenPayload = function(req) {
     return jwt.decode(this.getToken(req));
 };
 
+exports.getCurrUserId = function(req) {
+    return exports.getTokenPayload(req).id;
+};
 
 /**
  * Remove hashed password from user object
@@ -101,4 +104,22 @@ exports.updateUser = function(req, res) {
         .catch(err => {
             res.status(404).send({error: "user not found"})
         })
+};
+
+
+exports.addLibraryGames = function(req, res) {
+    if (!req.body.games) {
+        res.status(403).send({error: "missing games field"});
+    }
+    let userId = exports.getCurrUserId(req);
+    let games = req.body.games.map(g => { return { id_user: userId, id_board_game: g }});
+    db.LibraryGame.bulkCreate(games, { ignoreDuplicates: true })
+        .then(() => {
+            db.LibraryGame.findAll({where: {id_user: userId}})
+                .then(games => { res.status(200).send(games) })
+                .catch(err => { res.status(500).send({error: "err"}) });
+        })
+        .catch(err => {
+            res.status(500).send({error: "err"});
+        });
 };

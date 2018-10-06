@@ -2,10 +2,12 @@
 module.exports = (sequelize, DataTypes) => {
     var LibraryGame = sequelize.define('LibraryGame', {
         id_user: {
-            type: DataTypes.INTEGER
+            type: DataTypes.INTEGER,
+            primaryKey: true
         },
         id_board_game: {
-            type: DataTypes.INTEGER
+            type: DataTypes.INTEGER,
+            primaryKey: true
         }
     }, {});
     LibraryGame.associate = function(models) {
