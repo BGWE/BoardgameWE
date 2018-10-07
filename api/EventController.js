@@ -30,5 +30,9 @@ exports.getAllEvents = function(req, res) {
 
 exports.deleteEvent = function(req, res) {
     let eid = parseInt(req.params.eid);
-    return util.sendModelOrError(db.Event.destroy({ where: {id: eid}}), res, "deleted");
+    return db.Event.destroy({ where: {id: eid}}).then(
+        n => { return util.sendModelOrError(db.Event.findAll(), res, "events"); }
+    ).catch(
+        err => { return res.status(500).send({error: "err"}); }
+    );
 };
