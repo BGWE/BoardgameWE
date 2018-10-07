@@ -5,10 +5,14 @@ module.exports = (sequelize, DataTypes) => {
     start: DataTypes.DATE,
     end: DataTypes.DATE,
     description: DataTypes.TEXT,
-    location: DataTypes.STRING
+    location: DataTypes.STRING,
+    id_creator: DataTypes.INTEGER
   }, {});
   Event.associate = function(models) {
-    // associations can be defined here
+      models.Event.belongsTo(models.User, {
+        foreignKey: 'id_creator',
+        as: 'creator'
+      });
   };
   return Event;
 };

@@ -70,3 +70,15 @@ exports.rankPlayersFromData = (dict, aggregate) => {
     }
     return exports.rank(scores, (player) => player.score, false);
 };
+
+exports.sendModelOrError = function(promise, res, objName) {
+    return promise
+        .then(obj => {
+            let body = {};
+            body[objName] = obj;
+            res.status(200).send(body);
+        })
+        .catch(err => {
+            res.status(500).send({error: "err"});
+        })
+};

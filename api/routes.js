@@ -2,6 +2,7 @@
 
 const config = require("./config/config.js");
 const jwt = require("jsonwebtoken");
+const userutil = require("./util/user");
 
 module.exports = function(app) {
     const BoardGameController = require("./BoardGameController");
@@ -9,6 +10,7 @@ module.exports = function(app) {
     const GameController = require("./GameController");
     const StatsController = require("./StatsController");
     const UserController = require("./UserController");
+    const EventController = require("./EventController");
 
     // User routes
     app.route("/user/register")
@@ -18,7 +20,7 @@ module.exports = function(app) {
 
     // authentication middleware, applied to all except login and register
     app.use(/^\/(?!user\/register|user\/login).*/, function(req, res, next) {
-        let token = UserController.getToken(req);
+        let token = userutil.getToken(req);
         if (!token) {
             return res.status(403).send({
                 success: false,
@@ -48,6 +50,17 @@ module.exports = function(app) {
 
     app.route("/user/:uid/library/games")
         .get(UserController.getUserLibraryGames);
+
+    // Event
+    app.route("/event")
+        .post(EventController.createEvent);
+
+    app.route("/event/:eid")
+        .get(EventController.getEvent)
+        .delete(EventController.deleteEvent);
+
+    app.route("/events")
+        .get(EventController.getAllEvents);
 
     // Board game
     app.route("/board_game/search")

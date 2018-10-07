@@ -2,31 +2,8 @@ const config = require("./config/config.js");
 const db = require("./models/index");
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcryptjs");
+const userutil = require("./util/user");
 
-/**
- * Retrieve and return the json web token from the headers
- * @param req Request
- * @returns String|null Null if token is missing
- */
-exports.getToken = function(req) {
-    if (!req.headers || !req.headers.authentication || !req.headers.authentication.startsWith("JWT")) {
-        return null;
-    }
-    return req.headers.authentication.split(" ")[1].trim();
-};
-
-/**
- * Return the token payload
- * @param req Request
- * @returns String|null Null if token is missing
- */
-exports.getTokenPayload = function(req) {
-    return jwt.decode(this.getToken(req));
-};
-
-exports.getCurrUserId = function(req) {
-    return exports.getTokenPayload(req).id;
-};
 
 /**
  * Remove hashed password from user object
@@ -80,7 +57,7 @@ exports.register = function(req, res) {
 
 exports.updateUser = function(req, res) {
     // TODO security: implement token invalidation check when password changes
-    let payload = exports.getTokenPayload(req);
+    let payload = userutil.getTokenPayload(req);
     db.User.findById(payload.id)
         .then(user => {
             user.username = req.body.username || user.username;
@@ -111,7 +88,7 @@ exports.updateUser = function(req, res) {
  * @returns {Promise<Array<Model>>}
  */
 exports.sendCurrUserGames = function(req, res) {
-    return exports.sendUserLibraryGames(exports.getCurrUserId(req), req, res);
+    return exports.sendUserLibraryGames(userutil.getCurrUserId(req), req, res);
 };
 
 /**
@@ -128,7 +105,7 @@ exports.addLibraryGames = function(req, res) {
     if (!req.body.games) {
         res.status(403).send({error: "missing games field"});
     }
-    let userId = exports.getCurrUserId(req);
+    let userId = userutil.getCurrUserId(req);
     let games = req.body.games.map(g => { return { id_user: userId, id_board_game: g }});
     db.LibraryGame.bulkCreate(games, { ignoreDuplicates: true })
         .then(() => { return exports.sendCurrUserGames(req, res); })
@@ -139,7 +116,7 @@ exports.deleteLibraryGames = function(req, res) {
     if (!req.body.games) {
         res.status(403).send({error: "missing games field"});
     }
-    let userId = exports.getCurrUserId(req);
+    let userId = userutil.getCurrUserId(req);
     db.LibraryGame.destroy({
         where: {
             id_user: userId,

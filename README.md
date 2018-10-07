@@ -11,3 +11,4 @@
 - DB_NAME: database name
 - DB_HOSTNAME: database hostname
 - PORT: node sever port
+- TIMEZONE: default
