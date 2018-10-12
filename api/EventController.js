@@ -56,29 +56,48 @@ exports.deleteEvent = function(req, res) {
     );
 };
 
-exports.sendCurrEventGames = function(req, res) {
-
+exports.sendProvidedBoardGames = function(eid, res) {
+    return db.ProvidedBoardGame.findAll(
+        { where: { id_event: eid }, include: [userInclude, boardGameInclude]
+    }).then(provided => {
+        res.status(200).send(provided);
+    }).catch(err => {
+        res.status(500).send({error: "err"});
+    });
 };
 
 exports.addProvidedBoardGames = function(req, res) {
     let eid = parseInt(req.params.eid);
     let userId = userutil.getCurrUserId(req);
     let board_games = req.body.board_games.map(g => { return { id_user: userId, id_board_game: g, id_event: eid }});
-    db.ProvidedBoardGame.bulkCreate(board_games, { ignoreDuplicates: true })
+    return db.ProvidedBoardGame.bulkCreate(board_games, { ignoreDuplicates: true })
         .then(() => {
-            return db.ProvidedBoardGame.findAll({ where: { id_event: eid }, include: [userInclude, boardGameInclude] })
-                .then(provided => {
-                    res.status(200).send(provided);
-                })
-                .catch(err => {
-                    res.status(500).send({error: "err"});
-                });
+            return exports.sendProvidedBoardGames(eid, res);
         })
         .catch(err => {
             res.status(500).send({error: "err"});
         });
 };
 
+exports.getProvidedBoardGames = function(req, res) {
+    let eid = parseInt(req.params.eid);
+    return exports.sendProvidedBoardGames(eid, res);
+};
+
+exports.deleteProvidedBoardGames = function(req, res) {
+    let eid = parseInt(req.params.eid);
+    return db.ProvidedBoardGame.destroy({
+        where: {
+            id_event: eid,
+            id_user: userutil.getCurrUserId(req),
+            id_board_game: req.body.board_games
+        }
+    }).then(() => {
+        return exports.sendProvidedBoardGames(eid, res);
+    }).catch(err => {
+        res.status(500).send({error: "err"});
+    });
+};
 
 
 // exports.getParticipants = function(req, res) {
