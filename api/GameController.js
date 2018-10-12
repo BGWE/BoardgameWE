@@ -32,7 +32,6 @@ exports.validateGamePlayers = (players) => {
     return {valid: true};
 };
 
-
 exports.buildFullGame = (gameId, callback) => {
     return db.Game.findById(gameId)
     .then((game) => {
@@ -156,7 +155,7 @@ exports.getGames = function (req, res) {
 exports.getGame = function (req, res) {
     exports.buildFullGame(req.params.gid, (fullGame, err) => {
         if (err) {
-            res.status(404).send(err);
+            res.status(500).send(err);
             return;
         }
         fullGame.players = exports.rankForGameWithDataValues(fullGame);
@@ -171,8 +170,7 @@ exports.deleteGame = function (req, res) {
             .then(() => {
                 db.Game.destroy({where: {id: gid}}, {transaction: t});
             })
-    })
-    .then(() => {res.status(200).send({success: true});})
-    .error((err) => {res.status(500).send({error: err});});
+    }).then(() => {res.status(200).send({success: true});
+    }).error((err) => {res.status(500).send({error: err});});
 };
 

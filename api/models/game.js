@@ -9,6 +9,9 @@ module.exports = (sequelize, DataTypes) => {
     id_board_game: {
         type: DataTypes.INTEGER
     },
+    id_event: {
+        type: DataTypes.INTEGER
+    },
     ranking_method: {
         type: DataTypes.ENUM,
         allowNull: false,
@@ -18,15 +21,18 @@ module.exports = (sequelize, DataTypes) => {
   }, {});
 
   Game.associate = function(models) {
-      // models.Game.hasOne(models.BoardGame, {
-      //     foreignKey: "id",
-      //     sourceKey: "id_board_game"  // supported in only from version 5.0.0.beta5
-      // });
       models.Game.hasMany(models.GamePlayer, {
           onDelete: "CASCADE",
           foreignKey: "id_game",
           sourceKey: "id",
           as: "players"
+      });
+
+      models.Game.belongsTo(models.Event, {
+          onDelete: "RESTRICT",
+          foreignKey: "id_event",
+          targetKey: "id",
+          as: "event"
       });
   };
   return Game;

@@ -94,9 +94,9 @@ module.exports = function(app) {
     // app.route("/games")
     //     .get(GameController.getGames);
     //
-    // app.route("/game/:gid")
-    //     .get(GameController.getGame)
-    //     .delete(GameController.deleteGame);
+    app.route("/game/:gid")
+        .get(GameController.getGame)
+        .delete(GameController.deleteGame);
     //
     // // Statistics
     // app.route("/stats/rankings")
