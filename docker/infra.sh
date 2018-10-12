@@ -9,8 +9,6 @@ do
             ;;
         stop) docker-compose -f $SCRIPTDIR/docker-compose.yml -p bgwe_backend stop ; docker-compose -f $SCRIPTDIR/docker-compose.yml -p bgwe_backend rm -f
             ;;
-        reload) docker-compose -f $SCRIPTDIR/docker-compose.yml -p bgwe_backend stop ; docker-compose -f $SCRIPTDIR/docker-compose.yml -p bgwe_backend rm -f ; docker-compose -f $SCRIPTDIR/docker-compose.yml -p bgwe_backend build && docker-compose -f $SCRIPTDIR/docker-compose.yml -p bgwe_backend up -d --remove-orphans
-            ;;
         *) echo "bad option $1"
     esac
     shift
