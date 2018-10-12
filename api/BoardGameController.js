@@ -14,7 +14,7 @@ exports.getBoardGame = function(req, res) {
 };
 
 exports.updateBoardGame = function(req, res) {
-    const url = req.body.video_url;
+    const url = req.body.gameplay_video_url;
     if (url == null || url.length === 0) {
         res.status(400).send("Invalid url");
         return;
@@ -34,7 +34,7 @@ exports.updateBoardGame = function(req, res) {
 
 exports.addBoardGame = function(req, res) {
     // load info from board game geek
-    const bggId = parseInt(req.params.bggid);
+    const bggId = parseInt(req.body.bgg_id);
     bgg.get(bggId, function (err, game) {
         if (err) {
             res.status(404).send({error: "err"});
