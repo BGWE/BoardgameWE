@@ -7,9 +7,7 @@ module.exports = {
         database: process.env.DB_NAME + "_dev",
         host: process.env.DB_HOSTNAME,
         dialect: 'postgres',
-        options: {
-            timezone: process.env.TIMEZONE || "UTC"
-        }
+        timezone: process.env.TIMEZONE || "UTC"
     },
     test: {
         username: process.env.DB_USERNAME,
@@ -17,9 +15,7 @@ module.exports = {
         database: process.env.DB_NAME + "_test",
         host: process.env.DB_HOSTNAME,
         dialect: 'postgres',
-        options: {
-            timezone: process.env.TIMEZONE || "UTC"
-        }
+        timezone: process.env.TIMEZONE || "UTC"
     },
     production: {
         username: process.env.DB_USERNAME,
@@ -27,8 +23,6 @@ module.exports = {
         database: process.env.DB_NAME,
         host: process.env.DB_HOSTNAME,
         dialect: 'postgres',
-        options: {
-            timezone: process.env.TIMEZONE || "UTC"
-        }
+        timezone: process.env.TIMEZONE || "UTC"
     }
 };
