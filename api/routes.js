@@ -12,7 +12,7 @@ module.exports = function(app) {
     const EventController = require("./EventController");
 
     // User routes
-    app.route("/user/register")
+    app.route("/user")
         .post(UserController.register);
     app.route("/user/login")
         .post(UserController.signIn);
@@ -38,16 +38,16 @@ module.exports = function(app) {
     });
 
     // User (protected)
-    app.route("/user/update")
+    app.route("/user")
         .put(UserController.updateUser);
 
     // Library
-    app.route("/user/library/games")
+    app.route("/user/library_games")
         .get(UserController.getCurrentUserLibraryGames)
         .post(UserController.addLibraryGames)
         .delete(UserController.deleteLibraryGames);
 
-    app.route("/user/:uid/library/games")
+    app.route("/user/:uid/library_games")
         .get(UserController.getUserLibraryGames);
 
     // Event
@@ -75,21 +75,31 @@ module.exports = function(app) {
     app.route("/board_game/search")
         .get(BoardGameController.searchBoardGames);
 
+    app.route("/board_game")
+        .post(BoardGameController.addBoardGame);
+
     app.route("/board_game/:bgid")
         .get(BoardGameController.getBoardGame)
-        .post(BoardGameController.updateBoardGame)
+        .put(BoardGameController.updateBoardGame)
         .delete(BoardGameController.deleteBoardGame);
-
-    app.route("/board_game/:bggid")
-        .put(BoardGameController.addBoardGame);
 
     app.route("/board_games")
         .get(BoardGameController.getBoardGames);
 
+    // Player
+    app.route("/player")
+        .post(PlayerController.addPlayer);
 
-    // // Game
+    app.route("/player/:pid")
+        .get(PlayerController.getPlayer);
+
+    app.route("/players")
+        .get(PlayerController.getPlayers);
+
+
+    // Game
     // app.route("/game")
-    //     .put(GameController.addGame);
+    //     .post(GameController.addGame);
     //
     // app.route("/games")
     //     .get(GameController.getGames);
