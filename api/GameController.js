@@ -1,10 +1,11 @@
 const db = require("./models/index");
 const util = require("./util/util");
+const EventController = require("./EventController");
 
+/**
+ * Validate ranks from the list
+ */
 exports.validateRanks = (ranking_method, ranks) => {
-    /**
-     * Validate ranks from the list
-     */
     if (ranking_method === "WIN_LOSE") {
         for (let i = 0; i < ranks.length; ++i) {
             if (ranks[i] !== 0 && ranks[i] !== 1) {
@@ -18,14 +19,27 @@ exports.validateRanks = (ranking_method, ranks) => {
     return {valid: true};
 };
 
+/**
+ * Check whether players are correct
+ */
+exports.validateGamePlayers = (players) => {
+    for (let i = 0; i < players.length; ++i) {
+        if (!(players[i].hasOwnProperty("user") && players[i].user > 0)  // TODO validate user ids by checking in db
+                && !(players[i].hasOwnProperty("name") && players[i].name.length > 0)) {
+            return {valid: false, error: "Invalid player. Missing or invalid fields 'name' or 'user'."};
+        }
+    }
+    return {valid: true};
+};
+
 
 exports.buildFullGame = (gameId, callback) => {
-    db.Game.findById(gameId)
+    return db.Game.findById(gameId)
     .then((game) => {
-        db.BoardGame.findById(game.id_board_game)
+        return db.BoardGame.findById(game.id_board_game)
         .then((boardGame) => {
             let withBoardGame = Object.assign({board_game: boardGame.dataValues}, game.dataValues);
-            db.GamePlayer.findAll({where: {id_game: game.id}, include: [{model: db.Player, as: "player"}]})
+            return db.GamePlayer.findAll({where: {id_game: game.id}, include: [EventController.userIncludeSQ]})
             .then((players) => {
                 callback(Object.assign({players: players}, withBoardGame), null);
             }).catch((err) => {console.log(err); callback(withBoardGame, err);});
@@ -35,41 +49,48 @@ exports.buildFullGame = (gameId, callback) => {
 
 exports.addGame = function (req, res) {
     const players = req.body.players;
-    const id_board_game = req.body.board_game;
-    const ranking_method = req.body.ranking_method;
+    const idEvent = req.body.id_event || null;
+    const idBoardGame = req.body.id_board_game;
+    const rankingMethod = req.body.ranking_method;
     const duration = req.body.duration || null;
-    const ranking_validation = exports.validateRanks(ranking_method, players.map((item) => { return item.score; }));
-    if (!ranking_validation.valid) {
-        res.status(400).send({error: ranking_validation.error});
+    const rankingValidation = exports.validateRanks(rankingMethod, players.map((item) => { return item.score; }));
+    if (!rankingValidation.valid) {
+        res.status(400).send({error: rankingValidation.error});
         return;
     }
-    db.Game.build({
-        id_board_game: id_board_game,
+    const playersValidation = exports.validateGamePlayers(players);
+    if (!playersValidation.valid) {
+        res.status(400).send({error: playersValidation.error});
+    }
+    return db.Game.build({
+        id_event: idEvent,
+        id_board_game: idBoardGame,
         duration: duration,
-        ranking_method: ranking_method
+        ranking_method: rankingMethod
     }).save()
         .then((game) => {
             const playerGameData = players.map((item) => {
                 return {
                     id_game: game.id,
                     score: item.score,
-                    id_player: item.player
+                    id_user: item.user || null,
+                    name: item.name || null
                 };
             });
-            db.GamePlayer.bulkCreate(playerGameData, {
+            return db.GamePlayer.bulkCreate(playerGameData, {
                 returning: true,
                 individualHooks: true
             }).then(() => {
                 exports.buildFullGame(game.id, (fullGame, err) => {
                     console.log(err);
                     if (err) {
-                        res.status(500).send(err);
+                        res.status(500).send({error: "err"});
                         return;
                     }
                     res.status(200).json(fullGame);
                 });
             })
-        }).catch((err) => {res.status(500).send(err)})
+        }).catch((err) => {res.status(500).send({error: "err"})})
 };
 
 exports.rankForGame = function(game) {

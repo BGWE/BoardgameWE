@@ -88,8 +88,8 @@ module.exports = function(app) {
 
 
     // Game
-    // app.route("/game")
-    //     .post(GameController.addGame);
+    app.route("/game")
+        .post(GameController.addGame);
     //
     // app.route("/games")
     //     .get(GameController.getGames);

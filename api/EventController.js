@@ -3,11 +3,11 @@ const util = require("./util/util");
 const userutil = require("./util/user");
 const moment = require("moment");
 
-const userInclude = {
+exports.userIncludeSQ = {
     model: db.User, as: "user", attributes: {exclude: ["password"]}
 };
 
-const boardGameInclude = {
+exports.boardGameIncludeSQ = {
     model: db.BoardGame, as: "board_game"
 };
 
