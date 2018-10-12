@@ -90,15 +90,16 @@ module.exports = function(app) {
     // Game
     app.route("/game")
         .post(GameController.addGame);
-    //
-    // app.route("/games")
-    //     .get(GameController.getGames);
-    //
+
     app.route("/game/:gid")
         .get(GameController.getGame)
         .delete(GameController.deleteGame);
-    //
-    // // Statistics
+
+    // Disabled, games are mostly seen through event
+    // app.route("/games")
+    //     .get(GameController.getGames);
+
+    // Statistics
     // app.route("/stats/rankings")
     //     .get(StatsController.getRankings);
 };
