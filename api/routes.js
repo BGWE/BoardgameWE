@@ -86,16 +86,6 @@ module.exports = function(app) {
     app.route("/board_games")
         .get(BoardGameController.getBoardGames);
 
-    // Player
-    app.route("/player")
-        .post(PlayerController.addPlayer);
-
-    app.route("/player/:pid")
-        .get(PlayerController.getPlayer);
-
-    app.route("/players")
-        .get(PlayerController.getPlayers);
-
 
     // Game
     // app.route("/game")
