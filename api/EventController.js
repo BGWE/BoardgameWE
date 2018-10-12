@@ -36,3 +36,15 @@ exports.deleteEvent = function(req, res) {
         err => { return res.status(500).send({error: "err"}); }
     );
 };
+
+exports.getParticipants = function(req, res) {
+
+};
+
+exports.addParticipants = function(req, res) {
+
+};
+
+exports.deleteParticipants = function(req, res) {
+
+};

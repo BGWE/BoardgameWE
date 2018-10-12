@@ -62,6 +62,11 @@ module.exports = function(app) {
     app.route("/events")
         .get(EventController.getAllEvents);
 
+    app.route("/event/:eid/participants")
+        .get(EventController.getParticipants)
+        .post(EventController.addParticipants)
+        .delete(EventController.deleteParticipants);
+
     // Board game
     app.route("/board_game/search")
         .get(BoardGameController.searchBoardGames);
