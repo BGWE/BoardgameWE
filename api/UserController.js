@@ -16,10 +16,10 @@ exports.sanitizeUser = function(user) {
 };
 
 exports.signIn = function(req, res) {
-    db.User.findOne({
+    return db.User.findOne({
         where: {username: req.body.username}
     }).then(user => {
-        if (!user || !user.validPassword(req.body.password)) {
+        if (!user) {
             res.status(401).json({ message: 'Authentication failed. User not found.' });
         } else {
             let token_payload = {
@@ -29,9 +29,17 @@ exports.signIn = function(req, res) {
                 surname: user.surname,
                 name: user.name
             };
-            return res.json({
-                token: jwt.sign(token_payload, config.jwt_secret_key, {expiresIn: config.jwt_duration}) // 4 days
-            });
+            return user.validPassword(req.body.password).then(
+                valid => {
+                    if (valid) {
+                        res.status(200).json({
+                            token: jwt.sign(token_payload, config.jwt_secret_key, {expiresIn: config.jwt_duration}) // 4 days
+                        });
+                    } else {
+                        res.status(401).json({ message: 'Authentication failed. User not found.' });
+                    }
+                }
+            )
         }
     })
 };
