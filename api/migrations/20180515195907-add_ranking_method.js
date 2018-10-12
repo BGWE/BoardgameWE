@@ -10,6 +10,9 @@ module.exports = {
   },
 
   down: (queryInterface, Sequelize) => {
-      return queryInterface.removeColumn("Games", "ranking_method");
+      return queryInterface.removeColumn("Games", "ranking_method")
+          .then(r => {
+              return queryInterface.query("DROP TYPE IF EXISTS enum_Games_ranking_method RESTRICT")
+          });
   }
 };
