@@ -21,7 +21,7 @@ module.exports = function(app) {
     app.use(/^\/(?!user\/register|user\/login).*/, function(req, res, next) {
         let token = userutil.getToken(req);
         if (!token) {
-            return res.status(403).send({
+            return res.status(401).send({
                 success: false,
                 message: 'No token provided.'
             });
