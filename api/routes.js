@@ -55,16 +55,19 @@ module.exports = function(app) {
         .post(EventController.createEvent);
 
     app.route("/event/:eid")
-        .get(EventController.getEvent)
+        .get(EventController.getFullEvent)
         .delete(EventController.deleteEvent);
 
     app.route("/events")
         .get(EventController.getAllEvents);
 
-    app.route("/event/:eid/participants")
-        .get(EventController.getParticipants)
-        .post(EventController.addParticipants)
-        .delete(EventController.deleteParticipants);
+    app.route("/event/:eid/board_games")
+        .post(EventController.addProvidedBoardGames);
+
+    // app.route("/event/:eid/participants")
+    //     .get(EventController.getParticipants)
+    //     .post(EventController.addParticipants)
+    //     .delete(EventController.deleteParticipants);
 
     // Board game
     app.route("/board_game/search")
