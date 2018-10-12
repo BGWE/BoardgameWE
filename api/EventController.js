@@ -35,7 +35,9 @@ exports.getEvent = function(req, res) {
 exports.getFullEvent = function(req, res) {
     db.Event.findById(parseInt(req.params.eid))
         .then(event => {
-            db.ProvidedBoardGame.findAll({ where: {id_event: event.id}, include: [userInclude, boardGameInclude]}).then(board_games => {
+            db.ProvidedBoardGame.findAll({
+                where: {id_event: event.id}, include: [userInclude, boardGameInclude]
+            }).then(board_games => {
                 res.status(200).json(Object.assign({board_games: board_games}, event.dataValues));
             })
         });
