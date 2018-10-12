@@ -6,7 +6,6 @@ const userutil = require("./util/user");
 
 module.exports = function(app) {
     const BoardGameController = require("./BoardGameController");
-    const PlayerController = require("./PlayerController");
     const GameController = require("./GameController");
     const StatsController = require("./StatsController");
     const UserController = require("./UserController");
@@ -82,29 +81,19 @@ module.exports = function(app) {
     app.route("/board_games")
         .get(BoardGameController.getBoardGames);
 
-    // Player
-    app.route("/player")
-        .put(PlayerController.addPlayer);
 
-    app.route("/player/:pid")
-        .get(PlayerController.getPlayer);
-
-    app.route("/players")
-        .get(PlayerController.getPlayers);
-
-
-    // Game
-    app.route("/game")
-        .put(GameController.addGame);
-
-    app.route("/games")
-        .get(GameController.getGames);
-
-    app.route("/game/:gid")
-        .get(GameController.getGame)
-        .delete(GameController.deleteGame);
-
-    // Statistics
-    app.route("/stats/rankings")
-        .get(StatsController.getRankings);
+    // // Game
+    // app.route("/game")
+    //     .put(GameController.addGame);
+    //
+    // app.route("/games")
+    //     .get(GameController.getGames);
+    //
+    // app.route("/game/:gid")
+    //     .get(GameController.getGame)
+    //     .delete(GameController.deleteGame);
+    //
+    // // Statistics
+    // app.route("/stats/rankings")
+    //     .get(StatsController.getRankings);
 };

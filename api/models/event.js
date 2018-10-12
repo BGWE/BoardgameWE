@@ -13,6 +13,10 @@ module.exports = (sequelize, DataTypes) => {
         foreignKey: 'id_creator',
         as: 'creator'
       });
+      models.Event.hasMany(models.ProvidedBoardGame, {
+          onDelete: "CASCADE",
+          foreignKey: 'id_event'
+      });
   };
   return Event;
 };

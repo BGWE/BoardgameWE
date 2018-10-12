@@ -2,7 +2,7 @@ let assert = require('chai').assert;
 let expect = require("chai").expect;
 let should = require("chai").should;
 
-let _search_game = require('../../api/PlayerController');
+// let _search_game = require('../../api/BoardGameController');
 
 // describe('Handler', function () {
 //     it('should search Boardgame Geek to find the correct game via the handler (good UC).', function (done) {
