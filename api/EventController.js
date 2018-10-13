@@ -125,6 +125,27 @@ exports.addEventAttendees = function(req, res) {
         });
 };
 
-// exports.deleteParticipants = function(req, res) {
-//
-// };
+exports.deleteEventAttendees = function(req, res) {
+    let eid = parseInt(req.params.eid);
+    return db.EventAttendee.destroy({
+        where: {
+            id_event: eid,
+            id_user: req.body.users
+        }
+    }).then(() => {
+        return exports.sendEventAttendees(eid, res);
+    }).catch(err => {
+        res.status(500).send({error: "err"});
+    });
+};
+
+exports.subscribeToEvent = function(req, res) {
+    return db.EventAttendee.build({
+        id_user: userutil.getCurrUserId(req),
+        id_event: parseInt(req.params.eid)
+    }).save().then((attendee) => {
+        return exports.sendEventAttendees(attendee.id_event, res);
+    }).catch(err => {
+        res.status(500).send({error: "err"});
+    });
+};

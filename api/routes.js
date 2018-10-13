@@ -74,8 +74,11 @@ module.exports = function(app) {
 
     app.route("/event/:eid/attendees")
         .get(EventController.getEventAttendees)
-        .post(EventController.addEventAttendees);
-        //.delete(EventController.deleteEventAttendees);
+        .post(EventController.addEventAttendees)
+        .delete(EventController.deleteEventAttendees);
+
+    app.route("/event/:eid/subscribe")
+        .post(EventController.subscribeToEvent);
 
     // Board game
     app.route("/board_game/search")
