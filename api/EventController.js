@@ -74,7 +74,7 @@ exports.deleteEvent = function(req, res) {
 
 exports.sendProvidedBoardGames = function(eid, res) {
     return db.ProvidedBoardGame.findAll(
-        { where: { id_event: eid }, include: [exports.userIncludeSQ, exports.boardGameIncludeSQ]
+        { where: { id_event: eid }, include: [exports.getUserIncludeSQ("provider"), exports.getBoardGameIncludeSQ("provided_board_game")]
     }).then(provided => {
         res.status(200).send(provided);
     }).catch(err => {
