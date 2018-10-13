@@ -59,7 +59,7 @@ exports.addBoardGame = function(req, res) {
             family: util.listToString(game.boardgamefamily)
         }).save()
           .then((game) => { res.status(200).json(game); })
-          .error((err) => { res.status(500).send({error: "err"}); });
+          .catch((err) => { res.status(500).send({error: "err"}); });
     });
 };
 
