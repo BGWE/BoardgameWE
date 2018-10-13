@@ -10,6 +10,8 @@ services:
       POSTGRES_DB: bgwe_dev
     expose:
       - "5432"
+    volumes:
+      - ./postgres-data:/var/lib/postgresql/data
     ports:
       - "5432:5432"
       
