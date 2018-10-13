@@ -49,12 +49,10 @@ exports.getAllEvents = function(req, res) {
 
 exports.deleteEvent = function(req, res) {
     let eid = parseInt(req.params.eid);
-    return db.Event.destroy({
-        where: {
-            id: eid,
-            id_creator: userutil.getCurrUserId(req)  // restrict suppression of events to the creator
-        }
-    }).then(
+    return db.Event.destroy({where: {
+        id: eid,
+        id_creator: userutil.getCurrUserId(req)  // restrict suppression of events to the creator
+    }}).then(
         n => { return util.sendModelOrError(db.Event.findAll(), res, "events"); }
     ).catch(
         err => { return res.status(500).send({error: "err"}); }
