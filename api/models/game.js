@@ -25,7 +25,7 @@ module.exports = (sequelize, DataTypes) => {
           onDelete: "CASCADE",
           foreignKey: "id_game",
           sourceKey: "id",
-          as: "players"
+          as: "game_players"
       });
 
       models.Game.belongsTo(models.Event, {
@@ -33,6 +33,13 @@ module.exports = (sequelize, DataTypes) => {
           foreignKey: "id_event",
           targetKey: "id",
           as: "event"
+      });
+
+      models.Game.belongsTo(models.BoardGame, {
+          as: "board_game",
+          foreignKey: "id_board_game",
+          targetKey: "id",
+          onDelete: "RESTRICT"
       });
   };
   return Game;
