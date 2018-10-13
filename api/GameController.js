@@ -120,6 +120,7 @@ exports.getGamesQuery = function (filtering, res) {
 };
 
 exports.getGames = function (req, res) {
+    // no filterint
     return exports.getGamesQuery(undefined, res);
 };
 
@@ -140,5 +141,5 @@ exports.deleteGame = function (req, res) {
 
 
 exports.getEventGames = function(req, res) {
-
+    return exports.getGamesQuery({id_event: parseInt(req.params.eid)}, res)
 };
