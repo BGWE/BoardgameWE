@@ -84,3 +84,7 @@ exports.getRankings = function (req, res) {
         });
     }, (err) => {res.status(500).send({error: err});});
 };
+
+exports.getEventRankings = function(req, res) {
+    // TODO
+};

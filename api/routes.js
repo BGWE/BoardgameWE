@@ -66,6 +66,11 @@ module.exports = function(app) {
         .post(EventController.addProvidedBoardGames)
         .delete(EventController.deleteProvidedBoardGames);
 
+    app.route("/event/:eid/games")
+        .get(GameController.getEventGames);
+
+    app.route("/event/:eid/rankings")
+        .get(StatsController.getEventRankings);
     // app.route("/event/:eid/participants")
     //     .get(EventController.getParticipants)
     //     .post(EventController.addParticipants)
@@ -94,14 +99,12 @@ module.exports = function(app) {
         .get(GameController.getGame)
         .delete(GameController.deleteGame);
 
-    app.route("/event/:eid/games")
-        .get(GameController.getEventGames);
-
     // Disabled, games are mostly seen through event
     // app.route("/games")
     //     .get(GameController.getGames);
 
     // Statistics
+    // Disabled, rankings are mostly seen through event
     // app.route("/stats/rankings")
     //     .get(StatsController.getRankings);
 };
