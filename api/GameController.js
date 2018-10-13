@@ -9,6 +9,8 @@ const gameFullIncludesSQ = [
     Object.assign({include: [EventController.userIncludeSQ]}, gamePlayerIncludeSQ)
 ];
 
+exports.gameFullIncludeSQ = gameFullIncludesSQ;
+
 /**
  * Validate ranks from the list
  */
@@ -102,12 +104,7 @@ exports.rankForGame = function(game) {
 };
 
 exports.getGamesQuery = function (filtering, res) {
-    // TODO make this more efficient
-    let selection = {where: filtering, include: gameFullIncludesSQ};
-    return db.Game.findAll({ where: filtering, include: [
-        EventController.boardGameIncludeSQ,
-        Object.assign({include: [EventController.userIncludeSQ]}, gamePlayerIncludeSQ)
-    ]}).then(games => {
+    return db.Game.findAll({ where: filtering, include: gameFullIncludesSQ}).then(games => {
         for (let i = 0; i < games.length; ++i) {
             let game = games[i];
             game.dataValues.players = exports.rankForGame(game);

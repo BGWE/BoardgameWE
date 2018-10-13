@@ -69,9 +69,6 @@ module.exports = function(app) {
     app.route("/event/:eid/games")
         .get(GameController.getEventGames);
 
-    app.route("/event/:eid/rankings")
-        .get(StatsController.getEventRankings);
-
     app.route("/event/:eid/attendees")
         .get(EventController.getEventAttendees)
         .post(EventController.addEventAttendees)
@@ -79,6 +76,9 @@ module.exports = function(app) {
 
     app.route("/event/:eid/subscribe")
         .post(EventController.subscribeToEvent);
+
+    app.route("/event/:eid/rankings")
+        .get(StatsController.getRankings);
 
     // Board game
     app.route("/board_game/search")
