@@ -7,3 +7,4 @@ env_variables:
   DB_USERNAME: dbadmin
   NODE_ENV: development
   PORT: 8080
+  JWT_SECRET: Kbqz%G^hoc37;T8G]]s)/Q8.t;NkCvcU+Lo)#E_=,q:.6
