@@ -1,6 +1,7 @@
 version: '3'
 services:
   db:
+    container_name: "bgwe_backend_db_1"
     image: postgres:9.6
     restart: always
     environment:
@@ -13,12 +14,14 @@ services:
       - "5432:5432"
       
   apiserver:
+    container_name: "bgwe_backend_apiserver_1"
     image: "node:8"
     user: "node"
     working_dir: /home/node/app
     restart: always
     environment:
       PORT: 3000
+      JWT_SECRET_KEY: "bgwe1234"
       DB_HOSTNAME: "bgwe_backend_db_1"
       DB_NAME: bgwe
       DB_PASSWORD: Bgwe1234
