@@ -87,14 +87,7 @@ exports.addGame = function (req, res) {
                 returning: true,
                 individualHooks: true
             }).then(() => {
-                exports.buildFullGame(game.id, (fullGame, err) => {
-                    console.log(err);
-                    if (err) {
-                        res.status(500).send({error: "err"});
-                        return;
-                    }
-                    res.status(200).json(fullGame);
-                });
+                exports.buildFullGame(game.id, res);
             })
         }).catch((err) => {res.status(500).send({error: "err"})})
 };

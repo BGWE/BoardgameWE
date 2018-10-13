@@ -38,7 +38,10 @@ module.exports = function(app) {
     });
 
     // User (protected)
-    app.route("/user")
+    app.route("/user/current")
+        .get(UserController.getCurrentUser);
+
+    app.route("/user/:uid")
         .put(UserController.updateUser);
 
     // Library

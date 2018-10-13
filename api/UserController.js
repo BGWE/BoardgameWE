@@ -2,6 +2,7 @@ const config = require("./config/config.js");
 const db = require("./models/index");
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcryptjs");
+const util = require("./util/util");
 const userutil = require("./util/user");
 
 
@@ -62,11 +63,20 @@ exports.register = function(req, res) {
     });
 };
 
+exports.getCurrentUser = function(req, res) {
+    let userId = userutil.getCurrUserId(req);
+    return util.sendModelOrError(db.User.findById(userId), res, "user");
+}
+
 
 exports.updateUser = function(req, res) {
     // TODO security: implement token invalidation check when password changes
-    let payload = userutil.getTokenPayload(req);
-    db.User.findById(payload.id)
+    let userId = userutil.getCurrUserId(req);
+    if(userId != req.params.uid) { // TODO: allow update of another user for admins?
+        res.status(404).send({error: "cannot update data of another user"});
+    }
+
+    db.User.findById(userId)
         .then(user => {
             user.username = req.body.username || user.username;
             user.email = req.body.email || user.email;
