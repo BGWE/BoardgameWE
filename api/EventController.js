@@ -3,11 +3,28 @@ const util = require("./util/util");
 const userutil = require("./util/user");
 const moment = require("moment");
 
-exports.userIncludeSQ = {
-    model: db.User, as: "user", attributes: {exclude: ["password"]}
+exports.getUserIncludeSQ = function(as) {
+    return {model: db.User, as: as, attributes: {exclude: ["password"]}};
 };
 
-exports.boardGameIncludeSQ = {model: db.BoardGame, as: "board_game"};
+exports.getBoardGameIncludeSQ = function(as) {
+    return {model: db.BoardGame, as: as};
+};
+
+const userIncludeSQ = exports.getUserIncludeSQ("user");
+const boardGameIncludeSQ = exports.getBoardGameIncludeSQ("board_game");
+const eventFullIncludeSQ = [
+    {model: db.EventAttendee, as: "attendees", include: [userIncludeSQ]},
+    {model: db.ProvidedBoardGame, as: "provided_board_games", include: [
+        exports.getBoardGameIncludeSQ("provided_board_game"),
+        exports.getUserIncludeSQ("provider")
+    ]},
+    {model: db.Game, as: "games", include: [boardGameIncludeSQ]},
+    {model: db.User, as: "creator", includ: [userIncludeSQ]}
+];
+
+exports.userIncludeSQ = userIncludeSQ;
+exports.boardGameIncludeSQ = boardGameIncludeSQ;
 
 exports.createEvent = function(req, res) {
     // validate date
@@ -31,14 +48,12 @@ exports.getEvent = function(req, res) {
 };
 
 exports.getFullEvent = function(req, res) {
-    db.Event.findById(parseInt(req.params.eid))
-        .then(event => {
-            db.ProvidedBoardGame.findAll({
-                where: {id_event: event.id}, include: [exports.userIncludeSQ, exports.boardGameIncludeSQ]
-            }).then(board_games => {
-                res.status(200).json(Object.assign({board_games: board_games}, event.dataValues));
-            })
-        });
+    return db.Event.find({ where: {id: parseInt(req.params.eid)}, include: eventFullIncludeSQ})
+    .then(event => {
+        res.status(200).json(event);
+    }).catch(err => {
+        res.status(500).json({error: "err"});
+    });
 };
 
 exports.getAllEvents = function(req, res) {
