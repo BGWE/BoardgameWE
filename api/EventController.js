@@ -7,9 +7,7 @@ exports.userIncludeSQ = {
     model: db.User, as: "user", attributes: {exclude: ["password"]}
 };
 
-exports.boardGameIncludeSQ = {
-    model: db.BoardGame, as: "board_game"
-};
+exports.boardGameIncludeSQ = {model: db.BoardGame, as: "board_game"};
 
 exports.createEvent = function(req, res) {
     // validate date
@@ -36,7 +34,7 @@ exports.getFullEvent = function(req, res) {
     db.Event.findById(parseInt(req.params.eid))
         .then(event => {
             db.ProvidedBoardGame.findAll({
-                where: {id_event: event.id}, include: [userInclude, boardGameInclude]
+                where: {id_event: event.id}, include: [exports.userIncludeSQ, exports.boardGameIncludeSQ]
             }).then(board_games => {
                 res.status(200).json(Object.assign({board_games: board_games}, event.dataValues));
             })
@@ -61,7 +59,7 @@ exports.deleteEvent = function(req, res) {
 
 exports.sendProvidedBoardGames = function(eid, res) {
     return db.ProvidedBoardGame.findAll(
-        { where: { id_event: eid }, include: [userInclude, boardGameInclude]
+        { where: { id_event: eid }, include: [exports.userIncludeSQ, exports.boardGameIncludeSQ]
     }).then(provided => {
         res.status(200).send(provided);
     }).catch(err => {
@@ -102,15 +100,31 @@ exports.deleteProvidedBoardGames = function(req, res) {
     });
 };
 
+exports.sendEventAttendees = function(eid, res) {
+    return db.EventAttendee.findAll({where: { id_event: eid }, include: [exports.userIncludeSQ] })
+        .then(provided => {
+            res.status(200).send(provided);
+        }).catch(err => {
+            res.status(500).send({error: "err"});
+        });
+};
 
-// exports.getParticipants = function(req, res) {
-//
-// };
-//
-// exports.addParticipants = function(req, res) {
-//
-// };
-//
+exports.getEventAttendees = function(req, res) {
+    return exports.sendEventAttendees(parseInt(req.params.eid), res);
+};
+
+exports.addEventAttendees = function(req, res) {
+    let eid = parseInt(req.params.eid);
+    let users = req.body.users.map(u => { return { id_user: u, id_event: eid }});
+    return db.EventAttendee.bulkCreate(users, { ignoreDuplicates: true })
+        .then(() => {
+            return exports.sendEventAttendees(eid, res);
+        })
+        .catch(err => {
+            res.status(500).send({error: "err"});
+        });
+};
+
 // exports.deleteParticipants = function(req, res) {
 //
 // };

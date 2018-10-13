@@ -71,10 +71,11 @@ module.exports = function(app) {
 
     app.route("/event/:eid/rankings")
         .get(StatsController.getEventRankings);
-    // app.route("/event/:eid/participants")
-    //     .get(EventController.getParticipants)
-    //     .post(EventController.addParticipants)
-    //     .delete(EventController.deleteParticipants);
+
+    app.route("/event/:eid/attendees")
+        .get(EventController.getEventAttendees)
+        .post(EventController.addEventAttendees);
+        //.delete(EventController.deleteEventAttendees);
 
     // Board game
     app.route("/board_game/search")
