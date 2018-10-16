@@ -23,7 +23,7 @@ module.exports = function(app) {
         if (!token) {
             return res.status(401).send({
                 success: false,
-                message: 'No token provided.'
+                error: 'No token provided.'
             });
         }
         jwt.verify(token, config.jwt_secret_key, function(err, decoded) {
