@@ -25,7 +25,7 @@ services:
       PORT: 3000
       JWT_SECRET_KEY: "bgwe1234"
       DB_HOSTNAME: "bgwe_backend_db_1"
-      DB_NAME: bgwe
+      DB_NAME: bgwe_dev
       DB_PASSWORD: Bgwe1234
       DB_USERNAME: dbadmin
       NODE_ENV: development
