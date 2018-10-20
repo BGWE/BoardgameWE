@@ -11,6 +11,11 @@ exports.getBoardGameIncludeSQ = function(as) {
     return {model: db.BoardGame, as: as};
 };
 
+exports.getEventIncludeSQ = function(as) {
+    return {model: db.Event, as: as};
+};
+
+const eventIncludeSQ = exports.getEventIncludeSQ("event");
 const userIncludeSQ = exports.getUserIncludeSQ("user");
 const boardGameIncludeSQ = exports.getBoardGameIncludeSQ("board_game");
 const eventFullIncludeSQ = [
@@ -160,6 +165,19 @@ exports.subscribeToEvent = function(req, res) {
         id_event: parseInt(req.params.eid)
     }).save().then((attendee) => {
         return exports.sendEventAttendees(attendee.id_event, res);
+    }).catch(err => {
+        res.status(500).send({error: "err"});
+    });
+};
+
+exports.getCurrentUserEvents = function(req, res) {
+    return db.EventAttendee.findAll({
+        where: {id_user: userutil.getCurrUserId(req)},
+        include: [eventIncludeSQ]
+    }).then(events => {
+        res.status(200).send({
+            "events": events.map(e => e.event)
+        });
     }).catch(err => {
         res.status(500).send({error: "err"});
     });

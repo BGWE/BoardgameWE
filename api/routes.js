@@ -83,6 +83,9 @@ module.exports = function(app) {
     app.route("/event/:eid/rankings")
         .get(StatsController.getEventRankings);
 
+    app.route("/events/current")
+        .get(EventController.getCurrentUserEvents);
+
     // Board game
     app.route("/board_game/search")
         .get(BoardGameController.searchBoardGames);
