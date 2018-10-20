@@ -4,9 +4,20 @@ module.exports = {
     development: {
         username: process.env.DB_USERNAME,
         password: process.env.DB_PASSWORD,
-        database: process.env.DB_NAME + "_dev",
+        database: process.env.DB_NAME,
         host: process.env.DB_HOSTNAME,
         dialect: 'postgres',
+        timezone: process.env.TIMEZONE || "UTC"
+    },
+    staging: {
+        username: process.env.DB_USERNAME,
+        password: process.env.DB_PASSWORD,
+        database: process.env.DB_NAME,
+        host: process.env.DB_HOSTNAME,
+        dialect: 'postgres',
+        dialectOptions: {
+            ssl: true
+        },
         timezone: process.env.TIMEZONE || "UTC"
     },
     test: {
