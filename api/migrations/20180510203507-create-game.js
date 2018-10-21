@@ -11,7 +11,7 @@ module.exports = {
       },
       id_board_game: {
           type: Sequelize.INTEGER,
-          onDelete: "CASCADE",
+          onDelete: "RESTRICT",
           allowNull: false,
           references: {
               model: 'BoardGames',
