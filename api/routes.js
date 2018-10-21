@@ -81,6 +81,9 @@ module.exports = function(app) {
         .post(EventController.addProvidedBoardGames)
         .delete(EventController.deleteProvidedBoardGames);
 
+    app.route("/event/:eid/game")
+        .post(GameController.addEventGame);
+
     app.route("/event/:eid/games")
         .get(GameController.getEventGames);
 
@@ -114,8 +117,9 @@ module.exports = function(app) {
         .get(BoardGameController.getBoardGames);
 
     // Game
-    app.route("/game")
-        .post(GameController.addGame);
+    // Disabled, games are mostly added through event
+    // app.route("/game")
+    //     .post(GameController.addGame);
 
     app.route("/game/:gid")
         .get(GameController.getGame)

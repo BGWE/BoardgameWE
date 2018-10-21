@@ -10,7 +10,7 @@ const eventFullIncludeSQ = [
         includes.getBoardGameIncludeSQ("provided_board_game"),
         includes.getUserIncludeSQ("provider")
     ]),
-    // Disabled because makes the request too slow ! User /event/:eid/games instead.
+    // Disabled because makes the request too slow ! Use /event/:eid/games instead.
     // includes.getGameIncludeSQ("games", [includes.defaultBoardGameIncludeSQ]),
     includes.getUserIncludeSQ("creator")
 ];

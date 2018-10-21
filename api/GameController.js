@@ -37,85 +37,97 @@ exports.validateGamePlayers = (players) => {
     return {valid: true};
 };
 
+const fromGamePlayersToRanks = function(game) {
+    game.dataValues.players = exports.rankForGame(game);
+    game.dataValues.game_players = undefined; // to keep the more intuitive "players" label in json
+    return game;
+};
+
 exports.buildFullGame = (gameId, res) => {
-    return db.Game.find({
+    return util.sendModelOrError(res, db.Game.find({
         where: {id: gameId},
         include: exports.gameFullIncludesSQ
+    }), g => fromGamePlayersToRanks(g));
+};
+
+const preprocessGameData = function(body) {
+    return {
+        players: body.players,
+        id_board_game: body.id_board_game,
+        ranking_method: body.ranking_method,
+        duration: body.duration || null,
+        ranking_validation: exports.validateRanks(
+            body.ranking_method,
+            body.players.map((item) => { return item.score; })
+        ),
+        players_validation: exports.validateGamePlayers(body.players)
+    };
+};
+
+/**
+ * Execute the addition of a game
+ * @param eid Event id or null.
+ * @param req
+ * @param res
+ * @returns {*}
+ */
+exports.addGameQuery = function(eid, req, res) {
+    const game_data = preprocessGameData(req.body);
+    if (!game_data.ranking_validation.valid) {
+        return util.detailErrorResponse(res, 400, game_data.ranking_validation.error);
+    }
+    if (!game_data.players_validation.valid) {
+        return util.detailErrorResponse(res, 400, game_data.players_validation.error);
+    }
+    return db.Game.create({
+        id_event: eid,
+        id_board_game: game_data.id_board_game,
+        duration: game_data.duration,
+        ranking_method: game_data.ranking_method
     }).then((game) => {
-        if (!game) {
-            return res.status(404).json({err: "not found"});
-        } else {
-            game.dataValues.players = exports.rankForGame(game);
-            game.dataValues.game_players = undefined; // to keep the more intuitive "players" label in json
-            return res.status(200).json(game);
-        }
-    }).catch((err) => {
-        res.status(500).json({error: "err"});
-    });
+        const playerGameData = game_data.players.map((item) => {
+            return {
+                id_game: game.id,
+                score: item.score,
+                id_user: item.user || null,
+                name: item.name || null
+            };
+        });
+        return db.GamePlayer.bulkCreate(playerGameData, {
+            returning: true,
+            individualHooks: true
+        }).then(() => {
+            return exports.buildFullGame(game.id, res);
+        }).catch(err => {
+            return util.errorResponse(res);
+        });
+    }).catch(err => {
+        return util.errorResponse(res);
+    })
 };
 
 exports.addGame = function (req, res) {
-    const players = req.body.players;
-    const idEvent = req.body.id_event || null;
-    const idBoardGame = req.body.id_board_game;
-    const rankingMethod = req.body.ranking_method;
-    const duration = req.body.duration || null;
-    const rankingValidation = exports.validateRanks(rankingMethod, players.map((item) => { return item.score; }));
-    if (!rankingValidation.valid) {
-        res.status(400).send({error: rankingValidation.error});
-        return;
-    }
-    const playersValidation = exports.validateGamePlayers(players);
-    if (!playersValidation.valid) {
-        res.status(400).send({error: playersValidation.error});
-    }
-    return db.Game.build({
-        id_event: idEvent,
-        id_board_game: idBoardGame,
-        duration: duration,
-        ranking_method: rankingMethod
-    }).save()
-        .then((game) => {
-            const playerGameData = players.map((item) => {
-                return {
-                    id_game: game.id,
-                    score: item.score,
-                    id_user: item.user || null,
-                    name: item.name || null
-                };
-            });
-            return db.GamePlayer.bulkCreate(playerGameData, {
-                returning: true,
-                individualHooks: true
-            }).then(() => {
-                exports.buildFullGame(game.id, res);
-            })
-        }).catch((err) => {res.status(500).send({error: "err"})})
+    return exports.addGameQuery(req.body.id_event || null, req, res);
+};
+
+exports.addEventGame = function(req, res) {
+    return exports.addGameQuery(parseInt(req.params.eid), req, res);
 };
 
 exports.rankForGame = function(game) {
     return util.rank(game.game_players, (player) => player.score, game.ranking_method === "POINTS_LOWER_BETTER");
 };
 
-exports.getGamesQuery = function (filtering, res) {
-    return db.Game.findAll({
+exports.sendAllGamesFiltered = function (filtering, res) {
+    return util.sendModelOrError(res, db.Game.findAll({
         where: filtering,
         include: exports.gameFullIncludesSQ
-    }).then(games => {
-        for (let i = 0; i < games.length; ++i) {
-            let game = games[i];
-            game.dataValues.players = exports.rankForGame(game);
-            game.dataValues.game_players = undefined; // to keep the more intuitive "players" label in json
-        }
-        res.status(200).json(games);
-    }).catch(err => {
-        res.status(500).json({error: "err"});
-    });
+    }, games => { return games.map(g => fromGamePlayersToRanks(g)); }));
 };
 
 exports.getGames = function (req, res) {
-    // no filterint
-    return exports.getGamesQuery(undefined, res);
+    // no filtering
+    return exports.sendAllGamesFiltered(undefined, res);
 };
 
 exports.getGame = function (req, res) {
@@ -124,16 +136,15 @@ exports.getGame = function (req, res) {
 
 exports.deleteGame = function (req, res) {
     const gid = parseInt(req.params.gid);
-    db.sequelize.transaction((t) => {
-        return db.GamePlayer.destroy({where: {id_game: gid}})
-            .then(() => {
-                db.Game.destroy({where: {id: gid}}, {transaction: t});
-            })
-    }).then(() => {res.status(200).send({success: true});
-    }).error((err) => {res.status(500).send({error: err});});
+    return util.handleDeletion(res, db.sequelize.transaction(res, (t) => {
+        return db.GamePlayer.destroy({
+            where: {id_game: gid}
+        }).then(() => {
+            return db.Game.destroy({where: {id: gid}}, {transaction: t});
+        });
+    }));
 };
 
-
 exports.getEventGames = function(req, res) {
-    return exports.getGamesQuery({id_event: parseInt(req.params.eid)}, res)
+    return exports.sendAllGamesFiltered({id_event: parseInt(req.params.eid)}, res)
 };

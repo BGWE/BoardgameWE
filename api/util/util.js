@@ -111,6 +111,9 @@ exports.sendModelOrError = function(res, promise, transform) {
     }
     return promise
         .then(obj => {
+            if (!obj) {
+                return exports.detailErrorResponse(res, 404, "not found");
+            }
             return exports.successResponse(res, transform(obj));
         })
         .catch(err => {
