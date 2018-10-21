@@ -2,8 +2,6 @@ steps:
 - name: 'gcr.io/cloud-builders/npm'
   args: ['install']
 - name: 'gcr.io/cloud-builders/npm'
-  args: ['ls', '-al']
-- name: 'ubuntu'
   args: ['./node_modules/.bin/sequelize', 'db:migrate']
 - name: 'gcr.io/cloud-builders/gcloud'
   args: ['app', 'deploy']
