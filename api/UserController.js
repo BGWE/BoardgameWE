@@ -30,7 +30,7 @@ exports.signIn = function(req, res) {
         where: {username: req.body.username}
     }).then(user => {
         if (!user) {
-            res.status(401).json({ message: 'Authentication failed. User not found.' });
+            return res.status(401).json({ message: 'Authentication failed. User not found.' });
         } else {
             let token_payload = {
                 id: user.id,
@@ -42,11 +42,11 @@ exports.signIn = function(req, res) {
             return user.validPassword(req.body.password).then(
                 password_ok => {
                     if (!password_ok) {
-                        res.status(401).json({message: 'Authentication failed. User not found.'});
+                        return res.status(401).json({message: 'Authentication failed. User not found.'});
                     } else if (!user.validated) {
-                        res.status(403).json({message: exports.notValidatedErrorMsg});
+                        return res.status(403).json({message: exports.notValidatedErrorMsg});
                     } else {
-                        res.status(200).json({
+                        return res.status(200).json({
                             token: jwt.sign(token_payload, config.jwt_secret_key, {expiresIn: config.jwt_duration}) // 4 days
                         });
                     }
@@ -57,8 +57,8 @@ exports.signIn = function(req, res) {
 };
 
 exports.register = function(req, res) {
-    bcrypt.hash(req.body.password, 10, function(err, hash) {
-        db.User.build({
+    return bcrypt.hash(req.body.password, 10, function(err, hash) {
+        return db.User.create({
             name: req.body.name,
             surname: req.body.surname,
             email: req.body.email,
@@ -66,20 +66,19 @@ exports.register = function(req, res) {
             username: req.body.username,
             admin: false,  // by default not admin
             validated: null    // by default not accepted nor refused
-        }).save()
-            .then((user) => {
-                res.status(200).json(exports.removeSensitive(user));
-            })
-            .catch((err) => {
-                res.status(403).send({error: "username or email exists"});
-            });
+        }).then((user) => {
+            return res.status(200).json(exports.removeSensitive(user));
+        })
+        .catch((err) => {
+            return res.status(403).send({error: "username or email exists"});
+        });
     });
 };
 
 exports.getCurrentUser = function(req, res) {
     let userId = userutil.getCurrUserId(req);
     return db.User.findById(userId).then(user => {
-        return res.status(200).json({"user": exports.removeSensitive(user)});
+        return res.status(200).json(exports.removeSensitive(user));
     }).catch(err => {
         return res.status(500).json({err: "err"});
     });
@@ -89,32 +88,32 @@ exports.getCurrentUser = function(req, res) {
 exports.updateUser = function(req, res) {
     // TODO security: implement token invalidation check when password changes
     let userId = userutil.getCurrUserId(req);
-    if(userId != req.params.uid) { // TODO: allow update of another user for admins?
-        res.status(404).send({error: "cannot update data of another user"});
+    if(userId !== req.params.uid) { // TODO: allow update of another user for admins?
+        return res.status(404).send({error: "cannot update data of another user"});
     }
 
-    db.User.findById(userId)
+    return db.User.findById(userId)
         .then(user => {
             user.username = req.body.username || user.username;
             user.email = req.body.email || user.email;
             user.name = req.body.name || user.name;
             user.surname = req.body.surname || user.surname;
             if (req.body.password) {
-                bcrypt.hash(req.body.password, 10, function(err, hash) {
+                return bcrypt.hash(req.body.password, 10, function(err, hash) {
                     user.password = hash;
-                    user.save()
+                    return user.save()
                         .then((user) => {res.status(200).send(exports.removeSensitive(user));})
                         .catch((err) => {res.status(500).send({error: "err"});});
                 })
             } else {
-                user.save()
+                return user.save()
                     .then((user) => {res.status(200).send(exports.removeSensitive(user));})
                     .catch((err) => {res.status(500).send({error: "err"});});
             }
 
         })
         .catch(err => {
-            res.status(404).send({error: "user not found"})
+            return res.status(404).send({error: "user not found"})
         })
 };
 
@@ -131,34 +130,34 @@ exports.sendCurrUserGames = function(req, res) {
  * @returns {Promise<Array<Model>>}
  */
 exports.sendUserLibraryGames = function(uid, req, res) {
-    return db.LibraryGame.findAll({where: {id_user: uid}})
-        .then(games => { res.status(200).send(games) })
-        .catch(err => { res.status(500).send({error: "err"}) });
+    return db.LibraryGame.findAll({where: {id_user: uid}, include: [includes.defaultBoardGameIncludeSQ]})
+        .then(games => { return res.status(200).send(games) })
+        .catch(err => { return res.status(500).send({error: "err"}) });
 };
 
 exports.addLibraryGames = function(req, res) {
     if (!req.body.games) {
-        res.status(403).send({error: "missing games field"});
+        return res.status(403).send({error: "missing games field"});
     }
     let userId = userutil.getCurrUserId(req);
     let games = req.body.games.map(g => { return { id_user: userId, id_board_game: g }});
-    db.LibraryGame.bulkCreate(games, { ignoreDuplicates: true })
+    return db.LibraryGame.bulkCreate(games, { ignoreDuplicates: true })
         .then(() => { return exports.sendCurrUserGames(req, res); })
-        .catch(err => { res.status(500).send({error: "err"}); });
+        .catch(err => { return res.status(500).send({error: "err"}); });
 };
 
 exports.deleteLibraryGames = function(req, res) {
     if (!req.body.games) {
-        res.status(403).send({error: "missing games field"});
+        return res.status(403).send({error: "missing games field"});
     }
     let userId = userutil.getCurrUserId(req);
-    db.LibraryGame.destroy({
+    return db.LibraryGame.destroy({
         where: {
             id_user: userId,
             id_board_game: req.body.games
         }
     }).then(() => { return exports.sendCurrUserGames(req, res); })
-      .catch(err => { res.status(500).send({error: "err"});});
+      .catch(err => { return res.status(500).send({error: "err"});});
 };
 
 exports.getCurrentUserLibraryGames = function(req, res) {
