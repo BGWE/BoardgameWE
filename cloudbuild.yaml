@@ -1,5 +1,7 @@
 steps:
 - name: 'gcr.io/cloud-builders/npm'
   args: ['install']
+- name: 'node'
+  args: ['bash', 'migrate.sh']
 - name: 'gcr.io/cloud-builders/gcloud'
   args: ['app', 'deploy']
