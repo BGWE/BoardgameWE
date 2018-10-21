@@ -117,3 +117,14 @@ exports.sendModelOrError = function(res, promise, transform) {
             return exports.errorResponse(res);
         })
 };
+
+
+exports.handleDeletion = function(res, promise) {
+    return promise
+        .then(obj => {
+            return exports.successResponse(res, exports.successObj);
+        })
+        .catch(err => {
+            return exports.errorResponse(res);
+        })
+};

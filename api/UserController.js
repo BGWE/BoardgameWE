@@ -106,7 +106,6 @@ exports.updateUser = function(req, res) {
             } else {
                 return handleUserResponse(res, user.save());
             }
-
         })
         .catch(err => {
             return util.detailErrorResponse(res, 404, "user not found");

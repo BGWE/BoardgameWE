@@ -1,89 +1,67 @@
 const request = require('request');
+const rp = require('request-promise');
 let parse_string = require('xml2js').parseString;
 
 const BGG_ROOT_PATH = 'https://www.boardgamegeek.com/xmlapi2/';
 const DEFAULT_TYPE = 'boardgame';
 
-function search(boardgame_name, callback) {
+function search(boardgame_name) {
     let url_variables = {query: boardgame_name, type: DEFAULT_TYPE};
-    request(
-        {url: BGG_ROOT_PATH + 'search', qs: url_variables},
-        format_search_response(callback)
-    )
+    return rp({uri: BGG_ROOT_PATH + 'search', qs: url_variables});
 }
 
-function get(boardgame_id, callback) {
+function get(boardgame_id) {
     let url_variables = {id: boardgame_id, stats: 1};
-    request(
-        {url: BGG_ROOT_PATH + 'thing', qs: url_variables},
-        format_get_response(callback)
-    )
+    return rp({uri: BGG_ROOT_PATH + 'thing', qs: url_variables});
 }
 
-function format_search_response(callback) {
-    function _format_response(err, response, body) {
+function format_search_response(body) {
+    let games = [];
+    parse_string(body, function (err, result) {
         if (err) {console.log(err); return;}
-
-        parse_string(body, function (err, result) {
-            if (err) {console.log(err); return;}
-
-            let games = [];
-
-            if (result.items.hasOwnProperty("item")) {
-                result.items.item.forEach(function (_item) {
-                    games.push({
-                        'name': get_game_name_from_item(_item),
-                        'year': get_attribute_from_tag_or_null(_item, 'yearpublished', 'value'),
-                        'id': get_attribute(_item, 'id')
-                    })
-                });
-            }
-
-            callback(null, games);
-        });
-    }
-
-    return _format_response
-}
-
-function format_get_response(callback) {
-    function _format_response(err, response, body) {
-        if (err) {console.log(err); return;}
-
-        parse_string(body, function (err, result) {
-            if (err) {console.log(err); return;}
-            let game = {};
-
-            const TAGS_WITH_CONTENT = ['thumbnail', 'image', 'description'];
-            const SINGLE_TAGS = ['yearpublished', 'minplayers', 'maxplayers', 'playingtime', 'minplaytime', 'maxplaytime'];
-            const LINK_TAGS_TYPE = ['boardgamecategory', 'boardgamemechanic', 'boardgamefamily', 'boardgameexpansion'];
-
+        if (result.items.hasOwnProperty("item")) {
             result.items.item.forEach(function (_item) {
-                TAGS_WITH_CONTENT.forEach(function (tag) {
-                    game[tag] = get_tag(_item, tag);
-                });
+                games.push({
+                    'name': get_game_name_from_item(_item),
+                    'year': get_attribute_from_tag_or_null(_item, 'yearpublished', 'value'),
+                    'id': get_attribute(_item, 'id')
+                })
+            });
+        }
+    });
+    return games;
+}
 
-                SINGLE_TAGS.forEach(function (tag) {
-                    game[tag] = get_attribute_from_tag(_item, tag, 'value');
-                });
+function format_get_response(body) {
+    let game = {};
+    parse_string(body, function (err, result) {
+        if (err) {console.log(err); return;}
+        const TAGS_WITH_CONTENT = ['thumbnail', 'image', 'description'];
+        const SINGLE_TAGS = ['yearpublished', 'minplayers', 'maxplayers', 'playingtime', 'minplaytime', 'maxplaytime'];
+        const LINK_TAGS_TYPE = ['boardgamecategory', 'boardgamemechanic', 'boardgamefamily', 'boardgameexpansion'];
 
-                LINK_TAGS_TYPE.forEach(function (type) {
-                    let tags = get_tags_for_attribute(_item, 'link', 'type', type);
-
-                    game[type] = tags.map(function (tag) {
-                        return tag.$.value;
-                    })
-                });
-
-                game["name"] = get_game_name_from_item(_item);
-                game["score"] = get_rating(_item);
+        result.items.item.forEach(function (_item) {
+            TAGS_WITH_CONTENT.forEach(function (tag) {
+                game[tag] = get_tag(_item, tag);
             });
 
-            callback(null, game);
-        });
-    }
+            SINGLE_TAGS.forEach(function (tag) {
+                game[tag] = get_attribute_from_tag(_item, tag, 'value');
+            });
 
-    return _format_response
+            LINK_TAGS_TYPE.forEach(function (type) {
+                let tags = get_tags_for_attribute(_item, 'link', 'type', type);
+
+                game[type] = tags.map(function (tag) {
+                    return tag.$.value;
+                })
+            });
+
+            game["name"] = get_game_name_from_item(_item);
+            game["score"] = get_rating(_item);
+        });
+    });
+    return game;
 }
 
 function get_rating(_json) {
@@ -149,6 +127,8 @@ function get_game_name_from_item(_json) {
 
 exports.get = get;
 exports.search = search;
+exports.format_get_response = format_get_response;
+exports.format_search_response = format_search_response;
 exports.get_attribute = get_attribute;
 exports.get_tag = get_tag;
 exports.get_attribute_from_tag = get_attribute_from_tag;
