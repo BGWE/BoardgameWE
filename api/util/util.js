@@ -71,14 +71,46 @@ exports.rankPlayersFromData = (dict, aggregate) => {
     return exports.rank(scores, (player) => player.score, false);
 };
 
-exports.sendModelOrError = function(promise, res, objName) {
+exports.sendModelOrError = function(promise, res) {
     return promise
         .then(obj => {
-            let body = {};
-            body[objName] = obj;
-            res.status(200).send(body);
+            return res.status(200).send(obj);
         })
         .catch(err => {
-            res.status(500).send({error: "err"});
+            return res.status(500).send(util.errorObj);
         })
+};
+
+/** object marking a success */
+exports.successObj = {success: true};
+exports.errorObj = {error: "err"};
+
+/**
+ * Return a success json response containing the given data
+ * @param res
+ * @param data
+ * @returns {*}
+ */
+exports.successResponse = function(res, data) {
+    return res.status(200).json(data);
+};
+
+/**
+ * Error 500 with {error: "err"} JSON body
+ * @param res
+ * @returns {*}
+ */
+exports.errorResponse = function(res) {
+    return res.status(500).json(exports.errorObj);
+};
+
+/**
+ * Error with given cande and {message: msg, error: "err"} JSON body
+ * @param res
+ * @param code
+ * @param msg
+ * @returns {*}
+ */
+exports.detailErrorResponse = function(res, code, msg) {
+    return res.status(code).json(Object.assign({message: msg}, exports.errorObj));
 };

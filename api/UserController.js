@@ -25,12 +25,27 @@ exports.removeSensitive = function(user) {
     return user;
 };
 
+
+const handleUserResponse = function(res, promise) {
+    return promise.then(user => {
+        return util.successResponse(res, exports.removeSensitive(user));
+    }).catch(err => {
+        return util.errorResponse(res);
+    });
+};
+
+const handleLibraryGamesResponse = function(res, promise) {
+    return promise
+        .then(games => { return util.successResponse(res, games); })
+        .catch(err => { return util.errorResponse(res); });
+};
+
 exports.signIn = function(req, res) {
     return db.User.findOne({
         where: {username: req.body.username}
     }).then(user => {
         if (!user) {
-            return res.status(401).json({ message: 'Authentication failed. User not found.' });
+            return util.detailErrorResponse(res, 401, 'Authentication failed. User not found.');
         } else {
             let token_payload = {
                 id: user.id,
@@ -42,11 +57,11 @@ exports.signIn = function(req, res) {
             return user.validPassword(req.body.password).then(
                 password_ok => {
                     if (!password_ok) {
-                        return res.status(401).json({message: 'Authentication failed. User not found.'});
+                        return util.detailErrorResponse(res, 401, 'Authentication failed. User not found.');
                     } else if (!user.validated) {
-                        return res.status(403).json({message: exports.notValidatedErrorMsg});
+                        return util.detailErrorResponse(res, 403, exports.notValidatedErrorMsg);
                     } else {
-                        return res.status(200).json({
+                        return util.successResponse(res, {
                             token: jwt.sign(token_payload, config.jwt_secret_key, {expiresIn: config.jwt_duration}) // 4 days
                         });
                     }
@@ -67,21 +82,17 @@ exports.register = function(req, res) {
             admin: false,  // by default not admin
             validated: null    // by default not accepted nor refused
         }).then((user) => {
-            return res.status(200).json(exports.removeSensitive(user));
+            return util.successResponse(res, exports.removeSensitive(user));
         })
         .catch((err) => {
-            return res.status(403).send({error: "username or email exists"});
+            return util.detailErrorResponse(res, 403, "username or email exists");
         });
     });
 };
 
 exports.getCurrentUser = function(req, res) {
     let userId = userutil.getCurrUserId(req);
-    return db.User.findById(userId).then(user => {
-        return res.status(200).json(exports.removeSensitive(user));
-    }).catch(err => {
-        return res.status(500).json({err: "err"});
-    });
+    return handleUserResponse(res, db.User.findById(userId));
 };
 
 
@@ -89,7 +100,7 @@ exports.updateUser = function(req, res) {
     // TODO security: implement token invalidation check when password changes
     let userId = userutil.getCurrUserId(req);
     if(userId !== req.params.uid) { // TODO: allow update of another user for admins?
-        return res.status(404).send({error: "cannot update data of another user"});
+        return util.detailErrorResponse(res, 404, "cannot update data of another user");
     }
 
     return db.User.findById(userId)
@@ -101,19 +112,15 @@ exports.updateUser = function(req, res) {
             if (req.body.password) {
                 return bcrypt.hash(req.body.password, 10, function(err, hash) {
                     user.password = hash;
-                    return user.save()
-                        .then((user) => {res.status(200).send(exports.removeSensitive(user));})
-                        .catch((err) => {res.status(500).send({error: "err"});});
+                    return handleUserResponse(res, user.save());
                 })
             } else {
-                return user.save()
-                    .then((user) => {res.status(200).send(exports.removeSensitive(user));})
-                    .catch((err) => {res.status(500).send({error: "err"});});
+                return handleUserResponse(res, user.save());
             }
 
         })
         .catch(err => {
-            return res.status(404).send({error: "user not found"})
+            return util.detailErrorResponse(res, 404, "user not found");
         })
 };
 
@@ -130,9 +137,10 @@ exports.sendCurrUserGames = function(req, res) {
  * @returns {Promise<Array<Model>>}
  */
 exports.sendUserLibraryGames = function(uid, req, res) {
-    return db.LibraryGame.findAll({where: {id_user: uid}, include: [includes.defaultBoardGameIncludeSQ]})
-        .then(games => { return res.status(200).send(games) })
-        .catch(err => { return res.status(500).send({error: "err"}) });
+    return handleLibraryGamesResponse(res, db.LibraryGame.findAll({
+        where: {id_user: uid},
+        include: [includes.defaultBoardGameIncludeSQ]
+    }));
 };
 
 exports.addLibraryGames = function(req, res) {
@@ -143,12 +151,12 @@ exports.addLibraryGames = function(req, res) {
     let games = req.body.games.map(g => { return { id_user: userId, id_board_game: g }});
     return db.LibraryGame.bulkCreate(games, { ignoreDuplicates: true })
         .then(() => { return exports.sendCurrUserGames(req, res); })
-        .catch(err => { return res.status(500).send({error: "err"}); });
+        .catch(err => { return util.errorResponse(res); });
 };
 
 exports.deleteLibraryGames = function(req, res) {
     if (!req.body.games) {
-        return res.status(403).send({error: "missing games field"});
+        return util.detailErrorResponse(res, 403, "missing games field");
     }
     let userId = userutil.getCurrUserId(req);
     return db.LibraryGame.destroy({
@@ -157,7 +165,7 @@ exports.deleteLibraryGames = function(req, res) {
             id_board_game: req.body.games
         }
     }).then(() => { return exports.sendCurrUserGames(req, res); })
-      .catch(err => { return res.status(500).send({error: "err"});});
+      .catch(err => { return util.errorResponse(res); });
 };
 
 exports.getCurrentUserLibraryGames = function(req, res) {
