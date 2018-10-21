@@ -10,7 +10,8 @@ const eventFullIncludeSQ = [
         includes.getBoardGameIncludeSQ("provided_board_game"),
         includes.getUserIncludeSQ("provider")
     ]),
-    includes.getGameIncludeSQ("games", [includes.defaultBoardGameIncludeSQ]),
+    // Disabled because makes the request too slow ! User /event/:eid/games instead.
+    // includes.getGameIncludeSQ("games", [includes.defaultBoardGameIncludeSQ]),
     includes.getUserIncludeSQ("creator")
 ];
 
@@ -21,57 +22,46 @@ exports.createEvent = function(req, res) {
     if (!(start.isValid() && end.isValid() && start.isBefore(end)) && req.body.name && req.body.name.length > 0) {
         return res.status(403).send({error: "invalid dates or name"})
     }
-    return util.sendModelOrError(db.Event.build({
+    return util.sendModelOrError(res, db.Event.create({
         name: req.body.name,
         location: req.body.location,
         start: start.toDate(),
         end: end.toDate(),
         id_creator: userutil.getCurrUserId(req),
         description: req.body.description
-    }).save(), res, "event");
+    }));
 };
 
 exports.getEvent = function(req, res) {
-    return util.sendModelOrError(db.Event.findById(parseInt(req.params.eid)), res, "event");
+    return util.sendModelOrError(res, db.Event.findById(parseInt(req.params.eid)));
 };
 
 exports.getFullEvent = function(req, res) {
-    return db.Event.find({ where: {id: parseInt(req.params.eid)}, include: eventFullIncludeSQ})
-    .then(event => {
-        res.status(200).json(event);
-    }).catch(err => {
-        res.status(500).json({error: "err"});
-    });
+    return util.sendModelOrError(res, db.Event.find({
+        where: {id: parseInt(req.params.eid)},
+        include: eventFullIncludeSQ
+    }));
 };
 
 exports.getAllEvents = function(req, res) {
-    return util.sendModelOrError(db.Event.findAll(), res, "events");
+    return util.sendModelOrError(res, db.Event.findAll());
 };
 
 exports.deleteEvent = function(req, res) {
     let eid = parseInt(req.params.eid);
-    return db.Event.destroy({where: {
-        id: eid,
-        id_creator: userutil.getCurrUserId(req)  // restrict suppression of events to the creator
-    }}).then(
-        n => { return util.sendModelOrError(db.Event.findAll(), res, "events"); }
-    ).catch(
-        err => { return res.status(500).send({error: "err"}); }
-    );
+    return util.handleDeletion(res, db.Event.destroy({
+        where: {id: eid, id_creator: userutil.getCurrUserId(req)}  // restrict suppression of events to the creator
+    }));
 };
 
 exports.sendProvidedBoardGames = function(eid, res) {
-    return db.ProvidedBoardGame.findAll({
+    return util.sendModelOrError(res, db.ProvidedBoardGame.findAll({
         where: { id_event: eid },
         include: [
             includes.getUserIncludeSQ("provider"),
             includes.getBoardGameIncludeSQ("provided_board_game")
         ]
-    }).then(provided => {
-        res.status(200).send(provided);
-    }).catch(err => {
-        res.status(500).send({error: "err"});
-    });
+    }));
 };
 
 exports.addProvidedBoardGames = function(req, res) {
@@ -83,7 +73,7 @@ exports.addProvidedBoardGames = function(req, res) {
             return exports.sendProvidedBoardGames(eid, res);
         })
         .catch(err => {
-            res.status(500).send({error: "err"});
+            return util.errorResponse(res);
         });
 };
 
@@ -94,28 +84,20 @@ exports.getProvidedBoardGames = function(req, res) {
 
 exports.deleteProvidedBoardGames = function(req, res) {
     let eid = parseInt(req.params.eid);
-    return db.ProvidedBoardGame.destroy({
+    return util.handleDeletion(res, db.ProvidedBoardGame.destroy({
         where: {
             id_event: eid,
             id_user: userutil.getCurrUserId(req),
             id_board_game: req.body.board_games
         }
-    }).then(() => {
-        return exports.sendProvidedBoardGames(eid, res);
-    }).catch(err => {
-        res.status(500).send({error: "err"});
-    });
+    }));
 };
 
 exports.sendEventAttendees = function(eid, res) {
-    return db.EventAttendee.findAll({
+    return util.sendModelOrError(res, db.EventAttendee.findAll({
         where: { id_event: eid },
         include: [includes.defaultUserIncludeSQ]
-    }).then(provided => {
-        res.status(200).send(provided);
-    }).catch(err => {
-        res.status(500).send({error: "err"});
-    });
+    }));
 };
 
 exports.getEventAttendees = function(req, res) {
@@ -130,44 +112,35 @@ exports.addEventAttendees = function(req, res) {
             return exports.sendEventAttendees(eid, res);
         })
         .catch(err => {
-            res.status(500).send({error: "err"});
+            return util.errorResponse(res);
         });
 };
 
 exports.deleteEventAttendees = function(req, res) {
     let eid = parseInt(req.params.eid);
-    return db.EventAttendee.destroy({
+    return util.handleDeletion(res, db.EventAttendee.destroy({
         where: {
             id_event: eid,
             id_user: req.body.users
         }
-    }).then(() => {
-        return exports.sendEventAttendees(eid, res);
-    }).catch(err => {
-        res.status(500).send({error: "err"});
-    });
+    }));
 };
 
 exports.subscribeToEvent = function(req, res) {
-    return db.EventAttendee.build({
+    const eid = parseInt(req.params.eid);
+    return db.EventAttendee.create({
         id_user: userutil.getCurrUserId(req),
-        id_event: parseInt(req.params.eid)
-    }).save().then((attendee) => {
-        return exports.sendEventAttendees(attendee.id_event, res);
+        id_event: eid
+    }, { ignoreDuplicates: true }).then(() => {
+        return util.successResponse(res, util.successObj);
     }).catch(err => {
-        res.status(500).send({error: "err"});
+        return util.errorResponse(res);
     });
 };
 
 exports.getCurrentUserEvents = function(req, res) {
-    return db.EventAttendee.findAll({
+    return util.sendModelOrError(res, db.EventAttendee.findAll({
         where: {id_user: userutil.getCurrUserId(req)},
         include: [includes.defaultEventIncludeSQ]
-    }).then(events => {
-        res.status(200).send({
-            "events": events.map(e => e.event)
-        });
-    }).catch(err => {
-        res.status(500).send({error: "err"});
-    });
+    }), events => { return events.map(e => e.event); });
 };
