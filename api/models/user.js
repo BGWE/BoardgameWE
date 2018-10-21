@@ -6,7 +6,7 @@ module.exports = (sequelize, DataTypes) => {
     surname: DataTypes.STRING,
     password: DataTypes.STRING,
     admin: DataTypes.BOOLEAN,
-    valid: {
+    validated: {
       type: DataTypes.BOOLEAN,
       allowNull: true
     },

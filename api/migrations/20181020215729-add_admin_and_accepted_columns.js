@@ -2,22 +2,23 @@
 
 module.exports = {
   up: (queryInterface, Sequelize) => {
-    return queryInterface.addColumn("Users", "admin", {
+    return [
+        queryInterface.addColumn("Users", "admin", {
         type: Sequelize.BOOLEAN,
         defaultValue: false
-    }).then(() => {
-      return queryInterface.addColumn("Users", "valid", {
+      }),
+      queryInterface.addColumn("Users", "validated", {
         type: Sequelize.BOOLEAN,
         allowNull: true,
         defaultValue: null
-      });
-    });
+      })
+    ];
   },
 
   down: (queryInterface, Sequelize) => {
-    return queryInterface.removeColumn("Users", "valid")
-        .then(() => {
-          return queryInterface.removeColumn("Users", "admin");
-        });
+    return [
+      queryInterface.removeColumn("Users", "validated"),
+      queryInterface.removeColumn("Users", "admin")
+    ];
   }
 };

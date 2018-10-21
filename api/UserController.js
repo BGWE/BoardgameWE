@@ -43,7 +43,7 @@ exports.signIn = function(req, res) {
                 password_ok => {
                     if (!password_ok) {
                         res.status(401).json({message: 'Authentication failed. User not found.'});
-                    } else if (!user.valid) {
+                    } else if (!user.validated) {
                         res.status(403).json({message: exports.notValidatedErrorMsg});
                     } else {
                         res.status(200).json({
@@ -65,7 +65,7 @@ exports.register = function(req, res) {
             password: hash,
             username: req.body.username,
             admin: false,  // by default not admin
-            valid: null    // by default not accepted nor refused
+            validated: null    // by default not accepted nor refused
         }).save()
             .then((user) => {
                 res.status(200).json(exports.removeSensitive(user));

@@ -36,7 +36,8 @@ module.exports = function(app) {
                 // check that current user still exists and is validated !
                 return db.User.findById(decoded.id)
                     .then(user => {
-                        if (user.valid) {
+                        if (user.validated) {
+                            req.is_admin = user.admin;
                             return next();
                         } else {
                             return res.status(403).json({success: false, message: UserController.notValidatedErrorMsg});
@@ -129,4 +130,20 @@ module.exports = function(app) {
     // Disabled, rankings are mostly seen through event
     // app.route("/stats/rankings")
     //     .get(StatsController.getRankings);
+
+    // admin middleware
+    app.use(/\/admin\/.*/, function(req, res, next) {
+        if (!req.is_admin) { // is_admin is set in the authentication middleware
+            return res.status(403).json({message: "You are not an administrator."});
+        } else {
+            return next();
+        }
+    });
+
+    app.route("/admin/users")
+        .get(AdminController.getUsers);
+
+    app.route("/admin/user")
+        .put(AdminController.updateUserStatus);
+
 };
