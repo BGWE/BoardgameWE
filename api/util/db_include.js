@@ -4,7 +4,7 @@ const db = require("../models/index");
  * List of excluded attributes in the user model. Those should not be returned by the API.
  * @type {string[]}
  */
-exports.userExcludedAttributes = ["password"];
+exports.userExcludedAttributes = ["password", "admin", "valid"];
 
 /**
  *

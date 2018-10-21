@@ -3,6 +3,7 @@
 const config = require("./config/config.js");
 const jwt = require("jsonwebtoken");
 const userutil = require("./util/user");
+const db = require("./models/index");
 
 module.exports = function(app) {
     const BoardGameController = require("./BoardGameController");
@@ -28,11 +29,22 @@ module.exports = function(app) {
         }
         jwt.verify(token, config.jwt_secret_key, function(err, decoded) {
             if (err) {
-                return res.status(403).json({ success: false, message: 'Failed to authenticate token.' });
+                return res.status(401).json({ success: false, message: 'Failed to authenticate token.' });
             } else {
-                // if everything is good, save to request for use in other routes
+                // if everything is good, save to request for use in other route
                 req.decoded = decoded;
-                next();
+                // check that current user still exists and is validated !
+                return db.User.findById(decoded.id)
+                    .then(user => {
+                        if (user.valid) {
+                            return next();
+                        } else {
+                            return res.status(403).json({success: false, message: UserController.notValidatedErrorMsg});
+                        }
+                    }).catch(err => {
+                        // user doesn't exist anymore (shouldn't happen)
+                        return res.status(401).json({success: false, message: "Unknown user."});
+                    });
             }
         });
     });

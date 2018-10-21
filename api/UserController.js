@@ -4,15 +4,24 @@ const jwt = require("jsonwebtoken");
 const bcrypt = require("bcryptjs");
 const util = require("./util/util");
 const userutil = require("./util/user");
+const includes = require("./util/db_include");
 
+/**
+ *
+ * @type {string}
+ */
+exports.notValidatedErrorMsg = 'An admin must accept your registration request before you can connect to the app.';
 
 /**
  * Remove hashed password from user object
  * @param user
  * @returns User
  */
-exports.sanitizeUser = function(user) {
-    user.password = undefined;
+exports.removeSensitive = function(user) {
+    const attributes = includes.userExcludedAttributes;
+    for(var i = 0; i < attributes.length; ++i) {
+        user[attributes[i]] = undefined;
+    }
     return user;
 };
 
@@ -31,13 +40,15 @@ exports.signIn = function(req, res) {
                 name: user.name
             };
             return user.validPassword(req.body.password).then(
-                valid => {
-                    if (valid) {
+                password_ok => {
+                    if (!password_ok) {
+                        res.status(401).json({message: 'Authentication failed. User not found.'});
+                    } else if (!user.valid) {
+                        res.status(403).json({message: exports.notValidatedErrorMsg});
+                    } else {
                         res.status(200).json({
                             token: jwt.sign(token_payload, config.jwt_secret_key, {expiresIn: config.jwt_duration}) // 4 days
                         });
-                    } else {
-                        res.status(401).json({ message: 'Authentication failed. User not found.' });
                     }
                 }
             )
@@ -52,10 +63,12 @@ exports.register = function(req, res) {
             surname: req.body.surname,
             email: req.body.email,
             password: hash,
-            username: req.body.username
+            username: req.body.username,
+            admin: false,  // by default not admin
+            valid: null    // by default not accepted nor refused
         }).save()
             .then((user) => {
-                res.status(200).json(exports.sanitizeUser(user));
+                res.status(200).json(exports.removeSensitive(user));
             })
             .catch((err) => {
                 res.status(403).send({error: "username or email exists"});
@@ -65,8 +78,12 @@ exports.register = function(req, res) {
 
 exports.getCurrentUser = function(req, res) {
     let userId = userutil.getCurrUserId(req);
-    return util.sendModelOrError(db.User.findById(userId), res, "user");
-}
+    return db.User.findById(userId).then(user => {
+        return res.status(200).json({"user": exports.removeSensitive(user)});
+    }).catch(err => {
+        return res.status(500).json({err: "err"});
+    });
+};
 
 
 exports.updateUser = function(req, res) {
@@ -86,12 +103,12 @@ exports.updateUser = function(req, res) {
                 bcrypt.hash(req.body.password, 10, function(err, hash) {
                     user.password = hash;
                     user.save()
-                        .then((user) => {res.status(200).send(exports.sanitizeUser(user));})
+                        .then((user) => {res.status(200).send(exports.removeSensitive(user));})
                         .catch((err) => {res.status(500).send({error: "err"});});
                 })
             } else {
                 user.save()
-                    .then((user) => {res.status(200).send(exports.sanitizeUser(user));})
+                    .then((user) => {res.status(200).send(exports.removeSensitive(user));})
                     .catch((err) => {res.status(500).send({error: "err"});});
             }
 
