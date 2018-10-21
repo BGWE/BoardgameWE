@@ -11,6 +11,7 @@ module.exports = function(app) {
     const StatsController = require("./StatsController");
     const UserController = require("./UserController");
     const EventController = require("./EventController");
+    const AdminController = require("./AdminController");
 
     // User routes
     app.route("/user")
