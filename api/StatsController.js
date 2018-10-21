@@ -108,21 +108,11 @@ exports.computeGameRankings = function(games) {
 
 exports.getRankings = function (req, res) {
     let filtering = { where: {}, include: GameController.gameFullIncludeSQ};
-    return db.Game.findAll(filtering)
-        .then(games => {
-            res.status(200).send(exports.computeGameRankings(games));
-        }).catch((err) => {
-            res.status(500).send({error: err});
-        });
+    return util.sendModelOrError(res, db.Game.findAll(filtering), games => exports.computeGameRankings(games));
 };
 
 exports.getEventRankings = function(req, res) {
-    return db.Game.findAll({
+    return util.sendModelOrError(res, db.Game.findAll({
         where: {id_event: parseInt(req.params.eid)},
         include: GameController.gameFullIncludesSQ
-    }).then(games => {
-        res.status(200).send(exports.computeGameRankings(games));
-    }).catch((err) => {
-        res.status(500).send({error: err});
-    });
-};
+    }), games => exports.computeGameRankings(games));};
