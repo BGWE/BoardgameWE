@@ -2,34 +2,17 @@ const db = require("./models/index");
 const util = require("./util/util");
 const userutil = require("./util/user");
 const moment = require("moment");
+const includes = require("./util/db_include");
 
-exports.getUserIncludeSQ = function(as) {
-    return {model: db.User, as: as, attributes: {exclude: ["password"]}};
-};
-
-exports.getBoardGameIncludeSQ = function(as) {
-    return {model: db.BoardGame, as: as};
-};
-
-exports.getEventIncludeSQ = function(as) {
-    return {model: db.Event, as: as};
-};
-
-const eventIncludeSQ = exports.getEventIncludeSQ("event");
-const userIncludeSQ = exports.getUserIncludeSQ("user");
-const boardGameIncludeSQ = exports.getBoardGameIncludeSQ("board_game");
 const eventFullIncludeSQ = [
-    {model: db.EventAttendee, as: "attendees", include: [userIncludeSQ]},
-    {model: db.ProvidedBoardGame, as: "provided_board_games", include: [
-        exports.getBoardGameIncludeSQ("provided_board_game"),
-        exports.getUserIncludeSQ("provider")
-    ]},
-    {model: db.Game, as: "games", include: [boardGameIncludeSQ]},
-    {model: db.User, as: "creator", includ: [userIncludeSQ]}
+    includes.genericIncludeSQ(db.EventAttendee, "attendees", [includes.defaultUserIncludeSQ]),
+    includes.genericIncludeSQ(db.ProvidedBoardGame, "provided_board_games", [
+        includes.getBoardGameIncludeSQ("provided_board_game"),
+        includes.getUserIncludeSQ("provider")
+    ]),
+    includes.getGameIncludeSQ("games", [includes.defaultBoardGameIncludeSQ]),
+    includes.getUserIncludeSQ("creator")
 ];
-
-exports.userIncludeSQ = userIncludeSQ;
-exports.boardGameIncludeSQ = boardGameIncludeSQ;
 
 exports.createEvent = function(req, res) {
     // validate date
@@ -78,8 +61,12 @@ exports.deleteEvent = function(req, res) {
 };
 
 exports.sendProvidedBoardGames = function(eid, res) {
-    return db.ProvidedBoardGame.findAll(
-        { where: { id_event: eid }, include: [exports.getUserIncludeSQ("provider"), exports.getBoardGameIncludeSQ("provided_board_game")]
+    return db.ProvidedBoardGame.findAll({
+        where: { id_event: eid },
+        include: [
+            includes.getUserIncludeSQ("provider"),
+            includes.getBoardGameIncludeSQ("provided_board_game")
+        ]
     }).then(provided => {
         res.status(200).send(provided);
     }).catch(err => {
@@ -121,12 +108,14 @@ exports.deleteProvidedBoardGames = function(req, res) {
 };
 
 exports.sendEventAttendees = function(eid, res) {
-    return db.EventAttendee.findAll({where: { id_event: eid }, include: [exports.userIncludeSQ] })
-        .then(provided => {
-            res.status(200).send(provided);
-        }).catch(err => {
-            res.status(500).send({error: "err"});
-        });
+    return db.EventAttendee.findAll({
+        where: { id_event: eid },
+        include: [includes.defaultUserIncludeSQ]
+    }).then(provided => {
+        res.status(200).send(provided);
+    }).catch(err => {
+        res.status(500).send({error: "err"});
+    });
 };
 
 exports.getEventAttendees = function(req, res) {
@@ -173,7 +162,7 @@ exports.subscribeToEvent = function(req, res) {
 exports.getCurrentUserEvents = function(req, res) {
     return db.EventAttendee.findAll({
         where: {id_user: userutil.getCurrUserId(req)},
-        include: [eventIncludeSQ]
+        include: [includes.defaultEventIncludeSQ]
     }).then(events => {
         res.status(200).send({
             "events": events.map(e => e.event)

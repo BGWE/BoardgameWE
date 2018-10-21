@@ -49,7 +49,7 @@ exports.playersScoreToBinary = function(games, bestScoreFn) {
         }
     }
     return {players: playersData, points: binaryPoints};
-}
+};
 
 exports.getVictories = function (games) {
     return exports.playersScoreToBinary(games, (scores) => {
@@ -117,11 +117,12 @@ exports.getRankings = function (req, res) {
 };
 
 exports.getEventRankings = function(req, res) {
-    let filtering = { where: {id_event: parseInt(req.params.eid)}, include: GameController.gameFullIncludeSQ};
-    return db.Game.findAll(filtering)
-        .then(games => {
-            res.status(200).send(exports.computeGameRankings(games));
-        }).catch((err) => {
-            res.status(500).send({error: err});
-        });
+    return db.Game.findAll({
+        where: {id_event: parseInt(req.params.eid)},
+        include: GameController.gameFullIncludesSQ
+    }).then(games => {
+        res.status(200).send(exports.computeGameRankings(games));
+    }).catch((err) => {
+        res.status(500).send({error: err});
+    });
 };

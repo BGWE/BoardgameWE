@@ -1,15 +1,11 @@
 const db = require("./models/index");
 const util = require("./util/util");
-const EventController = require("./EventController");
+const includes = require("./util/db_include");
 
-const gameIncludeSQ = {model: db.Game, as: "game"};
-const gamePlayerIncludeSQ = {model: db.GamePlayer, as: "game_players"};
-const gameFullIncludesSQ = [
-    EventController.boardGameIncludeSQ,
-    Object.assign({include: [EventController.userIncludeSQ]}, gamePlayerIncludeSQ)
+exports.gameFullIncludesSQ = [
+    includes.defaultBoardGameIncludeSQ,
+    includes.genericIncludeSQ(db.GamePlayer, "game_players", [includes.defaultUserIncludeSQ])
 ];
-
-exports.gameFullIncludeSQ = gameFullIncludesSQ;
 
 /**
  * Validate ranks from the list
@@ -43,11 +39,16 @@ exports.validateGamePlayers = (players) => {
 
 exports.buildFullGame = (gameId, res) => {
     return db.Game.find({
-        where: {id: gameId}, include: gameFullIncludesSQ
+        where: {id: gameId},
+        include: exports.gameFullIncludesSQ
     }).then((game) => {
-        game.dataValues.players = exports.rankForGame(game);
-        game.dataValues.game_players = undefined; // to keep the more intuitive "players" label in json
-        res.status(200).json(game);
+        if (!game) {
+            return res.status(404).json({err: "not found"});
+        } else {
+            game.dataValues.players = exports.rankForGame(game);
+            game.dataValues.game_players = undefined; // to keep the more intuitive "players" label in json
+            return res.status(200).json(game);
+        }
     }).catch((err) => {
         res.status(500).json({error: "err"});
     });
@@ -97,7 +98,10 @@ exports.rankForGame = function(game) {
 };
 
 exports.getGamesQuery = function (filtering, res) {
-    return db.Game.findAll({ where: filtering, include: gameFullIncludesSQ}).then(games => {
+    return db.Game.findAll({
+        where: filtering,
+        include: exports.gameFullIncludesSQ
+    }).then(games => {
         for (let i = 0; i < games.length; ++i) {
             let game = games[i];
             game.dataValues.players = exports.rankForGame(game);
