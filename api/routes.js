@@ -3,6 +3,7 @@
 const config = require("./config/config.js");
 const jwt = require("jsonwebtoken");
 const userutil = require("./util/user");
+const util = require("./util/util");
 const db = require("./models/index");
 
 module.exports = function(app) {
