@@ -71,16 +71,6 @@ exports.rankPlayersFromData = (dict, aggregate) => {
     return exports.rank(scores, (player) => player.score, false);
 };
 
-exports.sendModelOrError = function(promise, res) {
-    return promise
-        .then(obj => {
-            return res.status(200).send(obj);
-        })
-        .catch(err => {
-            return res.status(500).send(util.errorObj);
-        })
-};
-
 /** object marking a success */
 exports.successObj = {success: true};
 exports.errorObj = {error: "err"};
@@ -113,4 +103,17 @@ exports.errorResponse = function(res) {
  */
 exports.detailErrorResponse = function(res, code, msg) {
     return res.status(code).json(Object.assign({message: msg}, exports.errorObj));
+};
+
+exports.sendModelOrError = function(res, promise, transform) {
+    if (transform === undefined) {
+        transform = (a) => a; // identity by default
+    }
+    return promise
+        .then(obj => {
+            return exports.successResponse(res, transform(obj));
+        })
+        .catch(err => {
+            return exports.errorResponse(res);
+        })
 };

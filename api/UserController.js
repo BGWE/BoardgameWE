@@ -25,19 +25,8 @@ exports.removeSensitive = function(user) {
     return user;
 };
 
-
 const handleUserResponse = function(res, promise) {
-    return promise.then(user => {
-        return util.successResponse(res, exports.removeSensitive(user));
-    }).catch(err => {
-        return util.errorResponse(res);
-    });
-};
-
-const handleLibraryGamesResponse = function(res, promise) {
-    return promise
-        .then(games => { return util.successResponse(res, games); })
-        .catch(err => { return util.errorResponse(res); });
+    return util.sendModelOrError(res, promise, user => exports.removeSensitive(user));
 };
 
 exports.signIn = function(req, res) {
@@ -137,7 +126,7 @@ exports.sendCurrUserGames = function(req, res) {
  * @returns {Promise<Array<Model>>}
  */
 exports.sendUserLibraryGames = function(uid, req, res) {
-    return handleLibraryGamesResponse(res, db.LibraryGame.findAll({
+    return util.sendModelOrError(res, db.LibraryGame.findAll({
         where: {id_user: uid},
         include: [includes.defaultBoardGameIncludeSQ]
     }));
