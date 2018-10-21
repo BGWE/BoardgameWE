@@ -23,14 +23,11 @@ module.exports = function(app) {
     app.use(/^\/(?!user\/register|user\/login).*/, function(req, res, next) {
         let token = userutil.getToken(req);
         if (!token) {
-            return res.status(401).send({
-                success: false,
-                error: 'No token provided.'
-            });
+            return util.detailErrorResponse(res, 401, "No token provided.");
         }
         jwt.verify(token, config.jwt_secret_key, function(err, decoded) {
             if (err) {
-                return res.status(401).json({ success: false, message: 'Failed to authenticate token.' });
+                return util.detailErrorResponse(res, 401, "Failed to authenticate token.");
             } else {
                 // if everything is good, save to request for use in other route
                 req.decoded = decoded;
@@ -41,11 +38,11 @@ module.exports = function(app) {
                             req.is_admin = user.admin;
                             return next();
                         } else {
-                            return res.status(403).json({success: false, message: UserController.notValidatedErrorMsg});
+                            return util.detailErrorResponse(res, 403, UserController.notValidatedErrorMsg);
                         }
                     }).catch(err => {
                         // user doesn't exist anymore (shouldn't happen)
-                        return res.status(401).json({success: false, message: "Unknown user."});
+                        return util.detailErrorResponse(res, 401, "Unknown user.");
                     });
             }
         });
@@ -135,7 +132,7 @@ module.exports = function(app) {
     // admin middleware
     app.use(/\/admin\/.*/, function(req, res, next) {
         if (!req.is_admin) { // is_admin is set in the authentication middleware
-            return res.status(403).json({message: "You are not an administrator."});
+            return util.detailErrorResponse(res, 403, "You are not an administrator.");
         } else {
             return next();
         }
