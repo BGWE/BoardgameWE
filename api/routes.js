@@ -62,6 +62,9 @@ module.exports = function(app) {
         .post(UserController.addLibraryGames)
         .delete(UserController.deleteLibraryGames);
 
+    app.route("/user/library_game/:source/:id")
+        .post(UserController.addBoardGameAndAddToLibrary);
+
     app.route("/user/:uid/library_games")
         .get(UserController.getUserLibraryGames);
 
@@ -75,6 +78,9 @@ module.exports = function(app) {
 
     app.route("/events")
         .get(EventController.getAllEvents);
+
+    app.route("/event/:eid/board_game/:source/:id")
+        .post(EventController.addBoardGameAndAddToEvent);
 
     app.route("/event/:eid/board_games")
         .get(EventController.getProvidedBoardGames)

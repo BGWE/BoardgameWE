@@ -22,15 +22,15 @@ module.exports = (sequelize, DataTypes) => {
         },
         min_playing_time: {
             type: DataTypes.INTEGER,
-            validate: {min: 1}
+            validate: {min: 0}
         },
         max_playing_time: {
             type: DataTypes.INTEGER,
-            validate: {min: 1}
+            validate: {min: 0}
         },
         playing_time: {
             type: DataTypes.INTEGER,
-            validate: {min: 1}
+            validate: {min: 0}
         },
         thumbnail: {
             type: DataTypes.STRING,

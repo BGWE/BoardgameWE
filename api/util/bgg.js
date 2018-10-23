@@ -1,4 +1,5 @@
 const request = require('request');
+const util = require("./util.js");
 const rp = require('request-promise');
 let parse_string = require('xml2js').parseString;
 
@@ -13,6 +14,12 @@ function search(boardgame_name) {
 function get(boardgame_id) {
     let url_variables = {id: boardgame_id, stats: 1};
     return rp({uri: BGG_ROOT_PATH + 'thing', qs: url_variables});
+}
+
+function getBoardGamePromise(boardgame_id, res, _then) {
+    return exports.get(boardgame_id).then(_then).catch(err => {
+        return util.detailErrorResponse(res, 404, "could not fetch game from board game geek");
+    });
 }
 
 function format_search_response(body) {
@@ -126,6 +133,7 @@ function get_game_name_from_item(_json) {
 }
 
 exports.get = get;
+exports.getBoardGamePromise = getBoardGamePromise;
 exports.search = search;
 exports.format_get_response = format_get_response;
 exports.format_search_response = format_search_response;

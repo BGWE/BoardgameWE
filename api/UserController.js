@@ -5,6 +5,7 @@ const bcrypt = require("bcryptjs");
 const util = require("./util/util");
 const userutil = require("./util/user");
 const includes = require("./util/db_include");
+const BoardGameController = require("./BoardGameController");
 
 /**
  *
@@ -162,4 +163,20 @@ exports.getCurrentUserLibraryGames = function(req, res) {
 
 exports.getUserLibraryGames = function(req, res) {
     return exports.sendUserLibraryGames(req.params.uid, req, res);
+};
+
+exports.addBoardGameAndAddToLibrary = function(req, res) {
+    const createFn = (board_game, req, res) => {
+        return db.LibraryGame.create({
+            id_user: userutil.getCurrUserId(req),
+            id_board_game: board_game.id
+        }, {ignoreDuplicates: true}).then(l => {
+            return exports.sendCurrUserGames(req, res);
+        }).catch(err => {
+            return util.errorResponse(res);
+        });
+    };
+    const bggId = parseInt(req.params.id);
+    const source = req.params.source;
+    return BoardGameController.executeIfBoardGameExists(bggId, source, req, res, createFn);
 };

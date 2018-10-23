@@ -25,33 +25,62 @@ exports.updateBoardGame = function(req, res) {
     });
 };
 
+const boardGameFromBggResponse = function(gid, body) {
+    const game = bgg.format_get_response(body);
+    return {
+        name: game.name,
+        bgg_id: gid,
+        bgg_score: game.score,
+        gameplay_video_url: null,
+        min_players: parseInt(game.minplayers),
+        max_players: parseInt(game.maxplayers),
+        min_playing_time: parseInt(game.maxplaytime),
+        max_playing_time: parseInt(game.minplaytime),
+        playing_time: parseInt(game.playingtime),
+        thumbnail: game.thumbnail[0],
+        image: game.image[0],
+        description: game.description[0],
+        year_published: parseInt(game.yearpublished),
+        category: util.listToString(game.boardgamecategory),
+        mechanic: util.listToString(game.boardgamemechanic),
+        family: util.listToString(game.boardgamefamily)
+    };
+};
+
+/**
+ * Executes an action if a given board game has already been fetched and registered in the database
+ * @param gid Id of the game (id from the source)
+ * @param source Source where to download game data
+ * @param req Input request
+ * @param res Response
+ * @param actionFn The action to perform, should return a promise
+ * @returns {*}
+ */
+exports.executeIfBoardGameExists = function(gid, source, req, res, actionFn) {
+    if (source !== "bgg") {
+        return util.detailErrorResponse(res, 400, "Invalid source '" + source + "' (only supported are {bgg,}).");
+    }
+    return db.BoardGame.find({where: {bgg_id: gid}}).then(board_game => {
+        if (board_game !== null) {
+            return actionFn(board_game, req, res);
+        } else {
+            return bgg.getBoardGamePromise(gid, res, body => {
+                return db.BoardGame.create(boardGameFromBggResponse(gid, body)).then(board_game => {
+                    return actionFn(board_game, req, res);
+                }).catch(err => {
+                    return util.errorResponse(res);
+                });
+            });
+        }
+    });
+};
+
 exports.addBoardGame = function(req, res) {
     // load info from board game geek
     const bggId = parseInt(req.body.bgg_id);
-    return bgg.get(bggId).then(body => {
-        const game = bgg.format_get_response(body);
-        return util.sendModelOrError(res, db.BoardGame.create({
-            name: game.name,
-            bgg_id: bggId,
-            bgg_score: game.score,
-            gameplay_video_url: null,
-            min_players: parseInt(game.minplayers),
-            max_players: parseInt(game.maxplayers),
-            min_playing_time: parseInt(game.maxplaytime),
-            max_playing_time: parseInt(game.minplaytime),
-            playing_time: parseInt(game.playingtime),
-            thumbnail: game.thumbnail[0],
-            image: game.image[0],
-            description: game.description[0],
-            year_published: parseInt(game.yearpublished),
-            category: util.listToString(game.boardgamecategory),
-            mechanic: util.listToString(game.boardgamemechanic),
-            family: util.listToString(game.boardgamefamily)
-        }));
-    }).catch(err => {
-        return util.detailErrorResponse(res, 404, "could not fetch game from board game geek");
+    return bgg.getBoardGamePromise(bggId, res, body => {
+        return util.sendModelOrError(res, db.BoardGame.create(boardGameFromBggResponse(bggId, body)));
     });
-
 };
 
 exports.getBoardGames = function(req, res) {

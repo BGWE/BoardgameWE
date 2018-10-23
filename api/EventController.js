@@ -3,6 +3,7 @@ const util = require("./util/util");
 const userutil = require("./util/user");
 const moment = require("moment");
 const includes = require("./util/db_include");
+const BoardGameController = require("./BoardGameController");
 
 const eventFullIncludeSQ = [
     includes.genericIncludeSQ(db.EventAttendee, "attendees", [includes.defaultUserIncludeSQ]),
@@ -143,4 +144,22 @@ exports.getCurrentUserEvents = function(req, res) {
         where: {id_user: userutil.getCurrUserId(req)},
         include: [includes.defaultEventIncludeSQ]
     }), events => { return events.map(e => e.event); });
+};
+
+exports.addBoardGameAndAddToEvent = function(req, res) {
+    const idEvent = parseInt(req.params.eid);
+    const createFn = (board_game, req, res) => {
+        return db.ProvidedBoardGame.create({
+            id_user: userutil.getCurrUserId(req),
+            id_board_game: board_game.id,
+            id_event: idEvent
+        }, {ignoreDuplicates: true}).then(l => {
+            return exports.sendProvidedBoardGames(idEvent, res);
+        }).catch(err => {
+            return util.errorResponse(res);
+        });
+    };
+    const bggId = parseInt(req.params.id);
+    const source = req.params.source;
+    return BoardGameController.executeIfBoardGameExists(bggId, source, req, res, createFn);
 };
