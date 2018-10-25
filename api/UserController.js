@@ -90,7 +90,7 @@ exports.getCurrentUser = function(req, res) {
 exports.updateUser = function(req, res) {
     // TODO security: implement token invalidation check when password changes
     let userId = userutil.getCurrUserId(req);
-    if(userId !== req.params.uid) { // TODO: allow update of another user for admins?
+    if(userId !== parseInt(req.params.uid)) { // TODO: allow update of another user for admins?
         return util.detailErrorResponse(res, 404, "cannot update data of another user");
     }
 
