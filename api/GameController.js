@@ -122,7 +122,9 @@ exports.sendAllGamesFiltered = function (filtering, res) {
     return util.sendModelOrError(res, db.Game.findAll({
         where: filtering,
         include: exports.gameFullIncludesSQ
-    }, games => { return games.map(g => fromGamePlayersToRanks(g)); }));
+    }), games => {
+        return games.map(g => fromGamePlayersToRanks(g));
+    });
 };
 
 exports.getGames = function (req, res) {
