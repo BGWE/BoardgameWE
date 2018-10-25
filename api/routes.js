@@ -104,6 +104,9 @@ module.exports = function(app) {
     app.route("/event/:eid/rankings")
         .get(StatsController.getEventRankings);
 
+    app.route("/event/:eid/ranking/:type(" + StatsController.availableRankings.join("|") + ")")
+        .get(StatsController.getEventRanking);
+
     app.route("/events/current")
         .get(EventController.getCurrentUserEvents);
 

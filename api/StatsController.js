@@ -25,6 +25,12 @@ const getPlayerRankableScoreFn = function(game) {
     return game.ranking_method === "POINTS_LOWER_BETTER" ? (p => -p.score) : (p => p.score);
 };
 
+exports.availableRankings = [
+    "victory_count", "defeat_count", "victory_prop", "defeat_prop",
+    "count_games", "count_unique_games", "is_last", "is_last_prop",
+    "gcbgb"
+];
+
 exports.playersScoreToBinary = function(games, bestScoreFn) {
     /**
      * Compute binary score for each player based on a best score function. For a given game, all players of which the
@@ -176,4 +182,46 @@ exports.getEventRankings = function(req, res) {
     return util.sendModelOrError(res, db.Game.findAll({
         where: {id_event: parseInt(req.params.eid)},
         include: GameController.gameFullIncludesSQ
-    }), games => exports.computeGameRankings(games));};
+    }), games => exports.computeGameRankings(games));
+};
+
+exports.getEventRanking = function(req, res) {
+    return util.sendModelOrError(res, db.Game.findAll({
+        where: {id_event: parseInt(req.params.eid)},
+        include: GameController.gameFullIncludesSQ
+    }), games => {
+        const type = req.params.type;
+        let result = {data: null, aggr: null};
+        if (type === "victory_count") {
+            result.data = exports.getVictories(games);
+            result.aggr = AGGREGATE.sum;
+        } else if (type === "defeat_count") {
+            result.data = exports.getDefeats(games);
+            result.aggr = AGGREGATE.sum;
+        } else if (type === "victory_prop") {
+            result.data = exports.getVictories(games);
+            result.aggr = AGGREGATE.freq;
+        } else if (type === "defeat_prop") {
+            result.data = exports.getDefeats(games);
+            result.aggr = AGGREGATE.freq;
+        } else if (type === "count_games") {
+            result.data = exports.getBoardGameCount(games);
+            result.aggr = AGGREGATE.count;
+        } else if (type === "count_unique_games") {
+            result.data = exports.getBoardGameCount(games);
+            result.aggr = AGGREGATE.count_unique;
+        } else if (type === "is_last") {
+            result.data = exports.getIsLast(games);
+            result.aggr = AGGREGATE.sum;
+        } else if (type === "is_last_prop") {
+            result.data = exports.getIsLast(games);
+            result.aggr = AGGREGATE.freq;
+        } else if (type === "gcbgb") {
+            result.data = exports.getGCBGBRankings(games);
+            result.aggr = AGGREGATE.sum;
+        } else {
+            return []
+        }
+        return util.rankPlayersFromData(result.data, result.aggr);
+    });
+};
