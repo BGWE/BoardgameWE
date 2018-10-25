@@ -6,6 +6,7 @@ const util = require("./util/util");
 const userutil = require("./util/user");
 const includes = require("./util/db_include");
 const BoardGameController = require("./BoardGameController");
+const Sequelize = require("sequelize");
 
 /**
  *
@@ -32,7 +33,7 @@ const handleUserResponse = function(res, promise) {
 
 exports.signIn = function(req, res) {
     return db.User.findOne({
-        where: {username: req.body.username}
+        where: {username: {[Sequelize.Op.iLike]: "%" + req.body.username + "%"}}
     }).then(user => {
         if (!user) {
             return util.detailErrorResponse(res, 401, 'Authentication failed. User not found.');
