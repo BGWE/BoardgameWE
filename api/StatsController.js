@@ -89,8 +89,68 @@ exports.getBoardGameCount = function (games) {
     return {players: playersData, points: gamesList};
 };
 
+/**
+ *
+ * @param rank_obj
+ * @param duration
+ * @param n_groups
+ * @param win_lose
+ * @returns {number}
+ */
+exports.getGCBGBForPlayer = function(rank_obj, duration, n_groups, win_lose) {
+    const rank = rank_obj.rank;
+    const score = rank_obj.score;
+    const floatDuration = duration < 30 ? 0.5 : Math.floor(duration / 30) / 2;
+    const scores = {
+        first: floatDuration * 5,
+        second: floatDuration * 4,
+        third: floatDuration * 2,
+        rest: floatDuration
+    };
+
+    if (n_groups === 1) {  // all vs game
+        return !win_lose || score ? scores.first : scores.third;
+    } else if (n_groups === 2) {  // one vs rest
+        return rank === 1 ? scores.first : scores.third;
+    } else {  // other games
+        if (rank === 1) {
+            return scores.first;
+        } else if (rank === 2) {
+            return scores.second;
+        } else if (rank === 3) {
+            return scores.third;
+        } else {
+            return scores.rest;
+        }
+    }
+};
+
+exports.getGCBGBRankings = function (games) {
+    let gamesList = {}, playersData = {};
+    for (let gameIndex = 0; gameIndex < games.length; ++gameIndex) {
+        const game = games[gameIndex];
+        if (game.duration === null) { // skip games with
+            continue;
+        }
+        const players = game.game_players;
+        const game_ranks = util.rank(game.game_players, player => player.score, game.ranking_method === "POINTS_LOWER_BETTER");
+        const n_groups = AGGREGATE.count_unique(game_ranks.map(gr => gr.rank));
+        for (let playerIndex = 0; playerIndex < game_ranks.length; ++playerIndex) {
+            const currPlayer = players[playerIndex];
+            const rank_obj = game_ranks[playerIndex];
+            const identifier = currPlayer.name || currPlayer.user.id;
+            let array = (identifier in gamesList ? gamesList[identifier] : []);
+            array.push(exports.getGCBGBForPlayer(rank_obj, game.duration, n_groups, game.ranking_method === "WIN_LOSE"));
+            gamesList[identifier] = array;
+            playersData[identifier] = extractPlayerDescriptor(players[playerIndex]);
+        }
+    }
+    return {players: playersData, points: gamesList};
+};
+
 exports.computeGameRankings = function(games) {
-    let victories = exports.getVictories(games),
+    let gcbgb = exports.getGCBGBRankings(games),
+        victories = exports.getVictories(games),
         defeats = exports.getDefeats(games),
         board_game_count = exports.getBoardGameCount(games),
         is_last = exports.getIsLast(games);
@@ -102,7 +162,8 @@ exports.computeGameRankings = function(games) {
         count_games: util.rankPlayersFromData(board_game_count, AGGREGATE.count),
         count_unique_games: util.rankPlayersFromData(board_game_count, AGGREGATE.count_unique),
         is_last: util.rankPlayersFromData(is_last, AGGREGATE.sum),
-        is_last_prop: util.rankPlayersFromData(is_last, AGGREGATE.freq)
+        is_last_prop: util.rankPlayersFromData(is_last, AGGREGATE.freq),
+        gcbgb: util.rankPlayersFromData(gcbgb, AGGREGATE.sum)
     };
 };
 

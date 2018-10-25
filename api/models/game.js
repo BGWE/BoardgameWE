@@ -1,7 +1,7 @@
 'use strict';
 module.exports = (sequelize, DataTypes) => {
   var Game = sequelize.define('Game', {
-    duration: {
+    duration: { // in minutes
         type: DataTypes.INTEGER,
         validate: {min: 0},
         allowNull: true
