@@ -93,6 +93,9 @@ module.exports = function(app) {
     app.route("/event/:eid/games")
         .get(GameController.getEventGames);
 
+    app.route("/event/:eid/games/latest")
+        .get(GameController.getRecentEventGames);
+
     app.route("/event/:eid/attendees")
         .get(EventController.getEventAttendees)
         .post(EventController.addEventAttendees)

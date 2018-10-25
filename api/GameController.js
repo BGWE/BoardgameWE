@@ -118,11 +118,14 @@ exports.rankForGame = function(game) {
     return util.rank(game.game_players, (player) => player.score, game.ranking_method === "POINTS_LOWER_BETTER");
 };
 
-exports.sendAllGamesFiltered = function (filtering, res) {
-    return util.sendModelOrError(res, db.Game.findAll({
+exports.sendAllGamesFiltered = function (filtering, res, options) {
+    if (!options) {
+        options = {};
+    }
+    return util.sendModelOrError(res, db.Game.findAll(Object.assign(options, {
         where: filtering,
         include: exports.gameFullIncludesSQ
-    }), games => {
+    })), games => {
         return games.map(g => fromGamePlayersToRanks(g));
     });
 };
@@ -149,4 +152,13 @@ exports.deleteGame = function (req, res) {
 
 exports.getEventGames = function(req, res) {
     return exports.sendAllGamesFiltered({id_event: parseInt(req.params.eid)}, res)
+};
+
+exports.getRecentEventGames = function(req, res) {
+    return exports.sendAllGamesFiltered({
+        id_event: parseInt(req.params.eid)
+    }, res, {
+        order: [["createdAt", "DESC"]],
+        limit: req.query.count || 10
+    });
 };
