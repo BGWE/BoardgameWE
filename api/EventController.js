@@ -45,7 +45,29 @@ exports.getFullEvent = function(req, res) {
 };
 
 exports.getAllEvents = function(req, res) {
-    return util.sendModelOrError(res, db.Event.findAll());
+    let where = {};
+    let currIncludes = [];
+    if (req.query.ongoing !== undefined) {
+        let between = {
+            start: {[db.Sequelize.Op.lte]: db.Sequelize.fn("now")},
+            end: {[db.Sequelize.Op.gte]: db.Sequelize.fn("now")}
+        };
+        if (req.query.ongoing) {
+            where[db.Sequelize.Op.and] = between;
+        } else {
+            where[db.Sequelize.Op.not] = {[db.Sequelize.Op.and] : between};
+        }
+    }
+    if (req.query.registered !== undefined) {
+        let attendeeInclude = includes.genericIncludeSQ(
+            db.EventAttendee,
+            "attendees"
+        );
+        attendeeInclude.attributes = [];
+        where["$attendees.id_user$"]= util.parseList(req.query.registered, parseInt, ",");
+        currIncludes = [attendeeInclude];
+    }
+    return util.sendModelOrError(res, db.Event.findAll({ where: where, include: currIncludes }));
 };
 
 exports.deleteEvent = function(req, res) {

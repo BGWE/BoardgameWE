@@ -11,6 +11,10 @@ exports.listToString = (list) => {
     return str;
 };
 
+exports.parseList = function(s, fn, sep) {
+    return s.split(sep).map(v => fn(v));
+};
+
 exports.toDictMapping = (arr, field) => {
     let object = {};
     for (let i in arr) {

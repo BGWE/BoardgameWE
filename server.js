@@ -1,6 +1,7 @@
 const http = require('http');
 const express = require('express');
 const bodyParser = require('body-parser');
+const boolParser = require('express-query-boolean');
 let cors = require('cors');
 
 let app = express();
@@ -9,6 +10,7 @@ const port = process.env.PORT || 3000;
 
 app.use(bodyParser.json()); // support json encoded bodies
 app.use(bodyParser.urlencoded({ extended: true })); // support encoded bodies
+app.use(boolParser());
 app.use(cors());
 app.options('*', cors());
 
