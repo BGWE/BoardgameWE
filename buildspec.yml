@@ -8,9 +8,5 @@ phases:
     commands:
       - npm test
 
-  post_build:
-    commands:
-      - cd ./api && ../node_modules/.bin/sequelize db:migrate
-
 artifacts:
   type: zip
