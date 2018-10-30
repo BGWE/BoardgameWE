@@ -1,12 +1,15 @@
 'use strict';
 module.exports = (sequelize, DataTypes) => {
   var Game = sequelize.define('Game', {
-    duration: {
+    duration: { // in minutes
         type: DataTypes.INTEGER,
         validate: {min: 0},
         allowNull: true
     },
     id_board_game: {
+        type: DataTypes.INTEGER
+    },
+    id_event: {
         type: DataTypes.INTEGER
     },
     ranking_method: {
@@ -18,15 +21,25 @@ module.exports = (sequelize, DataTypes) => {
   }, {});
 
   Game.associate = function(models) {
-      // models.Game.hasOne(models.BoardGame, {
-      //     foreignKey: "id",
-      //     sourceKey: "id_board_game"  // supported in only from version 5.0.0.beta5
-      // });
       models.Game.hasMany(models.GamePlayer, {
           onDelete: "CASCADE",
           foreignKey: "id_game",
           sourceKey: "id",
-          as: "players"
+          as: "game_players"
+      });
+
+      models.Game.belongsTo(models.Event, {
+          onDelete: "RESTRICT",
+          foreignKey: "id_event",
+          targetKey: "id",
+          as: "event"
+      });
+
+      models.Game.belongsTo(models.BoardGame, {
+          as: "board_game",
+          foreignKey: "id_board_game",
+          targetKey: "id",
+          onDelete: "RESTRICT"
       });
   };
   return Game;

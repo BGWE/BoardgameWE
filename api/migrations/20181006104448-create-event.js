@@ -1,25 +1,27 @@
 'use strict';
-
 module.exports = {
   up: (queryInterface, Sequelize) => {
-    return queryInterface.createTable('Games', {
+    return queryInterface.createTable('Events', {
       id: {
         allowNull: false,
         autoIncrement: true,
         primaryKey: true,
         type: Sequelize.INTEGER
       },
-      id_board_game: {
-          type: Sequelize.INTEGER,
-          onDelete: "RESTRICT",
-          allowNull: false,
-          references: {
-              model: 'BoardGames',
-              key: 'id'
-          }
+      name: {
+        type: Sequelize.STRING
       },
-      duration: {
-        type: Sequelize.INTEGER
+      start: {
+        type: Sequelize.DATE
+      },
+      end: {
+        type: Sequelize.DATE
+      },
+      description: {
+        type: Sequelize.TEXT
+      },
+      location: {
+        type: Sequelize.STRING
       },
       createdAt: {
         allowNull: false,
@@ -32,6 +34,6 @@ module.exports = {
     });
   },
   down: (queryInterface, Sequelize) => {
-    return queryInterface.dropTable('Games');
+    return queryInterface.dropTable('Events');
   }
 };

@@ -1,25 +1,29 @@
 'use strict';
-
 module.exports = {
   up: (queryInterface, Sequelize) => {
-    return queryInterface.createTable('Games', {
+    return queryInterface.createTable('Users', {
       id: {
         allowNull: false,
         autoIncrement: true,
         primaryKey: true,
         type: Sequelize.INTEGER
       },
-      id_board_game: {
-          type: Sequelize.INTEGER,
-          onDelete: "RESTRICT",
-          allowNull: false,
-          references: {
-              model: 'BoardGames',
-              key: 'id'
-          }
+      name: {
+        type: Sequelize.STRING
       },
-      duration: {
-        type: Sequelize.INTEGER
+      surname: {
+        type: Sequelize.STRING
+      },
+      email: {
+        type: Sequelize.STRING,
+        unique: true
+      },
+      password: {
+        type: Sequelize.STRING
+      },
+      username: {
+        type: Sequelize.STRING,
+        unique: true
       },
       createdAt: {
         allowNull: false,
@@ -32,6 +36,6 @@ module.exports = {
     });
   },
   down: (queryInterface, Sequelize) => {
-    return queryInterface.dropTable('Games');
+    return queryInterface.dropTable('Users');
   }
 };

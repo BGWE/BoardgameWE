@@ -4,99 +4,103 @@ const bgg = require("./util/bgg");
 const util = require("./util/util");
 
 exports.getBoardGame = function(req, res) {
-    db.BoardGame.findById(parseInt(req.params.bgid))
-        .then(function(boardGame) {
-            res.json(boardGame);
-        })
-        .catch(function (err) {
-            res.status(404).send({error: "err"});
-        });
+    return util.sendModelOrError(res, db.BoardGame.findById(parseInt(req.params.bgid)));
 };
 
 exports.updateBoardGame = function(req, res) {
-    const url = req.body.video_url;
+    const url = req.body.gameplay_video_url;
     if (url == null || url.length === 0) {
-        res.status(400).send("Invalid url");
-        return;
+        return util.detailErrorResponse(res, 400, "Invalid url");
     }
+    const bgid = parseInt(req.params.bgid);
+    return db.BoardGame.update({
+        gameplay_video_url: url
+    }, {
+        where: {id: bgid},
+        fields: ["gameplay_video_url"]
+    }).then(() => {
+        return util.sendModelOrError(res, db.BoardGame.findById(bgid));
+    }).catch(err => {
+        return util.errorResponse(res);
+    });
+};
 
-    db.BoardGame.findById(parseInt(req.params.bgid))
-        .then(function(boardGame) {
-            boardGame.gameplay_video_url = url;
-            boardGame.save()
-                .then((board_game) => {res.status(200).send(board_game);})
-                .catch((err) => {res.status(500).send({error: "err"});});
-        })
-        .catch(function(err) {
-            res.status(404).send({error: "err"});
-        });
+const boardGameFromBggResponse = function(gid, body) {
+    const game = bgg.format_get_response(body);
+    return {
+        name: game.name,
+        bgg_id: gid,
+        bgg_score: game.score,
+        gameplay_video_url: null,
+        min_players: parseInt(game.minplayers),
+        max_players: parseInt(game.maxplayers),
+        min_playing_time: parseInt(game.maxplaytime),
+        max_playing_time: parseInt(game.minplaytime),
+        playing_time: parseInt(game.playingtime),
+        thumbnail: game.thumbnail[0],
+        image: game.image[0],
+        description: game.description[0],
+        year_published: parseInt(game.yearpublished),
+        category: util.listToString(game.boardgamecategory),
+        mechanic: util.listToString(game.boardgamemechanic),
+        family: util.listToString(game.boardgamefamily)
+    };
+};
+
+/**
+ * Executes an action if a given board game has already been fetched and registered in the database
+ * @param gid Id of the game (id from the source)
+ * @param source Source where to download game data
+ * @param req Input request
+ * @param res Response
+ * @param actionFn The action to perform, should return a promise
+ * @returns {*}
+ */
+exports.executeIfBoardGameExists = function(gid, source, req, res, actionFn) {
+    if (source !== "bgg") {
+        return util.detailErrorResponse(res, 400, "Invalid source '" + source + "' (only supported are {bgg,}).");
+    }
+    return db.BoardGame.find({where: {bgg_id: gid}}).then(board_game => {
+        if (board_game !== null) {
+            return actionFn(board_game, req, res);
+        } else {
+            return bgg.getBoardGamePromise(gid, res, body => {
+                return db.BoardGame.create(boardGameFromBggResponse(gid, body)).then(board_game => {
+                    return actionFn(board_game, req, res);
+                }).catch(err => {
+                    return util.errorResponse(res);
+                });
+            });
+        }
+    });
 };
 
 exports.addBoardGame = function(req, res) {
     // load info from board game geek
-    const bggId = parseInt(req.params.bggid);
-    bgg.get(bggId, function (err, game) {
-        if (err) {
-            res.status(404).send({error: "err"});
-            return;
-        }
-        db.BoardGame.build({
-            name: game.name,
-            bgg_id: bggId,
-            bgg_score: game.score,
-            gameplay_video_url: null,
-            min_players: parseInt(game.minplayers),
-            max_players: parseInt(game.maxplayers),
-            min_playing_time: parseInt(game.maxplaytime),
-            max_playing_time: parseInt(game.minplaytime),
-            playing_time: parseInt(game.playingtime),
-            thumbnail: game.thumbnail[0],
-            image: game.image[0],
-            description: game.description[0],
-            year_published: parseInt(game.yearpublished),
-            category: util.listToString(game.boardgamecategory),
-            mechanic: util.listToString(game.boardgamemechanic),
-            family: util.listToString(game.boardgamefamily)
-        }).save()
-          .then((game) => { res.status(200).json(game); })
-          .error((err) => { res.status(500).send({error: "err"}); });
+    const bggId = parseInt(req.body.bgg_id);
+    return bgg.getBoardGamePromise(bggId, res, body => {
+        return util.sendModelOrError(res, db.BoardGame.create(boardGameFromBggResponse(bggId, body)));
     });
 };
 
 exports.getBoardGames = function(req, res) {
-    db.BoardGame.findAll()
-        .then((boardGames) => { res.json({"board_games": boardGames}); })
-        .error((err) => { res.status(500).send({error: "err"}); });
+    return util.sendModelOrError(res, db.BoardGame.findAll());
 };
 
 exports.searchBoardGames = function(req, res) {
     const searchQuery = req.query.q;
     if (searchQuery == null || searchQuery.length === 0) {
-        res.status(400).send("Invalid search query " + searchQuery + ".");
-        return;
+        return util.detailErrorResponse(res, 400, "Invalid search query " + searchQuery + ".");
     }
-    bgg.search(searchQuery, function(err, games) {
-        if (err) {
-            res.status(500).send({error: "err"});
-            return;
-        }
-        res.status(200).json(games);
-    });
+    return bgg.search(searchQuery)
+        .then(body => {
+            return util.successResponse(res, bgg.format_search_response(body));
+        }).catch(err => {
+            return util.errorResponse(res);
+        });
 };
 
 exports.deleteBoardGame = function(req, res) {
     const bgid = parseInt(req.params.bgid);
-    db.Game.findAll({where: {id_board_game: bgid}})
-    .then((games) => {
-        if (games.length > 0) {
-            res.status(400).send({error: "Some games are associated with this board game (id:" + bgid + ")."});
-        } else {
-            db.BoardGame.destroy({
-                where: {id: bgid}
-            })
-            .then(() => {res.status(200).send({"success": true});})
-            .error((err) => {res.status(500).send({error: err});});
-        }
-    })
-    .error((err) => {res.status(500).send({error: err})});
+    return util.handleDeletion(res, db.BoardGame.destroy({ where: {id: bgid} }));
 };

@@ -1,0 +1,10 @@
+runtime: nodejs8
+
+env_variables:
+  DB_HOSTNAME: "ec2-54-217-235-16.eu-west-1.compute.amazonaws.com"
+  DB_NAME: dd3pchju6plpv6
+  DB_PASSWORD: 5ba16d513e0b7641b566e2dca539f65fddc9f8563d63e9cae0111f1982631726
+  DB_USERNAME: yirqxrwyciqeev
+  NODE_ENV: staging
+  PORT: 8080
+  JWT_SECRET_KEY: Kbqz%G^hoc37;T8G]]s)/Q8.t;NkCvcU+Lo)#E_=,q:.6

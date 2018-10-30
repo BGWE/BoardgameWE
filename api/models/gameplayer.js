@@ -5,20 +5,25 @@ module.exports = (sequelize, DataTypes) => {
         type: DataTypes.INTEGER,
         validate: {min: 0}
     },
-    id_player: {
+    id_user: {
         type: DataTypes.INTEGER,
-        unique: 'players_unique_per_game'
+        allowNull: true,
+        unique: 'game_player_unique'
+    },
+    name: {
+        type: DataTypes.STRING,
+        allowNull: true
     },
     id_game: {
         type: DataTypes.INTEGER,
-        unique: 'players_unique_per_game'
+        unique: 'game_player_unique'
     }
   }, {});
   GamePlayer.associate = function(models) {
-      models.GamePlayer.belongsTo(models.Player, {
-          onDelete: "CASCADE",
-          foreignKey: "id_player",
-          as: "player"
+      models.GamePlayer.belongsTo(models.User, {
+          onDelete: "RESTRICT",
+          foreignKey: "id_user",
+          as: "user"
       });
 
       models.GamePlayer.belongsTo(models.Game, {

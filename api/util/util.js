@@ -11,6 +11,10 @@ exports.listToString = (list) => {
     return str;
 };
 
+exports.parseList = function(s, fn, sep) {
+    return s.split(sep).map(v => fn(v));
+};
+
 exports.toDictMapping = (arr, field) => {
     let object = {};
     for (let i in arr) {
@@ -69,4 +73,65 @@ exports.rankPlayersFromData = (dict, aggregate) => {
         })
     }
     return exports.rank(scores, (player) => player.score, false);
+};
+
+/** object marking a success */
+exports.successObj = {success: true};
+exports.errorObj = {error: "err"};
+
+/**
+ * Return a success json response containing the given data
+ * @param res
+ * @param data
+ * @returns {*}
+ */
+exports.successResponse = function(res, data) {
+    return res.status(200).json(data);
+};
+
+/**
+ * Error 500 with {error: "err"} JSON body
+ * @param res
+ * @returns {*}
+ */
+exports.errorResponse = function(res) {
+    return res.status(500).json(exports.errorObj);
+};
+
+/**
+ * Error with given cande and {message: msg, error: "err"} JSON body
+ * @param res
+ * @param code
+ * @param msg
+ * @returns {*}
+ */
+exports.detailErrorResponse = function(res, code, msg) {
+    return res.status(code).json(Object.assign({message: msg}, exports.errorObj));
+};
+
+exports.sendModelOrError = function(res, promise, transform) {
+    if (transform === undefined) {
+        transform = (a) => a; // identity by default
+    }
+    return promise
+        .then(obj => {
+            if (!obj) {
+                return exports.detailErrorResponse(res, 404, "not found");
+            }
+            return exports.successResponse(res, transform(obj));
+        })
+        .catch(err => {
+            return exports.errorResponse(res);
+        })
+};
+
+
+exports.handleDeletion = function(res, promise) {
+    return promise
+        .then(obj => {
+            return exports.successResponse(res, exports.successObj);
+        })
+        .catch(err => {
+            return exports.errorResponse(res);
+        })
 };
