@@ -142,13 +142,13 @@ exports.getGCBGBRankings = function (games) {
         const game_ranks = util.rank(game.game_players, player => player.score, game.ranking_method === "POINTS_LOWER_BETTER");
         const n_groups = AGGREGATE.count_unique(game_ranks.map(gr => gr.rank));
         for (let playerIndex = 0; playerIndex < game_ranks.length; ++playerIndex) {
-            const currPlayer = players[playerIndex];
+            const currPlayer = game_ranks[playerIndex];
             const rank_obj = game_ranks[playerIndex];
             const identifier = currPlayer.name || currPlayer.user.id;
             let array = (identifier in gamesList ? gamesList[identifier] : []);
             array.push(exports.getGCBGBForPlayer(rank_obj, game.duration, n_groups, game.ranking_method === "WIN_LOSE"));
             gamesList[identifier] = array;
-            playersData[identifier] = extractPlayerDescriptor(players[playerIndex]);
+            playersData[identifier] = extractPlayerDescriptor(currPlayer);
         }
     }
     return {players: playersData, points: gamesList};
