@@ -96,17 +96,31 @@ exports.updateUser = function(req, res) {
 
     return db.User.findById(userId)
         .then(user => {
-            user.username = req.body.username || user.username;
-            user.email = req.body.email || user.email;
-            user.name = req.body.name || user.name;
-            user.surname = req.body.surname || user.surname;
-            if (req.body.password) {
-                return bcrypt.hash(req.body.password, 10, function(err, hash) {
-                    user.password = hash;
+            let updateFn = function() {
+                user.username = req.body.username || user.username;
+                user.email = req.body.email || user.email;
+                user.name = req.body.name || user.name;
+                user.surname = req.body.surname || user.surname;
+                if (req.body.password) {
+                    return bcrypt.hash(req.body.password, 10, function(err, hash) {
+                        user.password = hash;
+                        return handleUserResponse(res, user.save());
+                    })
+                } else {
                     return handleUserResponse(res, user.save());
-                })
+                }
+            };
+
+            if (req.body.password !== undefined) {
+                user.validPassword(req.body.old_password).then(password_ok => {
+                    if (password_ok) {
+                        return updateFn();
+                    } else {
+                        return util.detailErrorResponse(res, 403, "invalid/missing old password");
+                    }
+                });
             } else {
-                return handleUserResponse(res, user.save());
+                return updateFn();
             }
         })
         .catch(err => {
