@@ -7,7 +7,8 @@ module.exports = {
         database: process.env.DB_NAME,
         host: process.env.DB_HOSTNAME,
         dialect: 'postgres',
-        timezone: process.env.TIMEZONE || "UTC"
+        timezone: process.env.TIMEZONE || "UTC",
+        seederStorage: "sequelize"
     },
     staging: {
         username: process.env.DB_USERNAME,
@@ -18,7 +19,8 @@ module.exports = {
         dialectOptions: {
             ssl: true
         },
-        timezone: process.env.TIMEZONE || "UTC"
+        timezone: process.env.TIMEZONE || "UTC",
+        seederStorage: "sequelize"
     },
     test: {
         username: process.env.DB_USERNAME,
@@ -26,7 +28,8 @@ module.exports = {
         database: process.env.DB_NAME + "_test",
         host: process.env.DB_HOSTNAME,
         dialect: 'postgres',
-        timezone: process.env.TIMEZONE || "UTC"
+        timezone: process.env.TIMEZONE || "UTC",
+        seederStorage: "sequelize"
     },
     production: {
         username: process.env.DB_USERNAME,
