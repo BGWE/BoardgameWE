@@ -49,8 +49,8 @@ exports.getAllEvents = function(req, res) {
     let currIncludes = [];
     if (req.query.ongoing !== undefined) {
         let between = {
-            start: {[db.Sequelize.Op.lte]: db.Sequelize.fn("now")},
-            end: {[db.Sequelize.Op.gte]: db.Sequelize.fn("now")}
+            start: {[db.Sequelize.Op.lte]: db.Sequelize.fn("date", db.Sequelize.fn("now"))},
+            end: {[db.Sequelize.Op.gte]: db.Sequelize.fn("date", db.Sequelize.fn("now"))}
         };
         if (req.query.ongoing) {
             where[db.Sequelize.Op.and] = between;

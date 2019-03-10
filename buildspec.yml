@@ -4,9 +4,5 @@ phases:
     commands:
       - npm install
 
-  pre_build:
-    commands:
-      - npm test
-
 artifacts:
   type: zip

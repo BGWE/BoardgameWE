@@ -2,6 +2,11 @@ const http = require('http');
 const express = require('express');
 const bodyParser = require('body-parser');
 const boolParser = require('express-query-boolean');
+
+if (process.env.NODE_ENV !== 'production') {
+    require('dotenv').load();
+}
+
 let cors = require('cors');
 
 let app = express();
