@@ -51,17 +51,34 @@ exports.buildFullGame = (gameId, res) => {
 };
 
 const preprocessGameData = function(body) {
-    return {
+    let data = {
         players: body.players,
         id_board_game: body.id_board_game,
         ranking_method: body.ranking_method,
         duration: body.duration || null,
-        ranking_validation: exports.validateRanks(
+        has_players: body.players !== undefined && body.players.length > 0
+    };
+
+    if (data.has_players) {
+        data.ranking_validation = exports.validateRanks(
             body.ranking_method,
             body.players.map((item) => { return item.score; })
-        ),
-        players_validation: exports.validateGamePlayers(body.players)
-    };
+        );
+        data.players_validation = exports.validateGamePlayers(body.players);
+    }
+
+    return data;
+};
+
+const getGamePlayerData = function(game, validated_players) {
+    return validated_players.map((item) => {
+        return {
+            id_game: game.id,
+            score: item.score,
+            id_user: item.user || null,
+            name: item.name || null
+        };
+    });
 };
 
 /**
@@ -73,37 +90,35 @@ const preprocessGameData = function(body) {
  */
 exports.addGameQuery = function(eid, req, res) {
     const game_data = preprocessGameData(req.body);
+    if (!game_data.has_players) {
+        return util.detailErrorResponse(res, 400, "missing players");
+    }
     if (!game_data.ranking_validation.valid) {
         return util.detailErrorResponse(res, 400, game_data.ranking_validation.error);
     }
     if (!game_data.players_validation.valid) {
         return util.detailErrorResponse(res, 400, game_data.players_validation.error);
     }
-    return db.Game.create({
-        id_event: eid,
-        id_board_game: game_data.id_board_game,
-        duration: game_data.duration,
-        ranking_method: game_data.ranking_method
-    }).then((game) => {
-        const playerGameData = game_data.players.map((item) => {
-            return {
-                id_game: game.id,
-                score: item.score,
-                id_user: item.user || null,
-                name: item.name || null
-            };
-        });
-        return db.GamePlayer.bulkCreate(playerGameData, {
-            returning: true,
-            individualHooks: true
-        }).then(() => {
-            return exports.buildFullGame(game.id, res);
-        }).catch(err => {
-            return util.errorResponse(res);
-        });
+    return db.sequelize.transaction(t => {
+        return db.Game.create({
+            id_event: eid,
+            id_board_game: game_data.id_board_game,
+            duration: game_data.duration,
+            ranking_method: game_data.ranking_method
+        }, {transaction: t}).then((game) => {
+            const player_data = getGamePlayerData(game, game_data.players);
+            return db.GamePlayer.bulkCreate(player_data, {
+                returning: true,
+                transaction: t
+            }).then(players => {
+                return game;
+            });
+        })
+    }).then(game => {
+        return exports.buildFullGame(game.id, res);
     }).catch(err => {
         return util.errorResponse(res);
-    })
+    });
 };
 
 exports.addGame = function (req, res) {
@@ -112,6 +127,50 @@ exports.addGame = function (req, res) {
 
 exports.addEventGame = function(req, res) {
     return exports.addGameQuery(parseInt(req.params.eid), req, res);
+};
+
+exports.updateEventGame = function(req, res) {
+    let gid = parseInt(req.params.gid);
+    let eid = parseInt(req.params.eid);
+    const game_data = preprocessGameData(req.body);
+    if (game_data.has_players && !game_data.ranking_validation.valid) {
+        return util.detailErrorResponse(res, 400, game_data.ranking_validation.error);
+    }
+    if (game_data.has_players && !game_data.players_validation.valid) {
+        return util.detailErrorResponse(res, 400, game_data.players_validation.error);
+    }
+    return db.sequelize.transaction(t => {
+        return db.Game.findById(gid, {transaction: t})
+            .then(game => {
+                return db.Game.update({
+                    id_board_game: game_data.id_board_game || game.id_board_game,
+                    duration: game_data.duration || game.duration,
+                    ranking_method: game_data.ranking_method || game.ranking_method,
+                    id_event: req.body.id_event || eid
+                }, {
+                    where: {id: game.id, id_event: eid},
+                    transaction: t
+                }).then(updated => {
+                    if (game_data.has_players) {
+                        return db.GamePlayer.destroy({
+                            transaction: t,
+                            where: {id_game: game.id}
+                        }).then(deleted => {
+                            const playersData = getGamePlayerData(game, game_data.players);
+                            return db.GamePlayer.bulkCreate(playersData, {
+                                transaction: t
+                            }).then(players => { return game; });
+                        });
+                    } else {
+                        return game;
+                    }
+                })
+            });
+    }).then(game => {
+        return exports.buildFullGame(game.id, res);
+    }).catch(err => {
+        return util.errorResponse(res);
+    });
 };
 
 exports.rankForGame = function(game) {

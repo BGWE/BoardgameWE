@@ -90,6 +90,9 @@ module.exports = function(app) {
     app.route("/event/:eid/game")
         .post(GameController.addEventGame);
 
+    app.route("/event/:eid/game/:gid")
+        .put(GameController.updateEventGame);
+
     app.route("/event/:eid/games")
         .get(GameController.getEventGames);
 
