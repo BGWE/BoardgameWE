@@ -57,6 +57,9 @@ typings/
 # dotenv environment variables file
 .env
 
+# doc
+doc/
+
 .idea
 .DS_Store
 docker/postgres-data
