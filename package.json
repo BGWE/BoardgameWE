@@ -16,7 +16,14 @@
     "url": "https://github.com/FServais/BoardgameWE/issues"
   },
   "homepage": "https://github.com/FServais/BoardgameWE#readme",
+  "apidoc": {
+    "name": "BoardGameWE API",
+    "title": "BoardGameWE API",
+    "private": false,
+    "description": "Documentation for the BoardgameWE REST API"
+  },
   "dependencies": {
+    "apidoc": "^0.17.7",
     "aws-sdk": "^2.327.0",
     "bcryptjs": "^2.4.3",
     "body-parser": "^1.18.3",
