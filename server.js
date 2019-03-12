@@ -23,6 +23,8 @@ app.get('/', function (req, res) {
    res.send('Hello Ro!');
 });
 
+app.use('/doc', express.static(__dirname + '/doc'));
+
 let routes = require('./api/routes');
 routes(app);
 
