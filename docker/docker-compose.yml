@@ -10,6 +10,8 @@ services:
       POSTGRES_DB: bgwe_dev
     expose:
       - "5432"
+    volumes:
+      - ./postgres-data:/var/lib/postgresql/data
     ports:
       - "5432:5432"
 
@@ -37,6 +39,7 @@ services:
       - ../:/home/node/app
     command:  >
       bash -c "npm install
+      && ./node_modules/apidoc/bin/apidoc -i api/ -o doc/
       && sleep 15
       && cd api/
       && ../node_modules/.bin/sequelize db:migrate
