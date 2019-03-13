@@ -148,25 +148,25 @@ exports.sendUserLibraryGames = function(uid, req, res) {
 };
 
 exports.addLibraryGames = function(req, res) {
-    if (!req.body.games) {
+    if (!req.body.board_games) {
         return res.status(403).send({error: "missing games field"});
     }
     let userId = userutil.getCurrUserId(req);
-    let games = req.body.games.map(g => { return { id_user: userId, id_board_game: g }});
+    let games = req.body.board_games.map(g => { return { id_user: userId, id_board_game: g }});
     return db.LibraryGame.bulkCreate(games, { ignoreDuplicates: true })
         .then(() => { return exports.sendCurrUserGames(req, res); })
         .catch(err => { return util.errorResponse(res); });
 };
 
 exports.deleteLibraryGames = function(req, res) {
-    if (!req.body.games) {
+    if (!req.body.board_games) {
         return util.detailErrorResponse(res, 403, "missing games field");
     }
     let userId = userutil.getCurrUserId(req);
     return db.LibraryGame.destroy({
         where: {
             id_user: userId,
-            id_board_game: req.body.games
+            id_board_game: req.body.board_games
         }
     }).then(() => { return exports.sendCurrUserGames(req, res); })
       .catch(err => { return util.errorResponse(res); });

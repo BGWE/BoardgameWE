@@ -17,7 +17,7 @@ module.exports = function(app) {
     /**
      * @apiDefine TokenHeaderRequired
      *
-     * @apiHeader {String} Authentication User authentication token "JWT {token}"
+     * @apiHeader {String} Authentication User authentication token `JWT {token}`
      */
 
     /**
@@ -27,6 +27,125 @@ module.exports = function(app) {
      * @apiParam {Number} id Board game identifier on the source platform.
      */
 
+    /**
+     * @apiDefine DBDatetimeFields
+     * @apiSuccess {String} createdAt Creation datetime of the resource (ISO8601, UTC)
+     * @apiSuccess {String} updatedAt Latest update datetime of the resource (ISO8061, UTC)
+     */
+
+    /**
+     * @apiDefine UserDescriptor
+     *
+     * @apiSuccess {Number} id User id
+     * @apiSuccess {String} name User name
+     * @apiSuccess {String} surname User surname
+     * @apiSuccess {String} username User username
+     * @apiSuccess {Boolean} admin True if the user is an admin, false otherwise
+     * @apiSuccess {String} email User email
+     */
+
+    /**
+     * @apiDefine EventDescriptor
+     *
+     * @apiSuccess {Number} id Event identifier
+     * @apiSuccess {String} name Event name
+     * @apiSuccess {String} start Start date (ISO8601)
+     * @apiSuccess {String} end End date (ISO8601)
+     * @apiSuccess {String} description Event description
+     * @apiSuccess {Number} id_creator Event creator user identifier
+     */
+
+    /**
+     * @apiDefine FullGameDescriptor
+     *
+     * @apiSuccess {Number} id Game identifier
+     * @apiSuccess {String} duration Game duration, or `null`.
+     * @apiSuccess {String} id_board_game Played board game identifier
+     * @apiSuccess {String} id_event Event identifier, or `null`.
+     * @apiSuccess {String} ranking_method The ranking method for the game. One of: `{WIN_LOSE, POINTS_LOWER_BETTER, POINTS_HIGHER_BETTER}`.
+     * @apiSuccess {BoardGame} board_game Board game data (see "Add board game" request for structure).
+     * @apiSuccess {Player[]} players List of players involved in the game.
+     * @apiSuccess {Number} players.id Game player identifier
+     * @apiSuccess {Number} players.score Player score
+     * @apiSuccess {Number} players.id_user Player user identifier (mutually exclusive with `name`), or `null`.
+     * @apiSuccess {User} players.user If `id_user` is not `null`, user data (see 'Get current user' request for user
+     * structure)
+     * @apiSuccess {String} players.name Player name if the player is not registered on the application (mutually
+     * exclusive with `user`), or `null`.
+     */
+
+    /**
+     * @apiDefine FullEventDescriptor
+     *
+     * @apiSuccess {Number} id Event id
+     * @apiSuccess {String} name Event name
+     * @apiSuccess {String} start Start date (ISO8601)
+     * @apiSuccess {String} end End date (ISO8601)
+     * @apiSuccess {String} description Event description
+     * @apiSuccess {Number} id_creator Event creator user identifier
+     * @apiSuccess {User} creator Creator user data (see 'Get current user' request for user structure)
+     * @apiSuccess {Attendee[]} attendees List of event attendees
+     * @apiSuccess {ProvidedBoardGame[]} provided_board_games List of board games provided by attendees to the event.
+     */
+
+    /**
+     * @apiDefine BoardGameDescriptor
+     *
+     * @apiSuccess {Number} id Board game identifier
+     * @apiSuccess {String} name Board game name
+     * @apiSuccess {Number} bgg_id BGG identifier of the board game
+     * @apiSuccess {Number} bgg_score Score of the game on BGG
+     * @apiSuccess {String} gameplay_video_url URL of a gameplay/rule video (can be `null`)
+     * @apiSuccess {Number} min_players Minimum number of players
+     * @apiSuccess {Number} max_players Maximum number of players
+     * @apiSuccess {Number} min_playing_time Minimum playing time
+     * @apiSuccess {Number} max_playing_time Maximum playing time
+     * @apiSuccess {Number} playing_time Board game official playing time
+     * @apiSuccess {String} thumbnail URL of the board game thumbnail image
+     * @apiSuccess {String} image URL of the board game image
+     * @apiSuccess {String} description Description of the board game
+     * @apiSuccess {Number} year_published Board game publication year
+     * @apiSuccess {String} category Comma-separated list of categories the game belongs to.
+     * @apiSuccess {String} mechanic Comma-separated list of mechanics the game belongs to.
+     * @apiSuccess {String} family  Comma-separated list of families the game belongs to.
+     *
+     */
+
+    /**
+     * @apiDefine EventListDescriptor
+     * @apiSuccess {Event[]} events List of events. See "Create event" request for event object structure. Note: the
+     * returned data is a list (not an actual object).
+     */
+
+    /**
+     * @apiDefine LibraryBoardGamesListDescriptor
+     * @apiSuccess {LibraryBoardGame[]} library_board_games List of library board games. Note: the
+     * returned data is a list (not an actual object).
+     * @apiSuccess {Number} library_board_games.id_user User (the library belongs to) identifier
+     * @apiSuccess {Number} library_board_games.id_board_game Library board game identifier.
+     * @apiSuccess {BoardGame} library_board_games.board_game Board game data (see "Add board game" request for structure)
+     * @apiSuccess {String} library_board_games.createdAt Creation datetime of the resource (ISO8601, UTC)
+     * @apiSuccess {String} library_board_games.updatedAt Latest update datetime of the resource (ISO8061, UTC)
+     */
+
+    /**
+     * @apiDefine ProvidedBoardGamesListDescriptor
+     * @apiSuccess {ProvidedBoardGame[]} provided_board_games List of provided board games. Note: the
+     * returned data is a list (not an actual object).
+     * @apiSuccess {Number} provided_board_games.id_user User (who provided the board game at the event) identifier
+     * @apiSuccess {Number} provided_board_games.id_event Event (the board game is provided at) identifier.
+     * @apiSuccess {Number} provided_board_games.id_board_game Provided board game identifier.
+     * @apiSuccess {User} provided_board_games.provider Provider user data (see 'Get current user' request for user structure)
+     * @apiSuccess {BoardGame} provided_board_games.board_game Board game data (see "Add board game" request for structure)
+     * @apiSuccess {String} provided_board_games.createdAt Creation datetime of the resource (ISO8601, UTC)
+     * @apiSuccess {String} provided_board_games.updatedAt Latest update datetime of the resource (ISO8061, UTC)
+     */
+
+    /**
+     * @apiDefine SuccessObjDescriptor
+     * @apiSuccess {Boolean} success True if success
+     */
+
     // User routes
     /**
      * @api {post} /user Register user
@@ -34,15 +153,20 @@ module.exports = function(app) {
      * @apiGroup User
      * @apiDescription Create a new user. The created user must be authorized by an admin before being able to access
      * the application data.
+     *
+     * @apiUse UserDescriptor
+     * @apiUse DBDatetimeFields
      */
     app.route("/user")
         .post(UserController.register);
 
     /**
-     * @api {post} /login Authenticate user
+     * @api {post} /user/login Authenticate user
      * @apiName Login
      * @apiGroup Authentication
      * @apiDescription Authenticate a user, returns a Json Web Token (JWT) to pass along with other requests.
+     *
+     * @apiSuccess {String} token JSON Web Token
      */
     app.route("/user/login")
         .post(UserController.signIn);
@@ -77,13 +201,15 @@ module.exports = function(app) {
     });
 
     // User (protected)
-
     /**
      * @api {get} /user/current Get current user
      * @apiName GetCurrentUser
      * @apiGroup User
      * @apiDescription Get current user data.
      * @apiUse TokenHeaderRequired
+     *
+     * @apiUse UserDescriptor
+     * @apiUse DBDatetimeFields
      */
     app.route("/user/current")
         .get(UserController.getCurrentUser);
@@ -94,18 +220,21 @@ module.exports = function(app) {
      * @apiGroup User
      * @apiDescription Update user data.
      * @apiUse TokenHeaderRequired
+     *
+     * @apiUse UserDescriptor
+     * @apiUse DBDatetimeFields
      */
     app.route("/user/:uid")
         .put(UserController.updateUser);
 
     // Library
-
     /**
      * @api {get} /user/library_games Get library
      * @apiName GetCurrentUserLibrary
      * @apiGroup User library
      * @apiDescription Get the current user's board game library.
      * @apiUse TokenHeaderRequired
+     * @apiUse LibraryBoardGamesListDescriptor
      */
 
     /**
@@ -114,6 +243,9 @@ module.exports = function(app) {
      * @apiGroup User library
      * @apiDescription Add a board game to the current user library.
      * @apiUse TokenHeaderRequired
+     * @apiParam {Number[]} board_games List of identifiers of the board games to add to the user library.
+     *
+     * @apiUse LibraryBoardGamesListDescriptor
      */
 
     /**
@@ -122,6 +254,8 @@ module.exports = function(app) {
      * @apiGroup User library
      * @apiDescription Delete a board game from the current user library.
      * @apiUse TokenHeaderRequired
+     *
+     * @apiUse LibraryBoardGamesListDescriptor
      */
     app.route("/user/library_games")
         .get(UserController.getCurrentUserLibraryGames)
@@ -134,10 +268,9 @@ module.exports = function(app) {
      * @apiGroup User library
      * @apiDescription Add a new board game from the given source to the application, then add this game to the current
      * user library.
-     *
      * @apiUse SourceParameter
-     *
      * @apiUse TokenHeaderRequired
+     * @apiUse LibraryBoardGamesListDescriptor
      */
     app.route("/user/library_game/:source/:id")
         .post(UserController.addBoardGameAndAddToLibrary);
@@ -147,22 +280,22 @@ module.exports = function(app) {
      * @apiName GetUserLibrary
      * @apiGroup User library
      * @apiDescription Get the specified user's board game library.
-     *
      * @apiParam {Number} id User identifier.
-     *
      * @apiUse TokenHeaderRequired
+     * @apiUse LibraryBoardGamesListDescriptor
      */
     app.route("/user/:uid/library_games")
         .get(UserController.getUserLibraryGames);
 
     // Event
-
     /**
      * @api {post} /event Create event
      * @apiName CreateEvent
      * @apiGroup Event
      * @apiDescription Create an event.
      * @apiUse TokenHeaderRequired
+     * @apiUse EventDescriptor
+     * @apiUse DBDatetimeFields
      */
     app.route("/event")
         .post(EventController.createEvent);
@@ -176,6 +309,8 @@ module.exports = function(app) {
      * @apiParam {Number} id The event identifier
      *
      * @apiUse TokenHeaderRequired
+     * @apiUse FullEventDescriptor
+     * @apiUse DBDatetimeFields
      */
 
     /**
@@ -187,6 +322,7 @@ module.exports = function(app) {
      * @apiParam {Number} id The event identifier
      *
      * @apiUse TokenHeaderRequired
+     * @apiUse SuccessObjDescriptor
      */
     app.route("/event/:eid")
         .get(EventController.getFullEvent)
@@ -205,9 +341,24 @@ module.exports = function(app) {
      * only the events he has subscribed to, false for the others.
      *
      * @apiUse TokenHeaderRequired
+     * @apiUse EventListDescriptor
      */
     app.route("/events")
         .get(EventController.getAllEvents);
+
+    /**
+     * @api {get} /events/current Get user events
+     * @apiName GetCurrentUserEvents
+     * @apiGroup Event
+     * @apiDescription Get all the events created by the current user.
+     *
+     * @apiParam {Number} id Event identifier.
+     *
+     * @apiUse TokenHeaderRequired
+     * @apiUse EventListDescriptor
+     */
+    app.route("/events/current")
+        .get(EventController.getCurrentUserEvents);
 
     /**
      * @api {post} /event/:eid/board_game/:source/:id Add to event from source
@@ -215,12 +366,10 @@ module.exports = function(app) {
      * @apiGroup Event board game
      * @apiDescription Add a new board game from the given source to the application, then add this game to the
      * specified event.
-     *
      * @apiUse SourceParameter
-     *
      * @apiParam {Number} eid Event identifier.
-     *
      * @apiUse TokenHeaderRequired
+     * @apiUse ProvidedBoardGamesListDescriptor
      */
     app.route("/event/:eid/board_game/:source/:id")
         .post(EventController.addBoardGameAndAddToEvent);
@@ -235,6 +384,7 @@ module.exports = function(app) {
      * @apiParam {Number} id Event identifier.
      *
      * @apiUse TokenHeaderRequired
+     * @apiUse ProvidedBoardGamesListDescriptor
      */
 
     /**
@@ -246,6 +396,7 @@ module.exports = function(app) {
      * @apiParam {Number} id Event identifier.
      *
      * @apiUse TokenHeaderRequired
+     * @apiUse ProvidedBoardGamesListDescriptor
      */
 
     /**
@@ -257,6 +408,7 @@ module.exports = function(app) {
      * @apiParam {Number} id Event identifier.
      *
      * @apiUse TokenHeaderRequired
+     * @apiUse SuccessObjDescriptor
      */
     app.route("/event/:eid/board_games")
         .get(EventController.getProvidedBoardGames)
@@ -271,7 +423,18 @@ module.exports = function(app) {
      *
      * @apiParam {Number} id Event identifier.
      *
+     * @apiParam (body) {Number} id_board_game Board game identifier
+     * @apiParam (body) {Number} duration Duration of the board game, or `null`.
+     * @apiParam (body) {String} ranking_method The ranking method for the game. One of: `{WIN_LOSE, POINTS_LOWER_BETTER, POINTS_HIGHER_BETTER}`.
+     * @apiParam (body) {GamePlayer[]} players List of players involved with the game.
+     * @apiParam (body) {Number} players.score Player score
+     * @apiParam (body) {String} players.name Player name if not registered on the platform (mutually exclusive with
+     * 'user') or `null`.
+     * @apiParam (body) {Number} players.user Player user identifier (mutually exclusive with 'name') or `null`.
      * @apiUse TokenHeaderRequired
+     *
+     * @apiUse FullGameDescriptor
+     * @apiUse DBDatetimeFields
      */
     app.route("/event/:eid/game")
         .post(GameController.addEventGame);
@@ -280,12 +443,24 @@ module.exports = function(app) {
      * @api {put} /event/:eid/game/:gid Update event game
      * @apiName UpdateEventGame
      * @apiGroup Event game
-     * @apiDescription Update a game of the specified event.
+     * @apiDescription Update a game of the specified event. If a list of players is provided, it replaces the old list of players completely .
      *
      * @apiParam {Number} eid Event identifier.
      * @apiParam {Number} gid Game identifier.
      *
+     * @apiParam (body) {Number} id_board_game (Optional) Board game identifier
+     * @apiParam (body) {Number} duration (Optional) Duration of the board game, or `null`.
+     * @apiParam (body) {String} ranking_method (Optional) The ranking method for the game. One of: `{WIN_LOSE, POINTS_LOWER_BETTER, POINTS_HIGHER_BETTER}`.
+     * @apiParam (body) {GamePlayer[]} players (Optional) List of players involved with the game. If the list is empty
+     * or missing, the list of players (and their scores) is not updated.
+     * @apiParam (body) {Number} players.score Player score
+     * @apiParam (body) {String} players.name Player name if not registered on the platform (mutually exclusive with
+     * 'user') or `null`.
+     * @apiParam (body) {Number} players.user Player user identifier (mutually exclusive with 'name') or `null`.
+     *
      * @apiUse TokenHeaderRequired
+     * @apiUse FullGameDescriptor
+     * @apiUse DBDatetimeFields
      */
     app.route("/event/:eid/game/:gid")
         .put(GameController.updateEventGame);
@@ -299,12 +474,15 @@ module.exports = function(app) {
      * @apiParam {Number} id Event identifier.
      *
      * @apiUse TokenHeaderRequired
+     *
+     * @apiSuccess {Game[]} games List of the games of the event (see "Add event game" for Game structure). Note: the
+     * returned data is a list (not an actual object).
      */
     app.route("/event/:eid/games")
         .get(GameController.getEventGames);
 
     /**
-     * @api {get} /event/:id/games Get recent event game
+     * @api {get} /event/:id/games/latest Get recent event game
      * @apiName GetRecentEventGame
      * @apiGroup Event game
      * @apiDescription Get the most recent games of the specified event.
@@ -313,6 +491,9 @@ module.exports = function(app) {
      * @apiParam (query) {Number} count The number of games to return.
      *
      * @apiUse TokenHeaderRequired
+     *
+     * @apiSuccess {Game[]} games List of the games of the event (see "Add event game" for Game structure). Note: the
+     * returned data is a list (not an actual object).
      */
     app.route("/event/:eid/games/latest")
         .get(GameController.getRecentEventGames);
@@ -363,6 +544,7 @@ module.exports = function(app) {
      * @apiParam {Number} id Event identifier.
      *
      * @apiUse TokenHeaderRequired
+     * @apiUse SuccessObjDescriptor
      */
     app.route("/event/:eid/subscribe")
         .post(EventController.subscribeToEvent);
@@ -387,26 +569,13 @@ module.exports = function(app) {
      * @apiDescription Get one ranking for the specified event.
      *
      * @apiParam {Number} id Event identifier.
-     * @apiParam {String} type Name of the ranking to fetch. One of: 'victory_count', 'defeat_count', 'victory_prop',
-     * 'defeat_prop', 'count_games', 'count_unique_games', 'is_last', 'is_last_prop', 'gcbgb'
+     * @apiParam {String} type Name of the ranking to fetch. One of: `{'victory_count', 'defeat_count', 'victory_prop',
+     * 'defeat_prop', 'count_games', 'count_unique_games', 'is_last', 'is_last_prop', 'gcbgb'}`
      *
      * @apiUse TokenHeaderRequired
      */
     app.route("/event/:eid/ranking/:type(" + StatsController.availableRankings.join("|") + ")")
         .get(StatsController.getEventRanking);
-
-    /**
-     * @api {get} /events/current Get user events
-     * @apiName GetCurrentUserEvents
-     * @apiGroup Event
-     * @apiDescription Get all the events created by the current user.
-     *
-     * @apiParam {Number} id Event identifier.
-     *
-     * @apiUse TokenHeaderRequired
-     */
-    app.route("/events/current")
-        .get(EventController.getCurrentUserEvents);
 
     // Board game
     /**
@@ -418,6 +587,7 @@ module.exports = function(app) {
      * @apiParam (query) {String} q The query string.
      *
      * @apiUse TokenHeaderRequired
+     *
      */
     app.route("/board_game/search")
         .get(BoardGameController.searchBoardGames);
@@ -431,6 +601,8 @@ module.exports = function(app) {
      * @apiParam (body) {String} bgg_id BGG identifier of the board game.
      *
      * @apiUse TokenHeaderRequired
+     * @apiUse BoardGameDescriptor
+     * @apiUse DBDatetimeFields
      */
     app.route("/board_game")
         .post(BoardGameController.addBoardGame);
@@ -444,6 +616,8 @@ module.exports = function(app) {
      * @apiParam {String} id Board game (application) identifier.
      *
      * @apiUse TokenHeaderRequired
+     * @apiUse BoardGameDescriptor
+     * @apiUse DBDatetimeFields
      */
 
     /**
@@ -455,6 +629,8 @@ module.exports = function(app) {
      * @apiParam {String} id Board game (application) identifier.
      *
      * @apiUse TokenHeaderRequired
+     * @apiUse BoardGameDescriptor
+     * @apiUse DBDatetimeFields
      */
 
     /**
@@ -466,6 +642,7 @@ module.exports = function(app) {
      * @apiParam {String} id Board game (application) identifier.
      *
      * @apiUse TokenHeaderRequired
+     * @apiUse SuccessObjDescriptor
      */
     app.route("/board_game/:bgid")
         .get(BoardGameController.getBoardGame)
