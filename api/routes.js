@@ -221,11 +221,30 @@ module.exports = function(app) {
      * @apiDescription Update user data.
      * @apiUse TokenHeaderRequired
      *
+     * @apiParam {Number} id User identifier
      * @apiUse UserDescriptor
      * @apiUse DBDatetimeFields
      */
     app.route("/user/:uid")
         .put(UserController.updateUser);
+
+    /**
+     * @api {get} /user/:id/stats Get user stats
+     * @apiName GetUserStats
+     * @apiGroup User
+     * @apiDescription Get user statistics
+     * @apiUse TokenHeaderRequired
+     * @apiParam {Number} id User identifier
+     * @apiSuccess {Number} played Number of games played so far.
+     * @apiSuccess {Number} attended Number of events attended.
+     * @apiSuccess {Number} owned Number of distinct board games owned.
+     * @apiSuccess {Object} most_played Most played board game
+     * @apiSuccess {Number} most_played.count Number of times played
+     * @apiSuccess {BoardGame} most_played.board_game Board game data (see "Add board game" request for structure), `null` if no game played.
+     * @apiSuccess {Number} play_time Total play time of the user (in minutes)
+     */
+    app.route("/user/:uid/stats")
+        .get(UserController.getUserStats);
 
     // Library
     /**

@@ -195,3 +195,56 @@ exports.addBoardGameAndAddToLibrary = function(req, res) {
     const source = req.params.source;
     return BoardGameController.executeIfBoardGameExists(bggId, source, req, res, createFn);
 };
+
+exports.getUserStats = function(req, res) {
+    const clause = {id_user: req.params.uid};
+    return Promise.all([
+        // get number of games played
+        db.GamePlayer.count({where: clause}),
+        // get number of attended events
+        db.EventAttendee.count({where: clause}),
+        // get size of library
+        db.LibraryGame.count({where: clause, distinct: true, col: "id_board_game"}),
+        // get most played board game and play count
+        db.Game.findAll({
+            attributes: ["id_board_game", [db.sequelize.fn("COUNT", "id_board_game"), "count"]],
+            include: [Object.assign(includes.genericIncludeSQ(db.GamePlayer, 'game_players'), {
+                where: clause, attributes: []
+            })],
+            group: db.sequelize.col('id_board_game'),
+            order: [["count", "DESC"]],
+            raw: true
+        }).then(data => {
+            if (data.length === 0) {
+                return {count: 0, board_game: null};
+            }
+            return db.BoardGame.findById(data[0].id_board_game).then(board_game => {
+                return {board_game: board_game, count: parseInt(data[0].count)};
+            });
+        }),
+        // get total play time (exclude null duration)
+        db.GamePlayer.findAll({
+            where: clause,
+            include: [Object.assign(includes.defaultGameIncludeSQ, {
+                where: {["duration"]: {[db.sequelize.Op.ne]: null}},
+                attributes: []
+            })],
+            attributes: [[db.sequelize.fn("SUM", db.sequelize.col('game.duration')), "total"]],
+            group: 'id_user',
+            raw: true
+        }).then(data => {
+            return data.length === 0 ? 0 : parseInt(data[0].total);
+        })
+    ]).then(values => {
+        return util.successResponse(res, {
+            "played": values[0],
+            "owned": values[1],
+            "attended": values[2],
+            "most_played": values[3],
+            "play_time": values[4]
+        });
+    }).catch(err => {
+        console.log(err);
+        return util.errorResponse(res);
+    });
+};
