@@ -1,6 +1,6 @@
 'use strict';
 module.exports = (sequelize, DataTypes) => {
-    var BoardGame = sequelize.define('BoardGame', {
+    const BoardGame = sequelize.define('BoardGame', {
         name: DataTypes.STRING,
         bgg_id: DataTypes.INTEGER,
         bgg_score: {
@@ -50,7 +50,14 @@ module.exports = (sequelize, DataTypes) => {
         models.BoardGame.hasMany(models.Game, {
             onDelete: "RESTRICT",
             foreignKey: "id_board_game"
-        })
+        });
+
+        models.BoardGame.hasMany(models.LibraryGame, {
+            onDelete: "CASCADE",
+            foreignKey: 'id_board_game',
+            sourceKey: 'id',
+            as: 'library_games'
+        });
     };
     return BoardGame;
 };
