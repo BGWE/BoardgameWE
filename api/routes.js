@@ -246,6 +246,24 @@ module.exports = function(app) {
     app.route("/user/:uid/stats")
         .get(UserController.getUserStats);
 
+    /**
+     * @api {get} /user/:id/activities Get user activities
+     * @apiName GetUserStats
+     * @apiGroup User
+     * @apiDescription Get user latest activities on the application
+     * @apiUse TokenHeaderRequired
+     * @apiParam {Number} id User identifier
+     *
+     * @apiSuccess {Activity[]} activities List of activities. Note: the returned data is a list (not an actual object).
+     * @apiSuccess {String} activities.type Type of activities among: `{'event/join', 'game/play', 'library/add'}`.
+     * @apiSuccess {String} activities.datetime When the activity occurred (iso8601, UTC)
+     * @apiSuccess {BoardGame} activities.board_game (only for `game/played` and `library/add` activities) Board game data
+     * (see "Add board game" request for structure).
+     * @apiSuccess {Event} activities.event (only for `event/join` activity) Event data (see "Add event game" for Game structure).
+     */
+    app.route("/user/:uid/activities")
+        .get(UserController.getUserActivities);
+
     // Library
     /**
      * @api {get} /user/library_games Get library

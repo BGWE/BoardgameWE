@@ -25,7 +25,6 @@ module.exports = (sequelize, DataTypes) => {
           foreignKey: "id_user",
           as: "user"
       });
-
       models.GamePlayer.belongsTo(models.Game, {
           onDelete: "CASCADE",
           foreignKey: "id_game",

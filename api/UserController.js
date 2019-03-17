@@ -7,6 +7,7 @@ const userutil = require("./util/user");
 const includes = require("./util/db_include");
 const BoardGameController = require("./BoardGameController");
 const Sequelize = require("sequelize");
+const Activity = require("./util/activities");
 
 /**
  *
@@ -244,7 +245,11 @@ exports.getUserStats = function(req, res) {
             "play_time": values[4]
         });
     }).catch(err => {
-        console.log(err);
         return util.errorResponse(res);
     });
+};
+
+exports.getUserActivities = function(req, res) {
+    const uid = parseInt(req.params.uid);
+    return util.sendModelOrError(res, Activity.getUserActivitiesPromise(uid, 10));
 };
