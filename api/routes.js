@@ -177,7 +177,7 @@ module.exports = function(app) {
         if (!token) {
             return util.detailErrorResponse(res, 401, "No token provided.");
         }
-        jwt.verify(token, config.jwt_secret_key, function(err, decoded) {
+        return jwt.verify(token, config.jwt_secret_key, function(err, decoded) {
             if (err) {
                 return util.detailErrorResponse(res, 401, "Failed to authenticate token.");
             } else {

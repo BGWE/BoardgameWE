@@ -42,6 +42,8 @@
     "request-promise": "^4.2.2",
     "sequelize": "^4.39.0",
     "sequelize-cli": "^4.1.1",
+    "socket.io": "^2.2.0",
+    "socketio-jwt": "^4.5.0",
     "xml2js": "^0.4.19"
   }
 }
