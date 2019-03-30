@@ -19,6 +19,14 @@ exports.isTimerDataValid = function(data) {
                 && (data.timer_type !== "RELOAD" || (data.reload_increment === undefined || data.reload_increment >= 0));
 };
 
+exports.arePlayerTimerDataValid = function(players) {
+    let color_regex = new RegExp(/^#[0-9a-f]{6}$/i);
+    return players !== undefined && players.map(p => {
+        return color_regex.test(p.color) && (name === null ^ id_user === null);
+    }).reduce((a, b) => a && b, true);
+};
+
+
 /**
  * Return a promise that creates a full game object
  * @param data
@@ -34,13 +42,14 @@ exports.buildFullTimer = function(tid) {
  * Create a default data object
  * @param id_user int|null
  * @param name string|null
+ * @param color string
  * @returns {{id_user: *, name: *, color: string, elapsed: number, start: null}}
  */
-exports.getDefaultPlayerTimer = function(id_user, name) {
+exports.getDefaultPlayerTimer = function(id_user, name, color) {
     return {
         id_user: id_user,
         name: name,
-        color: "#ffffff",
+        color: color || "#ffffff",
         elapsed: 0,
         start: null
     }
@@ -121,5 +130,19 @@ exports.getTimer = function(req, res) {
 };
 
 exports.createTimer = function(req, res) {
+    if (!exports.isTimerDataValid(req.body)) {
+        return util.detailErrorResponse(res, 400, "invalid timer data");
+    }
+    if (!exports.arePlayerTimerDataValid(req.body.players)) {
+        return util.detailErrorResponse(res, 400, "invalid player timer data");
+    }
 
+    return exports.createTimerPromise({
+        id_creator: userutil.getCurrUserId(req),
+        id_game: gid,
+        timer_type: req.body.timer_type || "COUNT_UP",
+        initial_duration: req.body.initial_duration || 0
+    }, req.body.player_timers.map(t => exports.getDefaultPlayerTimer(t.id_user, t.name, t.color)),{
+        duration_increment: req.body.reload_increment || 0
+    });
 };

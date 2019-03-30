@@ -767,7 +767,7 @@ module.exports = function(app) {
      * @apiParam {Number} player_timers.id_user Player user identifier if registered on the app (mutually exclusive with `name`), or `null`.
      * @apiParam {String} player_timers.name Player name if the player is not registered on the application (mutually
      * exclusive with `user`), or `null`.
-     * @apiParam {Number} player_timers.color Player's color (hexcode, e.g.: `#ffffff`).
+     * @apiParam {Number} player_timers.color=#ffffff Player's color (hexcode, e.g.: `#ffffff`).
      * @apiUse TokenHeaderRequired
      * @apiUse TimerDescriptor
      */
