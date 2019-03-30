@@ -13,6 +13,7 @@ module.exports = function(app) {
     const UserController = require("./UserController");
     const EventController = require("./EventController");
     const AdminController = require("./AdminController");
+    const TimerController = require("./TimerController");
 
     /**
      * @apiDefine TokenHeaderRequired
@@ -139,6 +140,28 @@ module.exports = function(app) {
      * @apiSuccess {BoardGame} provided_board_games.board_game Board game data (see "Add board game" request for structure)
      * @apiSuccess {String} provided_board_games.createdAt Creation datetime of the resource (ISO8601, UTC)
      * @apiSuccess {String} provided_board_games.updatedAt Latest update datetime of the resource (ISO8061, UTC)
+     */
+
+    /**
+     * @apiDefine TimerDescriptor
+     *
+     * @apiSuccess {Number} id Timer identifier
+     * @apiSuccess {Number} id_game Game identifier (or null if not tied to a game)
+     * @apiSuccess {String} timer_type Type of timer. One of: 'COUNT_UP', 'COUNT_DOWN' or 'RELOAD'
+     * @apiSuccess {Number} id_creator Identifier of the user who has created the timer.
+     * @apiSuccess {User} creator User data (see 'Get current user' request for user structure)
+     * @apiSuccess {Number} initial_duration Number of millisecond that each player's timer should start from.
+     * @apiSuccess {PlayerTimer[]} player_timers The individual player timers
+     * @apiSuccess {Number} player_timers.id_timer Timer identifier.
+     * @apiSuccess {Number} player_timers.id_user Player user identifier (mutually exclusive with `name`), or `null`.
+     * @apiSuccess {User} player_timers.user If `id_user` is not `null`, user data (see 'Get current user' request for user
+     * structure)
+     * @apiSuccess {String} player_timers.name Player name if the player is not registered on the application (mutually
+     * exclusive with `user`), or `null`.
+     * @apiSuccess {Number} player_timers.color Player's color (hexcode, e.g.: `#ffffff`).
+     * @apiSuccess {Number} player_timers.elapsed Number of millisecond elapsed since the beginning of the player's timer.
+     * @apiSuccess {Number} player_timers.start Start datetime of the player's timer (iso8601, UTC), or `null` if this timer is not running.
+     * @apiSuccess {Boolean} player_timers.running `true` if the player's timer is running, `false` otherwise.
      */
 
     /**
@@ -708,13 +731,68 @@ module.exports = function(app) {
      * @apiGroup Game
      * @apiDescription Get the specified game data
      *
-     * @apiParam {String} id Game identifier.
+     * @apiParam {Number} id Game identifier.
      *
      * @apiUse TokenHeaderRequired
      */
     app.route("/game/:gid")
         .get(GameController.getGame)
         .delete(GameController.deleteGame);
+
+    /**
+     * @api {post} /game/:gid/timer Create timer from game
+     * @apiName Create TimerFromGame
+     * @apiGroup Timer
+     * @apiDescription Create a new timer from an existing game (extract players from the game).
+     * @apiParam (query) {Number} gid Game identifier.
+     * @apiParam (body) {String} timer_type=`COUNT_UP` The type of timer to create. One of: `COUNT_UP`, `COUNT_DOWN `or `RELOAD`.
+     * @apiParam (body) {Number} initial_duration=0 Start time of all players' timers in milliseconds.
+     * @apiParam (body) {Number} reload_increment=0 If the timer is of type `RELOAD`, the amount of time add every at every `next()` action.
+     * @apiUse TokenHeaderRequired
+     * @apiUse TimerDescriptor
+     */
+    app.route("/game/:gid/timer")
+        .post(TimerController.addTimerFromGame);
+
+    // timer api
+    /**
+     * @api {post} /timer Create timer
+     * @apiName CreateTimer
+     * @apiGroup Timer
+     * @apiDescription Create a new timer.
+     * @apiParam (body) {String} timer_type=`COUNT_UP` The type of timer to create. One of: `COUNT_UP`, `COUNT_DOWN `or `RELOAD`.
+     * @apiParam (body) {Number} initial_duration=0 Start time of all players' timers in milliseconds.
+     * @apiParam (body) {Number} reload_increment=0 If the timer is of type `RELOAD`, the amount of time add every at every `next()` action.
+     * @apiParam (body) [PlayerTimer[]] player_timers Individual player timers information.
+     * @apiParam {Number} player_timers.id_user Player user identifier if registered on the app (mutually exclusive with `name`), or `null`.
+     * @apiParam {String} player_timers.name Player name if the player is not registered on the application (mutually
+     * exclusive with `user`), or `null`.
+     * @apiParam {Number} player_timers.color Player's color (hexcode, e.g.: `#ffffff`).
+     * @apiUse TokenHeaderRequired
+     * @apiUse TimerDescriptor
+     */
+    app.route("/timer")
+        .post(TimerController.createTimer);
+
+    /**
+     * @api {post} /timer/:tid Get timer
+     * @apiName GetTimer
+     * @apiGroup Timer
+     * @apiDescription Get timer data (only peek at one point in time. For real-time refresh, use the socket timer api).
+     * @apiParam (query) {Number} tid Timer identifier.
+     * @apiParam (body) {String} timer_type=`COUNT_UP` The type of timer to create. One of: `COUNT_UP`, `COUNT_DOWN `or `RELOAD`.
+     * @apiParam (body) {Number} initial_duration=0 Start time of all players' timers in milliseconds.
+     * @apiParam (body) {Number} reload_increment=0 If the timer is of type `RELOAD`, the amount of time add every at every `next()` action.
+     * @apiParam (body) [PlayerTimer[]] player_timers Individual player timers information.
+     * @apiParam {Number} player_timers.id_user Player user identifier if registered on the app (mutually exclusive with `name`), or `null`.
+     * @apiParam {String} player_timers.name Player name if the player is not registered on the application (mutually
+     * exclusive with `user`), or `null`.
+     * @apiParam {Number} player_timers.color Player's color (hexcode, e.g.: `#ffffff`).
+     * @apiUse TokenHeaderRequired
+     * @apiUse TimerDescriptor
+     */
+    app.route("/timer/:tid")
+        .get(TimerController.getTimer);
 
     // Disabled, games are mostly seen through event
     // app.route("/games")
