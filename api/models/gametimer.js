@@ -14,7 +14,7 @@ module.exports = (sequelize, DataTypes) => {
       models.GameTimer.belongsTo(models.Game, {
           foreignKey: 'id_game',
           sourceKey: 'id',
-          as: 'timer'
+          as: 'game'
       });
       models.GameTimer.belongsTo(models.User, {
           foreignKey: 'id_creator',
@@ -26,7 +26,11 @@ module.exports = (sequelize, DataTypes) => {
           foreignKey: 'id_timer',
           sourceKey: 'id',
           as: 'player_timers'
-      })
+      });
+      models.GameTimer.hasOne(models.ReloadGameTimer, {
+          onDelete: "CASCADE",
+          as: 'reload_timer'
+      });
   };
   return GameTimer;
 };

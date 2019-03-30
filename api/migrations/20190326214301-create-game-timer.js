@@ -11,7 +11,8 @@ module.exports = {
       id_game: {
         type: Sequelize.INTEGER,
         allowNull: true,
-        foreignKey: {table: "Games", key: "id"}
+        foreignKey: {table: "Games", key: "id"},
+        unique: true  // one timer per game
       },
       id_creator: {
         type: Sequelize.INTEGER,

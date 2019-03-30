@@ -9,7 +9,16 @@ module.exports = (sequelize, DataTypes) => {
     start: DataTypes.DATE
   }, {});
   PlayerGameTimer.associate = function(models) {
-    // associations can be defined here
+    models.PlayerGameTimer.belongsTo(models.GameTimer, {
+      onDelete: "CASCADE",
+      foreignKey: "id_timer",
+      as: "timer"
+    });
+    models.PlayerGameTimer.belongsTo(models.User, {
+      onDelete: "CASCADE",
+      foreignKey: "id_user",
+      as: "user"
+    });
   };
   return PlayerGameTimer;
 };

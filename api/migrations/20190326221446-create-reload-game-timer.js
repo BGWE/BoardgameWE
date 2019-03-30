@@ -2,17 +2,17 @@
 module.exports = {
   up: (queryInterface, Sequelize) => {
     return queryInterface.createTable('ReloadGameTimers', {
-      id_timer: {
+      id: {
         type: Sequelize.INTEGER,
-        allowNull: false,
-        primaryKey: true
+        increment: false,
+        primaryKey: true,
       },
       timer_type: {
         type: '"enum_GameTimers_timer_type"',
         allowNull: false,
         defaultValue: "RELOAD"
       },
-      increment: {
+      duration_increment: {
         type: Sequelize.BIGINT
       },
       createdAt: {
@@ -23,15 +23,23 @@ module.exports = {
         allowNull: false,
         type: Sequelize.DATE
       }
+    }).then(() => queryInterface.addConstraint('ReloadGameTimers', ['id'], {
+      type: 'foreign key',
+      name: 'reload_timer_id_fk_constraint',
+      references: { //Required field
+          table: 'GameTimers',
+          field: 'id'
+      },
+      onDelete: 'cascade'
     }).then(() => queryInterface.sequelize.query(
-            'ALTER TABLE "ReloadGameTimers" ' +
-            'ADD CONSTRAINT reload_game_timers_isa_fk ' +
-            'FOREIGN KEY (id_timer, timer_type) ' +
-            'REFERENCES "GameTimers"(id, timer_type) MATCH FULL'
+      'ALTER TABLE "ReloadGameTimers" ' +
+      'ADD CONSTRAINT reload_game_timers_isa_fk ' +
+      'FOREIGN KEY (id, timer_type) ' +
+      'REFERENCES "GameTimers"(id, timer_type) MATCH FULL'
     ).then(() => queryInterface.addConstraint('ReloadGameTimers', ['timer_type'], {
-            type: 'check',
-            where: { timer_type: { [Sequelize.Op.eq]: "RELOAD" } }
-    })));
+      type: 'check',
+      where: { timer_type: { [Sequelize.Op.eq]: "RELOAD" } }
+    }))));
   },
   down: (queryInterface, Sequelize) => {
     return queryInterface.dropTable('ReloadGameTimers');
