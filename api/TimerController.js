@@ -139,7 +139,7 @@ exports.createTimer = function(req, res) {
 
     return exports.createTimerPromise({
         id_creator: userutil.getCurrUserId(req),
-        id_game: gid,
+        id_game: null,
         timer_type: req.body.timer_type || "COUNT_UP",
         initial_duration: req.body.initial_duration || 0
     }, req.body.player_timers.map(t => exports.getDefaultPlayerTimer(t.id_user, t.name, t.color)),{
