@@ -22,7 +22,7 @@ exports.isTimerDataValid = function(data) {
 exports.arePlayerTimerDataValid = function(players) {
     let color_regex = new RegExp(/^#[0-9a-f]{6}$/i);
     return players !== undefined && players.map(p => {
-        return color_regex.test(p.color) && (name === null ^ id_user === null);
+        return color_regex.test(p.color) && (p.name === null ^ p.id_user === null);
     }).reduce((a, b) => a && b, true);
 };
 
@@ -88,7 +88,7 @@ exports.createTimerPromise = function(timer_data, individual_timers, per_type_da
                     }, {transaction: t}));
                 }
 
-                return promise.then(() => new Promise((resolve, reject) => resolve(timer.id)));  // to return timer id
+                return promise.then(() => new Promise((resolve, reject) => resolve(timer)));  // to return timer id
             });
     });
 };
@@ -114,8 +114,8 @@ exports.addTimerFromGame = function(req, res) {
         include: [includes.genericIncludeSQ(db.GamePlayer, "game_players", [includes.defaultUserIncludeSQ])]
     }).then(game => {
         const timers = game.game_players.map(p => exports.getDefaultPlayerTimer(p.id_user, p.name));
-        return exports.createTimerPromise(timer_data, timers, per_type_data).then(id_timer => {
-            return util.sendModelOrError(res, exports.buildFullTimer(id_timer));
+        return exports.createTimerPromise(timer_data, timers, per_type_data).then(timer => {
+            return util.sendModelOrError(res, exports.buildFullTimer(timer.id));
         }).catch(err => {
             return util.detailErrorResponse(res, 500, "cannot create timer");
         });
@@ -142,7 +142,11 @@ exports.createTimer = function(req, res) {
         id_game: null,
         timer_type: req.body.timer_type || "COUNT_UP",
         initial_duration: req.body.initial_duration || 0
-    }, req.body.player_timers.map(t => exports.getDefaultPlayerTimer(t.id_user, t.name, t.color)),{
+    }, req.body.players.map(t => exports.getDefaultPlayerTimer(t.id_user, t.name, t.color)),{
         duration_increment: req.body.reload_increment || 0
+    }).then(timer => {
+        return util.sendModelOrError(res, exports.buildFullTimer(timer.id));
+    }).catch(err => {
+        return util.detailErrorResponse(res, 400, "cannot create timer");
     });
 };
