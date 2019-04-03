@@ -119,6 +119,12 @@ module.exports = function(app) {
      */
 
     /**
+     * @apiDefine TimerListDescriptor
+     * @apiSuccess {Timer[]} timers List of timers. See "Create timer" request for timer object structure. Note: the
+     * returned data is a list (not an actual object).
+     */
+
+    /**
      * @apiDefine LibraryBoardGamesListDescriptor
      * @apiSuccess {LibraryBoardGame[]} library_board_games List of library board games. Note: the
      * returned data is a list (not an actual object).
@@ -763,11 +769,11 @@ module.exports = function(app) {
      * @apiParam (body) {String} timer_type=`COUNT_UP` The type of timer to create. One of: `COUNT_UP`, `COUNT_DOWN `or `RELOAD`.
      * @apiParam (body) {Number} initial_duration=0 Start time of all players' timers in milliseconds.
      * @apiParam (body) {Number} reload_increment=0 If the timer is of type `RELOAD`, the amount of time add every at every `next()` action.
-     * @apiParam (body) [PlayerTimer[]] player_timers Individual player timers information.
-     * @apiParam {Number} player_timers.id_user Player user identifier if registered on the app (mutually exclusive with `name`), or `null`.
-     * @apiParam {String} player_timers.name Player name if the player is not registered on the application (mutually
+     * @apiParam (body) {PlayerTimer[]} players Individual player timers information.
+     * @apiParam (body) {Number} players.id_user Player user identifier if registered on the app (mutually exclusive with `name`), or `null`.
+     * @apiParam (body) {String} players.name Player name if the player is not registered on the application (mutually
      * exclusive with `user`), or `null`.
-     * @apiParam {Number} player_timers.color=#ffffff Player's color (hexcode, e.g.: `#ffffff`).
+     * @apiParam (body) {Number} players.color=#ffffff Player's color (hexcode, e.g.: `#ffffff`).
      * @apiUse TokenHeaderRequired
      * @apiUse TimerDescriptor
      */
@@ -783,7 +789,7 @@ module.exports = function(app) {
      * @apiParam (body) {String} timer_type=`COUNT_UP` The type of timer to create. One of: `COUNT_UP`, `COUNT_DOWN `or `RELOAD`.
      * @apiParam (body) {Number} initial_duration=0 Start time of all players' timers in milliseconds.
      * @apiParam (body) {Number} reload_increment=0 If the timer is of type `RELOAD`, the amount of time add every at every `next()` action.
-     * @apiParam (body) [PlayerTimer[]] player_timers Individual player timers information.
+     * @apiParam (body) [Player[]] player_timers Individual player timers information.
      * @apiParam {Number} player_timers.id_user Player user identifier if registered on the app (mutually exclusive with `name`), or `null`.
      * @apiParam {String} player_timers.name Player name if the player is not registered on the application (mutually
      * exclusive with `user`), or `null`.
@@ -793,6 +799,17 @@ module.exports = function(app) {
      */
     app.route("/timer/:tid")
         .get(TimerController.getTimer);
+
+    /**
+     * @api {post} /timers Get timers
+     * @apiName GetTimers
+     * @apiGroup Timer
+     * @apiDescription Get all the timers the current user is involved in.
+     * @apiUse TokenHeaderRequired
+     * @apiUse TimerListDescriptor
+     */
+    app.route("/timers")
+        .get(TimerController.getCurrentUserTimers);
 
     // Disabled, games are mostly seen through event
     // app.route("/games")

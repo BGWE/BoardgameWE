@@ -150,3 +150,14 @@ exports.createTimer = function(req, res) {
         return util.detailErrorResponse(res, 400, "cannot create timer");
     });
 };
+
+exports.getCurrentUserTimers = function(req, res) {
+    return util.sendModelOrError(res, db.GameTimer.findAll({
+        include: [
+            includes.defaultGameIncludeSQ,
+            Object.assign(includes.genericIncludeSQ(db.PlayerGameTimer, "player_timers", [includes.defaultUserIncludeSQ]), {
+                where: { id_user : userutil.getCurrUserId(req) }
+            })
+        ]
+    }))
+};
