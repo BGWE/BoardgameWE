@@ -8,6 +8,7 @@ const includes = require("./util/db_include");
 exports.expectedTypes = ["COUNT_UP", "COUNT_DOWN", "RELOAD"];
 
 exports.fullTimerIncludes = [
+    includes.genericIncludeSQ(db.User, "creator"),
     includes.defaultGameIncludeSQ,
     includes.genericIncludeSQ(db.PlayerGameTimer, "player_timers", [includes.defaultUserIncludeSQ])
 ];
@@ -154,6 +155,7 @@ exports.createTimer = function(req, res) {
 exports.getCurrentUserTimers = function(req, res) {
     return util.sendModelOrError(res, db.GameTimer.findAll({
         include: [
+            includes.genericIncludeSQ(db.User, "creator"),
             includes.defaultGameIncludeSQ,
             Object.assign(includes.genericIncludeSQ(db.PlayerGameTimer, "player_timers", [includes.defaultUserIncludeSQ]), {
                 where: { id_user : userutil.getCurrUserId(req) }
