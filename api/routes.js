@@ -153,6 +153,7 @@ module.exports = function(app) {
      *
      * @apiSuccess {Number} id Timer identifier
      * @apiSuccess {Number} id_game Game identifier (or null if not tied to a game)
+     * @apiSuccess {Game} game Game data (see 'Get game' request for game structure).
      * @apiSuccess {String} timer_type Type of timer. One of: 'COUNT_UP', 'COUNT_DOWN' or 'RELOAD'
      * @apiSuccess {Number} id_creator Identifier of the user who has created the timer.
      * @apiSuccess {User} creator User data (see 'Get current user' request for user structure)
