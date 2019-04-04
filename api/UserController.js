@@ -239,8 +239,8 @@ exports.getUserStats = function(req, res) {
     ]).then(values => {
         return util.successResponse(res, {
             "played": values[0],
-            "owned": values[1],
-            "attended": values[2],
+            "attended": values[1],
+            "owned": values[2],
             "most_played": values[3],
             "play_time": values[4]
         });
