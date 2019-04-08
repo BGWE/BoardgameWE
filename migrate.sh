@@ -10,3 +10,4 @@ export JWT_SECRET_KEY="Kbqz%G^hoc37;T8G]]s)/Q8.t;NkCvcU+Lo)#E_=,q:.6"
 export USE_SSL=true
 
 cd ./api && ../node_modules/.bin/sequelize db:migrate
+./node_modules/apidoc/bin/apidoc -i api/ -o doc/
