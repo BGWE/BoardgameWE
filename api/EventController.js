@@ -25,8 +25,8 @@ exports.createEvent = function(req, res) {
     return util.sendModelOrError(res, db.Event.create({
         name: req.body.name,
         location: req.body.location,
-        start: start.toDate(),
-        end: end.toDate(),
+        start: req.body.start.toDate(),
+        end: req.body.end.toDate(),
         id_creator: userutil.getCurrUserId(req),
         description: req.body.description,
         hide_rankings: req.body.hide_rankings || false
