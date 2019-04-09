@@ -348,7 +348,6 @@ module.exports = function(app) {
      * @apiParam (body) {String} start Start date (ISO8601)
      * @apiParam (body) {String} end End date (ISO8601)
      * @apiParam (body) {String} description Event description
-     * @apiParam (body) {Number} id_creator Event creator user identifier
      * @apiParam (body) {Boolean} hide_rankings True if rankings should be hidden, false otherwise
      * @apiUse TokenHeaderRequired
      * @apiUse EventDescriptor
