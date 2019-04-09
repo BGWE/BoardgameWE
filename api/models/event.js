@@ -6,7 +6,8 @@ module.exports = (sequelize, DataTypes) => {
     end: DataTypes.DATE,
     description: DataTypes.TEXT,
     location: DataTypes.STRING,
-    id_creator: DataTypes.INTEGER
+    id_creator: DataTypes.INTEGER,
+    hide_rankings: DataTypes.BOOLEAN
   }, {});
   Event.associate = function(models) {
       models.Event.belongsTo(models.User, {

@@ -7,6 +7,8 @@ const util = require("./util/util");
 const db = require("./models/index");
 
 module.exports = function(app) {
+    const {check, body} = require('express-validator/check');
+    const validation = require('./util/validation');
     const BoardGameController = require("./BoardGameController");
     const GameController = require("./GameController");
     const StatsController = require("./StatsController");
@@ -49,10 +51,11 @@ module.exports = function(app) {
      *
      * @apiSuccess {Number} id Event identifier
      * @apiSuccess {String} name Event name
-     * @apiSuccess {String} start Start date (ISO8601)
-     * @apiSuccess {String} end End date (ISO8601)
+     * @apiSuccess {String} start Start date (ISO8601, UTC)
+     * @apiSuccess {String} end End date (ISO8601, UTC)
      * @apiSuccess {String} description Event description
      * @apiSuccess {Number} id_creator Event creator user identifier
+     * @apiSuccess {Boolean} hide_rankings True if rankings should be hidden, false otherwise
      */
 
     /**
@@ -79,9 +82,10 @@ module.exports = function(app) {
      *
      * @apiSuccess {Number} id Event id
      * @apiSuccess {String} name Event name
-     * @apiSuccess {String} start Start date (ISO8601)
-     * @apiSuccess {String} end End date (ISO8601)
+     * @apiSuccess {String} start Start date (ISO8601, UTC)
+     * @apiSuccess {String} end End date (ISO8601, UTC)
      * @apiSuccess {String} description Event description
+     * @apiSuccess {Boolean} hide_rankings True if rankings should be hidden, false otherwise
      * @apiSuccess {Number} id_creator Event creator user identifier
      * @apiSuccess {User} creator Creator user data (see 'Get current user' request for user structure)
      * @apiSuccess {Attendee[]} attendees List of event attendees
@@ -144,6 +148,16 @@ module.exports = function(app) {
     /**
      * @apiDefine SuccessObjDescriptor
      * @apiSuccess {Boolean} success True if success
+     */
+
+    /**
+     * @apiDefine ErrorDescriptor
+     * @apiError {String} message General error message
+     * @apiError {Boolean} success `false`, indicate that the request has failed
+     * @apiError {Error[]} [errors] List of errors
+     * @apiError {String} errors.location Location of the parameter (e.g. `body`)
+     * @apiError {String} errors.msg Description for this error
+     * @apiError {String} errors.param Name of the erroneous parameter
      */
 
     // User routes
@@ -330,12 +344,30 @@ module.exports = function(app) {
      * @apiName CreateEvent
      * @apiGroup Event
      * @apiDescription Create an event.
+     * @apiParam (body) {String} name Event name
+     * @apiParam (body) {String} start Start date (ISO8601)
+     * @apiParam (body) {String} end End date (ISO8601)
+     * @apiParam (body) {String} description Event description
+     * @apiParam (body) {Number} id_creator Event creator user identifier
+     * @apiParam (body) {Boolean} hide_rankings True if rankings should be hidden, false otherwise
      * @apiUse TokenHeaderRequired
      * @apiUse EventDescriptor
      * @apiUse DBDatetimeFields
+     * @apiUse ErrorDescriptor
      */
     app.route("/event")
-        .post(EventController.createEvent);
+        .post([
+            body('description').isString(),
+            body('name').isString().isLength({min: 1}),
+            body('end')
+                .custom(validation.checkIso8601)
+                .custom(validation.isAfter('start'))
+                .customSanitizer(validation.toMoment),
+            body('start')
+                .custom(validation.checkIso8601)
+                .customSanitizer(validation.toMoment),
+            body('hide_rankings').optional().isBoolean()
+        ], EventController.createEvent);
 
     /**
      * @api {get} /event/:id Get event
@@ -361,9 +393,37 @@ module.exports = function(app) {
      * @apiUse TokenHeaderRequired
      * @apiUse SuccessObjDescriptor
      */
+
+    /**
+     * @api {post} /event/:id Update event
+     * @apiName UpdateEvent
+     * @apiGroup Event
+     * @apiDescription Update an event.
+     * @apiParam (body) {String} name Event name
+     * @apiParam (body) {String} start Start date (ISO8601)
+     * @apiParam (body) {String} end End date (ISO8601)
+     * @apiParam (body) {String} description Event description
+     * @apiParam (body) {Boolean} hide_rankings True if rankings should be hidden, false otherwise
+     * @apiUse TokenHeaderRequired
+     * @apiUse EventDescriptor
+     * @apiUse DBDatetimeFields
+     * @apiUse ErrorDescriptor
+     */
     app.route("/event/:eid")
         .get(EventController.getFullEvent)
-        .delete(EventController.deleteEvent);
+        .delete(EventController.deleteEvent)
+        .put([
+            body('description').optional().isString(),
+            body('name').optional().isString().isLength({min: 1}),
+            body('end').optional()
+                .custom(validation.checkIso8601)
+                .custom(validation.isAfter('start'))
+                .customSanitizer(validation.toMoment),
+            body('start').optional()
+                .custom(validation.checkIso8601)
+                .customSanitizer(validation.toMoment),
+            body('hide_rankings').optional().isBoolean()
+        ], EventController.updateEvent);
 
     /**
      * @api {get} /event/:id Get events

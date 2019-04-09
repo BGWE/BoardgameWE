@@ -4,6 +4,7 @@ const userutil = require("./util/user");
 const moment = require("moment");
 const includes = require("./util/db_include");
 const BoardGameController = require("./BoardGameController");
+const { validationResult } = require('express-validator/check');
 
 const eventFullIncludeSQ = [
     includes.genericIncludeSQ(db.EventAttendee, "attendees", [includes.defaultUserIncludeSQ]),
@@ -17,11 +18,9 @@ const eventFullIncludeSQ = [
 ];
 
 exports.createEvent = function(req, res) {
-    // validate date
-    let start = moment.utc(req.body.start, moment.ISO_8601);
-    let end = moment.utc(req.body.end, moment.ISO_8601);
-    if (!(start.isValid() && end.isValid() && start.isBefore(end)) && req.body.name && req.body.name.length > 0) {
-        return res.status(403).send({error: "invalid dates or name"})
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+        return util.detailErrorResponse(res, 400, "cannot create event", errors);
     }
     return util.sendModelOrError(res, db.Event.create({
         name: req.body.name,
@@ -29,8 +28,29 @@ exports.createEvent = function(req, res) {
         start: start.toDate(),
         end: end.toDate(),
         id_creator: userutil.getCurrUserId(req),
-        description: req.body.description
+        description: req.body.description,
+        hide_rankings: req.body.hide_rankings || false
     }));
+};
+
+exports.updateEvent = function(req, res) {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+        return util.detailErrorResponse(res, 400, "cannot update event", errors);
+    }
+    return db.Event.findById(parseInt(req.params.eid)).then(event => {
+        if (event.id_creator !== userutil.getCurrUserId(req)) {
+            return util.detailErrorResponse(res, 403, "only the event creator can update the event");
+        }
+        event.description = req.body.description || event.description;
+        event.name = req.body.name || event.name;
+        event.start = req.body.start || event.start;
+        event.end = req.body.end || event.end;
+        event.hide_rankings = req.body.hide_rankings === undefined ? event.hide_rankings : req.body.hide_rankings;
+        return util.sendModelOrError(res, event.save());
+    }).catch(err => {
+        return util.detailErrorResponse(res, 404, "no such event")
+    })
 };
 
 exports.getEvent = function(req, res) {
