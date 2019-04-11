@@ -245,7 +245,7 @@ exports.getEventStats = function(req, res) {
             games_played: values[0],
             board_games_played: values[1],
             minutes_played: values[2],
-            brought_board_game: values[3],
+            provided_board_games: values[3],
             longest_game: GameController.fromGamePlayersToRanks(values[4]),
             most_played: { count: values[5][0], board_game: values[5][1] }
         }

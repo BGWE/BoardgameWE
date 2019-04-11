@@ -468,7 +468,7 @@ module.exports = function(app) {
      * @apiSuccess {Number} games_played Number of games played
      * @apiSuccess {Number} board_games_played Number of distinct board games played
      * @apiSuccess {Number} minutes_played Number of minutes played
-     * @apiSuccess {Number} brought_board_game Number of brought distinct board games
+     * @apiSuccess {Number} provided_board_games Number of brought distinct board games
      * @apiSuccess {Game} longest_game Longest game
      * @apiSuccess {Object} most_played Most played board game
      * @apiSuccess {BoardGame} most_played.board_game Most played board game (see "Add board game" request for structure).
