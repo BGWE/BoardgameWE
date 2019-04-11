@@ -3,7 +3,7 @@ const db = require("../models/index");
 const moment = require("moment");
 
 exports.ACTIVITY_USER_EVENT_JOIN = "user/join_event";
-exports.ACTIVITY_USER_LIBRARY_ADD = "user/add_library";
+exports.ACTIVITY_USER_LIBRARY_ADD = "user/library_add";
 exports.ACTIVITY_USER_GAME_PLAY = "user/play_game";
 exports.ACTIVITY_EVENT_USER_JOIN = "event/user_join";
 exports.ACTIVITY_EVENT_GAME_PLAY = "event/play_game";

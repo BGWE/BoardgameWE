@@ -269,9 +269,9 @@ module.exports = function(app) {
      * @apiParam {Number} id User identifier
      *
      * @apiSuccess {Activity[]} activities List of activities. Note: the returned data is a list (not an actual object).
-     * @apiSuccess {String} activities.type Type of activities among: `{'user/join_event', 'user/play_game', 'user/add_library'}`.
+     * @apiSuccess {String} activities.type Type of activities among: `{'user/join_event', 'user/play_game', 'user/library_add'}`.
      * @apiSuccess {String} activities.datetime When the activity occurred (iso8601, UTC)
-     * @apiSuccess {BoardGame} activities.board_game (only for `user/play_game` and `user/add_library` activities) Board game data
+     * @apiSuccess {BoardGame} activities.board_game (only for `user/play_game` and `user/library_add` activities) Board game data
      * (see "Add board game" request for structure).
      * @apiSuccess {Event} activities.event (only for `user/join_event` activity) Event data (see "Add event game" for Game structure).
      */
