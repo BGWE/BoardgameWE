@@ -37,7 +37,7 @@ exports.validateGamePlayers = (players) => {
     return {valid: true};
 };
 
-const fromGamePlayersToRanks = function(game) {
+exports.fromGamePlayersToRanks = function(game) {
     game.dataValues.players = exports.rankForGame(game);
     game.dataValues.game_players = undefined; // to keep the more intuitive "players" label in json
     return game;
@@ -47,7 +47,7 @@ exports.buildFullGame = (gameId, res) => {
     return util.sendModelOrError(res, db.Game.find({
         where: {id: gameId},
         include: exports.gameFullIncludesSQ
-    }), g => fromGamePlayersToRanks(g));
+    }), g => exports.fromGamePlayersToRanks(g));
 };
 
 const preprocessGameData = function(body) {
@@ -185,7 +185,7 @@ exports.sendAllGamesFiltered = function (filtering, res, options) {
         where: filtering,
         include: exports.gameFullIncludesSQ
     })), games => {
-        return games.map(g => fromGamePlayersToRanks(g));
+        return games.map(g => exports.fromGamePlayersToRanks(g));
     });
 };
 

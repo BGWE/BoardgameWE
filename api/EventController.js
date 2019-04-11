@@ -205,3 +205,48 @@ exports.addBoardGameAndAddToEvent = function(req, res) {
     const source = req.params.source;
     return BoardGameController.executeIfBoardGameExists(bggId, source, req, res, createFn);
 };
+
+exports.getEventStats = function(req, res) {
+    const GameController = require("./GameController");
+    const eid = parseInt(req.params.eid);
+    return util.sendModelOrError(res, Promise.all([
+        db.Game.count({where: {id_event: eid}}),
+        db.Game.count({
+            where: {id_event: eid},
+            distinct: true,
+            col: 'id_board_game'
+        }),
+        db.Game.sum('duration', { where: {id_event: eid} }),
+        db.ProvidedBoardGame.count({
+            where: {id_event: eid},
+            distinct: true,
+            col: 'id_board_game'
+        }),
+        db.Game.find({
+            where: {id_event: eid},
+            order: [['duration', 'DESC']],
+            include: GameController.gameFullIncludesSQ
+        }),
+        db.Game.find({
+            where: {id_event: eid},
+            attributes: ['id_board_game', [db.sequelize.fn('count', 'id_board_game'), 'count']],
+            raw: true,
+            order: [['count', 'DESC']],
+            group: 'id_board_game'
+        }).then(data => {
+            return Promise.all([
+                new Promise((resolve, reject) => { resolve(parseInt(data.count)); }),
+                db.BoardGame.findById(data.id_board_game)
+            ]);
+        })
+    ]), values => {
+        return {
+            games_played: values[0],
+            board_games_played: values[1],
+            minutes_played: values[2],
+            brought_board_game: values[3],
+            longest_game: GameController.fromGamePlayersToRanks(values[4]),
+            most_played: { count: values[5][0], board_game: values[5][1] }
+        }
+    });
+};

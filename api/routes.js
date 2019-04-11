@@ -457,6 +457,27 @@ module.exports = function(app) {
         .get(EventController.getCurrentUserEvents);
 
     /**
+     * @api {get} /event/:eid/stats Get event statistics
+     * @apiName GetEventStatistics
+     * @apiGroup Event
+     * @apiDescription Get the event statistics.
+     *
+     * @apiParam {Number} id Event identifier.
+     *
+     * @apiUse TokenHeaderRequired
+     * @apiSuccess {Number} games_played Number of games played
+     * @apiSuccess {Number} board_games_played Number of distinct board games played
+     * @apiSuccess {Number} minutes_played Number of minutes played
+     * @apiSuccess {Number} brought_board_game Number of brought distinct board games
+     * @apiSuccess {Game} longest_game Longest game
+     * @apiSuccess {Object} most_played Most played board game
+     * @apiSuccess {BoardGame} most_played.board_game Most played board game
+     * @apiSuccess {Number} most_played.count Number of times played
+     */
+    app.route("/event/:eid/stats")
+        .get(EventController.getEventStats);
+
+    /**
      * @api {post} /event/:eid/board_game/:source/:id Add to event from source
      * @apiName AddBoardGameFromSourceToEvent
      * @apiGroup Event board game
@@ -648,7 +669,7 @@ module.exports = function(app) {
     /**
      * @api {get} /event/:id/rankings Get event rankings
      * @apiName GetEventRankings
-     * @apiGroup Event stats
+     * @apiGroup Event
      * @apiDescription Get all the rankings for the specified event.
      *
      * @apiParam {Number} id Event identifier.
@@ -661,7 +682,7 @@ module.exports = function(app) {
     /**
      * @api {get} /event/:id/ranking/:type Get event ranking
      * @apiName GetEventRanking
-     * @apiGroup Event stats
+     * @apiGroup Event
      * @apiDescription Get one ranking for the specified event.
      *
      * @apiParam {Number} id Event identifier.
