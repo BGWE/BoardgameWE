@@ -269,11 +269,11 @@ module.exports = function(app) {
      * @apiParam {Number} id User identifier
      *
      * @apiSuccess {Activity[]} activities List of activities. Note: the returned data is a list (not an actual object).
-     * @apiSuccess {String} activities.type Type of activities among: `{'event/join', 'game/play', 'library/add'}`.
+     * @apiSuccess {String} activities.type Type of activities among: `{'user/join_event', 'user/play_game', 'user/add_library'}`.
      * @apiSuccess {String} activities.datetime When the activity occurred (iso8601, UTC)
-     * @apiSuccess {BoardGame} activities.board_game (only for `game/played` and `library/add` activities) Board game data
+     * @apiSuccess {BoardGame} activities.board_game (only for `user/play_game` and `user/add_library` activities) Board game data
      * (see "Add board game" request for structure).
-     * @apiSuccess {Event} activities.event (only for `event/join` activity) Event data (see "Add event game" for Game structure).
+     * @apiSuccess {Event} activities.event (only for `user/join_event` activity) Event data (see "Add event game" for Game structure).
      */
     app.route("/user/:uid/activities")
         .get(UserController.getUserActivities);
@@ -471,11 +471,32 @@ module.exports = function(app) {
      * @apiSuccess {Number} brought_board_game Number of brought distinct board games
      * @apiSuccess {Game} longest_game Longest game
      * @apiSuccess {Object} most_played Most played board game
-     * @apiSuccess {BoardGame} most_played.board_game Most played board game
+     * @apiSuccess {BoardGame} most_played.board_game Most played board game (see "Add board game" request for structure).
      * @apiSuccess {Number} most_played.count Number of times played
      */
     app.route("/event/:eid/stats")
         .get(EventController.getEventStats);
+
+    /**
+     * @api {get} /event/:eid/activities Get event activities
+     * @apiName GetEventActivities
+     * @apiGroup Event
+     * @apiDescription Get the recent event activities.
+     *
+     * @apiParam {Number} id Event identifier.
+     *
+     * @apiSuccess {Activity[]} activities List of activities. Note: the returned data is a list (not an actual object).
+     * @apiSuccess {String} activities.type Type of activities among: `{'event/user_join', 'event/play_game', 'event/add_game'}`.
+     * @apiSuccess {String} activities.datetime When the activity occurred (iso8601, UTC)
+     * @apiSuccess {BoardGame} activities.board_game (only for `event/add_game` activities) Board game data (see
+     * "Add board game" request for structure).
+     * @apiSuccess {Game} activities.game (only for `event/play_game` activities) Game data (see "Add event game" for
+     * Game structure)
+     * @apiSuccess {User} activities.user (only for `event/user_join` and `event/add_game` activity) Event data (see
+     * 'Get current user' request for user structure).
+     */
+    app.route("/event/:eid/activities")
+        .get(EventController.getEventActivities);
 
     /**
      * @api {post} /event/:eid/board_game/:source/:id Add to event from source

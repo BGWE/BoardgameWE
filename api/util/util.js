@@ -95,7 +95,7 @@ exports.successResponse = function(res, data) {
  * @returns {*}
  */
 exports.errorResponse = function(res) {
-    return res.status(500).json(exports.errorObj);
+    return exports.detailErrorResponse(res, 500, "error");
 };
 
 /**

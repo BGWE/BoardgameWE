@@ -5,6 +5,7 @@ const moment = require("moment");
 const includes = require("./util/db_include");
 const BoardGameController = require("./BoardGameController");
 const { validationResult } = require('express-validator/check');
+const Activity = require("./util/activities");
 
 const eventFullIncludeSQ = [
     includes.genericIncludeSQ(db.EventAttendee, "attendees", [includes.defaultUserIncludeSQ]),
@@ -249,4 +250,9 @@ exports.getEventStats = function(req, res) {
             most_played: { count: values[5][0], board_game: values[5][1] }
         }
     });
+};
+
+exports.getEventActivities = function(req, res) {
+    const eid = parseInt(req.params.eid);
+    return util.sendModelOrError(res, Activity.getEventActivitiesPromise(eid, 10));
 };
