@@ -82,8 +82,8 @@ module.exports = function(app) {
      *
      * @apiSuccess {Number} id Event id
      * @apiSuccess {String} name Event name
-     * @apiSuccess {String} start Start date (ISO8601, UTC)
-     * @apiSuccess {String} end End date (ISO8601, UTC)
+     * @apiSuccess {String} start Start datetime (ISO8601, UTC)
+     * @apiSuccess {String} end End datetime(ISO8601, UTC)
      * @apiSuccess {String} description Event description
      * @apiSuccess {Boolean} hide_rankings True if rankings should be hidden, false otherwise
      * @apiSuccess {Number} id_creator Event creator user identifier
@@ -262,7 +262,7 @@ module.exports = function(app) {
 
     /**
      * @api {get} /user/:id/activities Get user activities
-     * @apiName GetUserStats
+     * @apiName GetUserActivities
      * @apiGroup User
      * @apiDescription Get user latest activities on the application
      * @apiUse TokenHeaderRequired
@@ -345,8 +345,8 @@ module.exports = function(app) {
      * @apiGroup Event
      * @apiDescription Create an event.
      * @apiParam (body) {String} name Event name
-     * @apiParam (body) {String} start Start date (ISO8601)
-     * @apiParam (body) {String} end End date (ISO8601)
+     * @apiParam (body) {String} start Start datetime (ISO8601)
+     * @apiParam (body) {String} end End datetimer (ISO8601)
      * @apiParam (body) {String} description Event description
      * @apiParam (body) {Boolean} hide_rankings True if rankings should be hidden, false otherwise
      * @apiUse TokenHeaderRequired
@@ -399,8 +399,8 @@ module.exports = function(app) {
      * @apiGroup Event
      * @apiDescription Update an event.
      * @apiParam (body) {String} name Event name
-     * @apiParam (body) {String} start Start date (ISO8601)
-     * @apiParam (body) {String} end End date (ISO8601)
+     * @apiParam (body) {String} start Start datetime (ISO8601)
+     * @apiParam (body) {String} end End datetime (ISO8601)
      * @apiParam (body) {String} description Event description
      * @apiParam (body) {Boolean} hide_rankings True if rankings should be hidden, false otherwise
      * @apiUse TokenHeaderRequired
