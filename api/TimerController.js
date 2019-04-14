@@ -3,6 +3,7 @@ const userutil = require("./util/user");
 const util = require("./util/util");
 const game = require("./GameController");
 const includes = require("./util/db_include");
+const _ = require("lodash");
 
 
 exports.expectedTypes = ["COUNT_UP", "COUNT_DOWN", "RELOAD"];
@@ -50,16 +51,18 @@ exports.buildFullTimer = function(tid) {
  * Create a default data object
  * @param id_user int|null
  * @param name string|null
+ * @param turn_order int
  * @param color string
  * @returns {{id_user: *, name: *, color: string, elapsed: number, start: null}}
  */
-exports.getDefaultPlayerTimer = function(id_user, name, color) {
+exports.getDefaultPlayerTimer = function(id_user, name, turn_order, color) {
     return {
         id_user: id_user,
         name: name,
         color: color || "#ffffff",
         elapsed: 0,
-        start: null
+        start: null,
+        turn_order: turn_order
     }
 };
 
@@ -111,7 +114,8 @@ exports.addTimerFromGame = function(req, res) {
         id_creator: userutil.getCurrUserId(req),
         id_game: gid,
         timer_type: req.body.timer_type || "COUNT_UP",
-        initial_duration: req.body.initial_duration || 0
+        initial_duration: req.body.initial_duration || 0,
+        current_player: req.body.current_player || 0
     };
     const per_type_data = {
         duration_increment: req.body.reload_increment || 0
@@ -121,7 +125,10 @@ exports.addTimerFromGame = function(req, res) {
         where: {id: gid},
         include: [includes.genericIncludeSQ(db.GamePlayer, "game_players", [includes.defaultUserIncludeSQ])]
     }).then(game => {
-        const timers = game.game_players.map(p => exports.getDefaultPlayerTimer(p.id_user, p.name));
+        const timers = _.range(game.game_players.length).map(index => {
+            const player = game.game_players[index];
+            return exports.getDefaultPlayerTimer(player.id_user, player.name, index)
+        });
         return exports.createTimerPromise(timer_data, timers, per_type_data).then(timer => {
             return util.sendModelOrError(res, exports.buildFullTimer(timer.id));
         }).catch(err => {
@@ -149,12 +156,17 @@ exports.createTimer = function(req, res) {
         id_creator: userutil.getCurrUserId(req),
         id_game: null,
         timer_type: req.body.timer_type || "COUNT_UP",
-        initial_duration: req.body.initial_duration || 0
-    }, req.body.players.map(t => exports.getDefaultPlayerTimer(t.id_user, t.name, t.color)),{
+        initial_duration: req.body.initial_duration || 0,
+        current_player: req.body.current_player || 0
+    }, _.range(req.body.players.length).map(index => {
+        const timer = req.body.players[index];
+        return exports.getDefaultPlayerTimer(timer.id_user, timer.name, index, timer.color);
+    }),{
         duration_increment: req.body.reload_increment || 0
     }).then(timer => {
         return util.sendModelOrError(res, exports.buildFullTimer(timer.id));
     }).catch(err => {
+        console.log(err);
         return util.detailErrorResponse(res, 400, "cannot create timer");
     });
 };

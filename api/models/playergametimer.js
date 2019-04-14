@@ -6,7 +6,8 @@ module.exports = (sequelize, DataTypes) => {
     name: DataTypes.STRING,
     color: DataTypes.STRING,
     elapsed: DataTypes.BIGINT,  // in ms
-    start: DataTypes.DATE
+    start: DataTypes.DATE,
+    turn_order: DataTypes.INTEGER
   }, {});
   PlayerGameTimer.associate = function(models) {
     models.PlayerGameTimer.belongsTo(models.GameTimer, {

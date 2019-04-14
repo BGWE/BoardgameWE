@@ -4,6 +4,7 @@ module.exports = (sequelize, DataTypes) => {
     id_game: DataTypes.INTEGER,
     id_creator: DataTypes.INTEGER,
     initial_duration: DataTypes.BIGINT, // in ms
+    current_player: DataTypes.INTEGER,
     timer_type: {
       type: DataTypes.ENUM,
       allowNull: false,
