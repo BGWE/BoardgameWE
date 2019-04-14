@@ -10,6 +10,10 @@ module.exports = function(io) {
         secret: config.jwt_secret_key
     })).on('authenticated', (socket) => {
 
+        setInterval(() => {
+            timerNamespace.emit('ping', (new Date()).toLocaleTimeString());
+        }, 1000);
+
         timerNamespace.on('disconnect', () => {
             console.log('disconnect: ' + socket.decoded_token)
         });
