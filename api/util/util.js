@@ -95,7 +95,7 @@ exports.successResponse = function(res, data) {
  * @returns {*}
  */
 exports.errorResponse = function(res) {
-    return res.status(500).json(exports.errorObj);
+    return exports.detailErrorResponse(res, 500, "error");
 };
 
 /**
@@ -103,10 +103,12 @@ exports.errorResponse = function(res) {
  * @param res
  * @param code
  * @param msg
+ * @param errors Object containing the validation errors
  * @returns {*}
  */
-exports.detailErrorResponse = function(res, code, msg) {
-    return res.status(code).json(Object.assign({message: msg}, exports.errorObj));
+exports.detailErrorResponse = function(res, code, msg, errors) {
+    errors = errors === undefined ? [] : errors.array({ onlyFirstError: true });
+    return res.status(code).json({success: false, message: msg, errors});
 };
 
 exports.sendModelOrError = function(res, promise, transform) {

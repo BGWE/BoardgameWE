@@ -7,5 +7,7 @@ export DB_USERNAME="yirqxrwyciqeev"
 export NODE_ENV="staging"
 export PORT=8080
 export JWT_SECRET_KEY="Kbqz%G^hoc37;T8G]]s)/Q8.t;NkCvcU+Lo)#E_=,q:.6"
+export USE_SSL=true
 
+./node_modules/apidoc/bin/apidoc -i api/ -o doc/
 cd ./api && ../node_modules/.bin/sequelize db:migrate

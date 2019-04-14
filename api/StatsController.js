@@ -43,8 +43,8 @@ exports.playersScoreToBinary = function(games, bestScoreFn) {
     for (let gameIndex = 0; gameIndex < games.length; ++gameIndex) {
         const game = games[gameIndex];
         const getScore = getPlayerRankableScoreFn(game);
-        const players = games[gameIndex].game_players;
-        const bestScore = bestScoreFn(players.map(getScore));
+        const players = game.game_players;
+        const bestScore = bestScoreFn(game, players.map(getScore));
         for (let playerIndex = 0; playerIndex < players.length; ++playerIndex) {
             const currPlayer = players[playerIndex];
             const identifier = currPlayer.name || currPlayer.user.id;
@@ -58,14 +58,22 @@ exports.playersScoreToBinary = function(games, bestScoreFn) {
 };
 
 exports.getVictories = function (games) {
-    return exports.playersScoreToBinary(games, (scores) => {
-        return Math.max.apply(null, scores);
-    })
+    return exports.playersScoreToBinary(games, (game, scores) => {
+        if (game.ranking_method === "WIN_LOSE") {
+            return 1;
+        } else {
+            return Math.max.apply(null, scores);
+        }
+    });
 };
 
 exports.getIsLast = function (games) {
-    return exports.playersScoreToBinary(games, (scores) => {
-        return Math.min.apply(null, scores);
+    return exports.playersScoreToBinary(games, (game, scores) => {
+        if (game.ranking_method === "WIN_LOSE") {
+            return 0;
+        } else {
+            return Math.min.apply(null, scores);
+        }
     });
 };
 

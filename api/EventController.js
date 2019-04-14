@@ -4,6 +4,8 @@ const userutil = require("./util/user");
 const moment = require("moment");
 const includes = require("./util/db_include");
 const BoardGameController = require("./BoardGameController");
+const { validationResult } = require('express-validator/check');
+const Activity = require("./util/activities");
 
 const eventFullIncludeSQ = [
     includes.genericIncludeSQ(db.EventAttendee, "attendees", [includes.defaultUserIncludeSQ]),
@@ -17,20 +19,39 @@ const eventFullIncludeSQ = [
 ];
 
 exports.createEvent = function(req, res) {
-    // validate date
-    let start = moment.utc(req.body.start, moment.ISO_8601);
-    let end = moment.utc(req.body.end, moment.ISO_8601);
-    if (!(start.isValid() && end.isValid() && start.isBefore(end)) && req.body.name && req.body.name.length > 0) {
-        return res.status(403).send({error: "invalid dates or name"})
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+        return util.detailErrorResponse(res, 400, "cannot create event", errors);
     }
     return util.sendModelOrError(res, db.Event.create({
         name: req.body.name,
         location: req.body.location,
-        start: start.toDate(),
-        end: end.toDate(),
+        start: req.body.start.toDate(),
+        end: req.body.end.toDate(),
         id_creator: userutil.getCurrUserId(req),
-        description: req.body.description
+        description: req.body.description,
+        hide_rankings: req.body.hide_rankings || false
     }));
+};
+
+exports.updateEvent = function(req, res) {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+        return util.detailErrorResponse(res, 400, "cannot update event", errors);
+    }
+    return db.Event.findById(parseInt(req.params.eid)).then(event => {
+        if (event.id_creator !== userutil.getCurrUserId(req)) {
+            return util.detailErrorResponse(res, 403, "only the event creator can update the event");
+        }
+        event.description = req.body.description || event.description;
+        event.name = req.body.name || event.name;
+        event.start = req.body.start || event.start;
+        event.end = req.body.end || event.end;
+        event.hide_rankings = req.body.hide_rankings === undefined ? event.hide_rankings : req.body.hide_rankings;
+        return util.sendModelOrError(res, event.save());
+    }).catch(err => {
+        return util.detailErrorResponse(res, 404, "no such event")
+    })
 };
 
 exports.getEvent = function(req, res) {
@@ -184,4 +205,54 @@ exports.addBoardGameAndAddToEvent = function(req, res) {
     const bggId = parseInt(req.params.id);
     const source = req.params.source;
     return BoardGameController.executeIfBoardGameExists(bggId, source, req, res, createFn);
+};
+
+exports.getEventStats = function(req, res) {
+    const GameController = require("./GameController");
+    const eid = parseInt(req.params.eid);
+    return util.sendModelOrError(res, Promise.all([
+        db.Game.count({where: {id_event: eid}}),
+        db.Game.count({
+            where: {id_event: eid},
+            distinct: true,
+            col: 'id_board_game'
+        }),
+        db.Game.sum('duration', { where: {id_event: eid} }),
+        db.ProvidedBoardGame.count({
+            where: {id_event: eid},
+            distinct: true,
+            col: 'id_board_game'
+        }),
+        db.Game.find({
+            where: {id_event: eid},
+            order: [['duration', 'DESC']],
+            include: GameController.gameFullIncludesSQ
+        }),
+        db.Game.find({
+            where: {id_event: eid},
+            attributes: ['id_board_game', [db.sequelize.fn('count', 'id_board_game'), 'count']],
+            raw: true,
+            order: [['count', 'DESC']],
+            group: 'id_board_game'
+        }).then(data => {
+            return Promise.all([
+                new Promise((resolve, reject) => { resolve(parseInt(data.count)); }),
+                db.BoardGame.findById(data.id_board_game)
+            ]);
+        })
+    ]), values => {
+        return {
+            games_played: values[0],
+            board_games_played: values[1],
+            minutes_played: values[2],
+            provided_board_games: values[3],
+            longest_game: GameController.fromGamePlayersToRanks(values[4]),
+            most_played: { count: values[5][0], board_game: values[5][1] }
+        }
+    });
+};
+
+exports.getEventActivities = function(req, res) {
+    const eid = parseInt(req.params.eid);
+    return util.sendModelOrError(res, Activity.getEventActivitiesPromise(eid, 10));
 };

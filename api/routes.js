@@ -7,6 +7,8 @@ const util = require("./util/util");
 const db = require("./models/index");
 
 module.exports = function(app) {
+    const {check, body} = require('express-validator/check');
+    const validation = require('./util/validation');
     const BoardGameController = require("./BoardGameController");
     const GameController = require("./GameController");
     const StatsController = require("./StatsController");
@@ -50,10 +52,11 @@ module.exports = function(app) {
      *
      * @apiSuccess {Number} id Event identifier
      * @apiSuccess {String} name Event name
-     * @apiSuccess {String} start Start date (ISO8601)
-     * @apiSuccess {String} end End date (ISO8601)
+     * @apiSuccess {String} start Start date (ISO8601, UTC)
+     * @apiSuccess {String} end End date (ISO8601, UTC)
      * @apiSuccess {String} description Event description
      * @apiSuccess {Number} id_creator Event creator user identifier
+     * @apiSuccess {Boolean} hide_rankings True if rankings should be hidden, false otherwise
      */
 
     /**
@@ -80,9 +83,10 @@ module.exports = function(app) {
      *
      * @apiSuccess {Number} id Event id
      * @apiSuccess {String} name Event name
-     * @apiSuccess {String} start Start date (ISO8601)
-     * @apiSuccess {String} end End date (ISO8601)
+     * @apiSuccess {String} start Start datetime (ISO8601, UTC)
+     * @apiSuccess {String} end End datetime(ISO8601, UTC)
      * @apiSuccess {String} description Event description
+     * @apiSuccess {Boolean} hide_rankings True if rankings should be hidden, false otherwise
      * @apiSuccess {Number} id_creator Event creator user identifier
      * @apiSuccess {User} creator Creator user data (see 'Get current user' request for user structure)
      * @apiSuccess {Attendee[]} attendees List of event attendees
@@ -174,6 +178,16 @@ module.exports = function(app) {
     /**
      * @apiDefine SuccessObjDescriptor
      * @apiSuccess {Boolean} success True if success
+     */
+
+    /**
+     * @apiDefine ErrorDescriptor
+     * @apiError {String} message General error message
+     * @apiError {Boolean} success `false`, indicate that the request has failed
+     * @apiError {Error[]} [errors] List of errors
+     * @apiError {String} errors.location Location of the parameter (e.g. `body`)
+     * @apiError {String} errors.msg Description for this error
+     * @apiError {String} errors.param Name of the erroneous parameter
      */
 
     // User routes
@@ -278,18 +292,18 @@ module.exports = function(app) {
 
     /**
      * @api {get} /user/:id/activities Get user activities
-     * @apiName GetUserStats
+     * @apiName GetUserActivities
      * @apiGroup User
      * @apiDescription Get user latest activities on the application
      * @apiUse TokenHeaderRequired
      * @apiParam {Number} id User identifier
      *
      * @apiSuccess {Activity[]} activities List of activities. Note: the returned data is a list (not an actual object).
-     * @apiSuccess {String} activities.type Type of activities among: `{'event/join', 'game/play', 'library/add'}`.
+     * @apiSuccess {String} activities.type Type of activities among: `{'user/join_event', 'user/play_game', 'user/library_add'}`.
      * @apiSuccess {String} activities.datetime When the activity occurred (iso8601, UTC)
-     * @apiSuccess {BoardGame} activities.board_game (only for `game/played` and `library/add` activities) Board game data
+     * @apiSuccess {BoardGame} activities.board_game (only for `user/play_game` and `user/library_add` activities) Board game data
      * (see "Add board game" request for structure).
-     * @apiSuccess {Event} activities.event (only for `event/join` activity) Event data (see "Add event game" for Game structure).
+     * @apiSuccess {Event} activities.event (only for `user/join_event` activity) Event data (see "Add event game" for Game structure).
      */
     app.route("/user/:uid/activities")
         .get(UserController.getUserActivities);
@@ -360,12 +374,29 @@ module.exports = function(app) {
      * @apiName CreateEvent
      * @apiGroup Event
      * @apiDescription Create an event.
+     * @apiParam (body) {String} name Event name
+     * @apiParam (body) {String} start Start datetime (ISO8601)
+     * @apiParam (body) {String} end End datetimer (ISO8601)
+     * @apiParam (body) {String} description Event description
+     * @apiParam (body) {Boolean} hide_rankings True if rankings should be hidden, false otherwise
      * @apiUse TokenHeaderRequired
      * @apiUse EventDescriptor
      * @apiUse DBDatetimeFields
+     * @apiUse ErrorDescriptor
      */
     app.route("/event")
-        .post(EventController.createEvent);
+        .post([
+            body('description').isString(),
+            body('name').isString().isLength({min: 1}),
+            body('end')
+                .custom(validation.checkIso8601)
+                .custom(validation.isAfter('start'))
+                .customSanitizer(validation.toMoment),
+            body('start')
+                .custom(validation.checkIso8601)
+                .customSanitizer(validation.toMoment),
+            body('hide_rankings').optional().isBoolean()
+        ], EventController.createEvent);
 
     /**
      * @api {get} /event/:id Get event
@@ -391,9 +422,37 @@ module.exports = function(app) {
      * @apiUse TokenHeaderRequired
      * @apiUse SuccessObjDescriptor
      */
+
+    /**
+     * @api {post} /event/:id Update event
+     * @apiName UpdateEvent
+     * @apiGroup Event
+     * @apiDescription Update an event.
+     * @apiParam (body) {String} name Event name
+     * @apiParam (body) {String} start Start datetime (ISO8601)
+     * @apiParam (body) {String} end End datetime (ISO8601)
+     * @apiParam (body) {String} description Event description
+     * @apiParam (body) {Boolean} hide_rankings True if rankings should be hidden, false otherwise
+     * @apiUse TokenHeaderRequired
+     * @apiUse EventDescriptor
+     * @apiUse DBDatetimeFields
+     * @apiUse ErrorDescriptor
+     */
     app.route("/event/:eid")
         .get(EventController.getFullEvent)
-        .delete(EventController.deleteEvent);
+        .delete(EventController.deleteEvent)
+        .put([
+            body('description').optional().isString(),
+            body('name').optional().isString().isLength({min: 1}),
+            body('end').optional()
+                .custom(validation.checkIso8601)
+                .custom(validation.isAfter('start'))
+                .customSanitizer(validation.toMoment),
+            body('start').optional()
+                .custom(validation.checkIso8601)
+                .customSanitizer(validation.toMoment),
+            body('hide_rankings').optional().isBoolean()
+        ], EventController.updateEvent);
 
     /**
      * @api {get} /event/:id Get events
@@ -426,6 +485,48 @@ module.exports = function(app) {
      */
     app.route("/events/current")
         .get(EventController.getCurrentUserEvents);
+
+    /**
+     * @api {get} /event/:eid/stats Get event statistics
+     * @apiName GetEventStatistics
+     * @apiGroup Event
+     * @apiDescription Get the event statistics.
+     *
+     * @apiParam {Number} id Event identifier.
+     *
+     * @apiUse TokenHeaderRequired
+     * @apiSuccess {Number} games_played Number of games played
+     * @apiSuccess {Number} board_games_played Number of distinct board games played
+     * @apiSuccess {Number} minutes_played Number of minutes played
+     * @apiSuccess {Number} provided_board_games Number of brought distinct board games
+     * @apiSuccess {Game} longest_game Longest game
+     * @apiSuccess {Object} most_played Most played board game
+     * @apiSuccess {BoardGame} most_played.board_game Most played board game (see "Add board game" request for structure).
+     * @apiSuccess {Number} most_played.count Number of times played
+     */
+    app.route("/event/:eid/stats")
+        .get(EventController.getEventStats);
+
+    /**
+     * @api {get} /event/:eid/activities Get event activities
+     * @apiName GetEventActivities
+     * @apiGroup Event
+     * @apiDescription Get the recent event activities.
+     *
+     * @apiParam {Number} id Event identifier.
+     *
+     * @apiSuccess {Activity[]} activities List of activities. Note: the returned data is a list (not an actual object).
+     * @apiSuccess {String} activities.type Type of activities among: `{'event/user_join', 'event/play_game', 'event/add_game'}`.
+     * @apiSuccess {String} activities.datetime When the activity occurred (iso8601, UTC)
+     * @apiSuccess {BoardGame} activities.board_game (only for `event/add_game` activities) Board game data (see
+     * "Add board game" request for structure).
+     * @apiSuccess {Game} activities.game (only for `event/play_game` activities) Game data (see "Add event game" for
+     * Game structure)
+     * @apiSuccess {User} activities.user (only for `event/user_join` and `event/add_game` activity) Event data (see
+     * 'Get current user' request for user structure).
+     */
+    app.route("/event/:eid/activities")
+        .get(EventController.getEventActivities);
 
     /**
      * @api {post} /event/:eid/board_game/:source/:id Add to event from source
@@ -619,7 +720,7 @@ module.exports = function(app) {
     /**
      * @api {get} /event/:id/rankings Get event rankings
      * @apiName GetEventRankings
-     * @apiGroup Event stats
+     * @apiGroup Event
      * @apiDescription Get all the rankings for the specified event.
      *
      * @apiParam {Number} id Event identifier.
@@ -632,7 +733,7 @@ module.exports = function(app) {
     /**
      * @api {get} /event/:id/ranking/:type Get event ranking
      * @apiName GetEventRanking
-     * @apiGroup Event stats
+     * @apiGroup Event
      * @apiDescription Get one ranking for the specified event.
      *
      * @apiParam {Number} id Event identifier.
