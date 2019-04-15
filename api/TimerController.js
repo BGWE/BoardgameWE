@@ -173,8 +173,7 @@ exports.createTimer = function(req, res) {
 
 exports.getCurrentUserTimers = function(req, res) {
     return util.sendModelOrError(res, db.GameTimer.findAll({
-        include: exports.getFullTimerIncludes({
-            where: { id_user: userutil.getCurrUserId(req) }
-        })
+        where: { id_creator: userutil.getCurrUserId(req) },
+        include: exports.getFullTimerIncludes()
     }));
 };
