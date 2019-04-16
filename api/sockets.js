@@ -1,24 +1,74 @@
 const socketioJwt = require("socketio-jwt");
 const config = require("./config/config.js");
 const TimerController = require('./TimerController');
+const db = require('./models/index');
+const moment = require('moment');
 
-const emitErrorEvent = function(socket, message, event) {
+
+const sendErrorEvent = function(socket, message, event) {
     event = event || 'error';
-    socket.emit(event, {
+    socket.send(event, {
         success: false,
         message: message,
         errors: []
     });
 };
 
-const getTimerRoomName = function(id_timer) {
-    return "timer/" + id_timer;
-};
-
 module.exports = function(io) {
     // timer namespace
     // vue-socket.io-extended does not support namespaces
     // const timerNamespace = io.of("/timer");
+
+    /**
+     *  A class representing a timer room
+     */
+    class TimerRoom {
+        constructor(socket, id_timer) {
+            this.socket = socket;
+            this.id_timer = id_timer;
+            this.timeout = null;
+        }
+
+        getRoomName() {
+            return "timer/" + this.id_timer;
+        }
+
+        join() {
+            this.socket.join(this.getRoomName());
+        }
+
+        leave() {
+            this.socket.leave(this.getRoomName());
+        }
+
+        emit(action, data) {
+            io.to(this.getRoomName()).emit(action, data);
+        }
+
+        /**
+         * Broadcast the action to the timer room, and sends the current state of the timer as message
+         * @param action str
+         * @returns {Promise<void>}
+         */
+        async emitWithState(action) {
+            const timer = await db.GameTimer.find({
+                where: {id: this.id_timer},
+                include: TimerController.getFullTimerIncludes()
+            });
+            this.emit(action, timer);
+            return timer;
+        }
+
+        async timerExists() {
+            return (await db.GameTimer.count({ where: {id: this.id_timer}})) === 1;
+        }
+
+        async getTimer() {
+            return await db.GameTimer.find({
+                where: {id: this.id_timer}
+            });
+        }
+    }
 
     // user must be authenticated to use this namespace
     io.on('connection', socketioJwt.authorize({
@@ -32,24 +82,94 @@ module.exports = function(io) {
         /**
          * Timer
          */
-        let current_timer_room = null;
+        let timer_room = null;
 
         socket.on('timer_follow', function(id_timer) {
-           console.debug('timer_follow - ' + id_timer);
-           if (current_timer_room !== null) {
-               emitErrorEvent(socket, "cannot follow two timers");
-           } else {
-               current_timer_room = getTimerRoomName(id_timer);
-               socket.join(current_timer_room);
-           }
+            console.debug('timer_follow - ' + id_timer);
+            if (timer_room !== null) {
+                sendErrorEvent(socket, "cannot follow two timers");
+            } else {
+                timer_room = new TimerRoom(socket, id_timer);
+                if (timer_room.timerExists()) {
+                    timer_room.join();
+                } else {
+                    timer_room = null;
+                    sendErrorEvent(socket, "no such timer");
+                }
+            }
         });
 
         socket.on('timer_unfollow', function() {
-           console.debug('timer_unfollow - ', current_timer_room);
-           if (current_timer_room !== null) {
-               socket.leave(current_timer_room);
-               current_timer_room = null;
-           }
+            if (!timer_room) {
+                sendErrorEvent(socket, "not following any timer: cannot unfollow");
+                return;
+            }
+            console.debug('timer_unfollow - ' + timer_room.getRoomName());
+            if (timer_room !== null) {
+                timer_room.leave();
+                timer_room = null;
+            }
+        });
+
+        socket.on('timer_start', async function() {
+            if (timer_room === null) {
+                sendErrorEvent(socket, "not following any timer: cannot start");
+                return;
+            }
+            console.debug('timer_start - ' + timer_room.getRoomName());
+            try {
+                const timer = await timer_room.getTimer();
+                const player_timer = await db.PlayerGameTimer.find({
+                    where: {
+                        id_timer: timer.id,
+                        turn_order: timer.current_player
+                    }
+                });
+
+                if (player_timer.start !== null) {
+                    sendErrorEvent(socket, 'timer already started');
+                } else {
+                    await player_timer.update({
+                        start: db.sequelize.fn('now')
+                    });
+                    await timer_room.emitWithState("timer_start");
+                }
+            } catch (e) {
+                sendErrorEvent(socket, "cannot update timer: " + e.message)
+            }
+        });
+
+        socket.on('timer_stop', async function() {
+            if (timer_room === null) {
+                sendErrorEvent(socket, "not following any timer: cannot stop");
+                return;
+            }
+            console.debug('timer_stop - ' + timer_room.getRoomName());
+            try {
+                const timer = await timer_room.getTimer();
+                const player_timer = await db.PlayerGameTimer.find({
+                    where: {
+                        id_timer: timer.id,
+                        turn_order: timer.current_player
+                    }
+                });
+
+                if (player_timer.start === null) {
+                    sendErrorEvent(socket, 'timer already stopped');
+                } else {
+                    await player_timer.update({
+                        elapsed: player_timer.elapsed + moment().diff(player_timer.start),
+                        start: null
+                    });
+                    await timer_room.emitWithState("timer_stop");
+                }
+            } catch (e) {
+                sendErrorEvent(socket, "cannot update timer: " + e.message)
+            }
+        });
+
+        socket.on('error', function(err) {
+            console.log(err);
         });
 
         // socket.on('timer_edit', async function(timer) {
@@ -65,7 +185,7 @@ module.exports = function(io) {
         //         elapsed: [['elapsed', '+', ()]]
         //     })
         //     }).catch(err => {
-        //         emitErrorEvent(socket, "cannot find timer");
+        //         sendErrorEvent(socket, "cannot find timer");
         //     })
         // });
 
@@ -74,10 +194,10 @@ module.exports = function(io) {
         // });
 
         socket.on('disconnect', () => {
-            if (current_timer_room !== null) {
-                socket.leave(current_timer_room);
+            if (timer_room !== null) {
+                socket.leave(timer_room);
             }
-            console.log('disconnect: ' + socket.decoded_token)
+            console.log('disconnect');
         });
     });
 
