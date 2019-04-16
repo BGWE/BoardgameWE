@@ -59,14 +59,97 @@ module.exports = function(io) {
             return timer;
         }
 
-        async timerExists() {
-            return (await db.GameTimer.count({ where: {id: this.id_timer}})) === 1;
+        async timerExists(options) {
+            return (await db.GameTimer.count(Object.assign({ where: {id: this.id_timer} }, options))) === 1;
         }
 
-        async getTimer() {
-            return await db.GameTimer.find({
+        async getTimer(options) {
+            return await db.GameTimer.find(Object.assign({
                 where: {id: this.id_timer}
-            });
+            }, options));
+        }
+
+        async getPlayerCount(options) {
+            return await db.PlayerGameTimer.count({ where: { id_timer: this.id_timer } }, options);
+        }
+
+        async getPlayerPerTurn(player_turn, options) {
+            return await db.PlayerGameTimer.find({ where: { id_timer: this.id_timer, turn_order: player_turn }}, options);
+        }
+
+        /**
+         * Start the given player timer (based on player turn). If the timer is already started nothing is changed.
+         * @param player_turn int
+         * @param options
+         * @returns {Promise<boolean>} Return true if the timer was already running, false if it was stopped.
+         */
+        async startTimer(player_turn, options) {
+            const player = await this.getPlayerPerTurn(player_turn, options);
+            const is_started = player.start !== null;
+            if (!is_started) {
+                await player.update({ start: db.sequelize.fn('now') }, options);
+            }
+            return is_started;
+        }
+
+        /**
+         * Stop the given player timer (based on player turn). If the timer is already stopped nothing is changed.
+         * @param player_turn int
+         * @param options
+         * @returns {Promise<boolean>} Return true if the timer was running and was stopped, false if it was already stopped.
+         */
+        async stopTimer(player_turn, options) {
+            const player = await this.getPlayerPerTurn(player_turn, options);
+            const is_started = player.start !== null;
+            if (is_started) {
+                await player.update({ elapsed: player.elapsed + moment().diff(player.start), start: null }, options);
+            }
+            return is_started;
+        }
+
+        /**
+         * Change the current player
+         * @param new_player int
+         * @param options
+         * @returns {Promise<void>}
+         */
+        async updateCurrentPlayer(new_player, options) {
+            const timer = await this.getTimer(options);
+            await timer.update({ current_player: new_player }, options);
+        }
+
+        /**
+         * Change current player
+         * @param take_next True for taking next, false for taking previous
+         * @returns {Promise<void>}
+         */
+        async changePlayer(take_next) {
+            let self = this;
+            return db.sequelize.transaction(async function(transaction) {
+                const t = {transaction};
+                return Promise.all([
+                    self.getPlayerCount(t),
+                    self.getTimer(t)
+                ]).then(values => {
+                    const count = values[0], timer = values[1];
+                    const next_player = (timer.current_player + (take_next ? 1 : count - 1)) % count;
+                    return self.stopTimer(timer.current_player, t).then(is_started => {
+                        let promises = [self.updateCurrentPlayer(next_player, t)];
+                        if (is_started) {
+                            promises.push(self.startTimer(next_player, t));
+                        }
+                        return Promise.all(promises);
+                    });
+                });
+            })
+        }
+
+        async nextPlayer() {
+            return this.changePlayer(true);
+        }
+
+        async prevPlayer() {
+            return this.changePlayer(false);
         }
     }
 
@@ -119,19 +202,9 @@ module.exports = function(io) {
             console.debug('timer_start - ' + timer_room.getRoomName());
             try {
                 const timer = await timer_room.getTimer();
-                const player_timer = await db.PlayerGameTimer.find({
-                    where: {
-                        id_timer: timer.id,
-                        turn_order: timer.current_player
-                    }
-                });
-
-                if (player_timer.start !== null) {
+                if (!(await timer_room.startTimer(timer.current_player))) {
                     sendErrorEvent(socket, 'timer already started');
                 } else {
-                    await player_timer.update({
-                        start: db.sequelize.fn('now')
-                    });
                     await timer_room.emitWithState("timer_start");
                 }
             } catch (e) {
@@ -147,25 +220,42 @@ module.exports = function(io) {
             console.debug('timer_stop - ' + timer_room.getRoomName());
             try {
                 const timer = await timer_room.getTimer();
-                const player_timer = await db.PlayerGameTimer.find({
-                    where: {
-                        id_timer: timer.id,
-                        turn_order: timer.current_player
-                    }
-                });
-
-                if (player_timer.start === null) {
+                if (!(await timer_room.stopTimer(timer.current_player))) {
                     sendErrorEvent(socket, 'timer already stopped');
                 } else {
-                    await player_timer.update({
-                        elapsed: player_timer.elapsed + moment().diff(player_timer.start),
-                        start: null
-                    });
                     await timer_room.emitWithState("timer_stop");
                 }
             } catch (e) {
                 sendErrorEvent(socket, "cannot update timer: " + e.message)
             }
+        });
+
+        socket.on('timer_next', async function() {
+            if (timer_room === null) {
+                sendErrorEvent(socket, "not following any timer: cannot stop");
+                return;
+            }
+            console.debug('timer_next - ' + timer_room.getRoomName());
+
+            timer_room.nextPlayer().then(async () => {
+                await timer_room.emitWithState("timer_next");
+            }).catch(async (e) => {
+                sendErrorEvent(socket, "cannot update timer: " + e.message)
+            });
+        });
+
+        socket.on('timer_prev', async function() {
+            if (timer_room === null) {
+                sendErrorEvent(socket, "not following any timer: cannot stop");
+                return;
+            }
+            console.debug('timer_prev - ' + timer_room.getRoomName());
+
+            timer_room.prevPlayer().then(async () => {
+                await timer_room.emitWithState("timer_prev");
+            }).catch(async (e) => {
+                sendErrorEvent(socket, "cannot update timer: " + e.message)
+            });
         });
 
         socket.on('error', function(err) {
