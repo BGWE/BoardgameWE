@@ -7,7 +7,8 @@ const util = require("./util/util");
 const db = require("./models/index");
 
 module.exports = function(app) {
-    const {check, body} = require('express-validator/check');
+    const { body } = require('express-validator/check');
+    const { asyncMiddleware } = require('./util/util');
     const validation = require('./util/validation');
     const BoardGameController = require("./BoardGameController");
     const GameController = require("./GameController");
@@ -216,33 +217,28 @@ module.exports = function(app) {
         .post(UserController.signIn);
 
     // authentication middleware, applied to all except login and register
-    app.use(/^\/(?!user\/register|user\/login).*/, function(req, res, next) {
+    app.use(/^\/(?!user\/register|user\/login).*/, asyncMiddleware(async function(req, res, next) {
         let token = userutil.getToken(req);
         if (!token) {
             return util.detailErrorResponse(res, 401, "No token provided.");
         }
-        return jwt.verify(token, config.jwt_secret_key, function(err, decoded) {
-            if (err) {
-                return util.detailErrorResponse(res, 401, "Failed to authenticate token.");
-            } else {
-                // if everything is good, save to request for use in other route
-                req.decoded = decoded;
-                // check that current user still exists and is validated !
-                return db.User.findById(decoded.id)
-                    .then(user => {
-                        if (user.validated) {
-                            req.is_admin = user.admin;
-                            return next();
-                        } else {
-                            return util.detailErrorResponse(res, 403, UserController.notValidatedErrorMsg);
-                        }
-                    }).catch(err => {
-                        // user doesn't exist anymore (shouldn't happen)
-                        return util.detailErrorResponse(res, 401, "Unknown user.");
-                    });
+        const verified = jwt.verify(token, config.jwt_secret_key, (error, decoded) => { return {error, decoded}; });
+        if (verified.error) {
+            return util.detailErrorResponse(res, 401, "Failed to authenticate token.");
+        }
+        try {
+            const user = await db.User.findById(verified.decoded.id);
+            if (!user.validated){
+                return util.detailErrorResponse(res, 403, UserController.notValidatedErrorMsg);
             }
-        });
-    });
+            req.decoded = verified.decoded;
+            req.is_admin = user.admin;
+            next();
+        } catch(err) {
+            console.log(err);
+            return util.detailErrorResponse(res, 401, "Unknown user.");
+        }
+    }));
 
     // User (protected)
     /**
