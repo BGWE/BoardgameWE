@@ -372,7 +372,7 @@ module.exports = function(app) {
      * @apiDescription Create an event.
      * @apiParam (body) {String} name Event name
      * @apiParam (body) {String} start Start datetime (ISO8601)
-     * @apiParam (body) {String} end End datetimer (ISO8601)
+     * @apiParam (body) {String} end End datetime (ISO8601)
      * @apiParam (body) {String} description Event description
      * @apiParam (body) {Boolean} hide_rankings True if rankings should be hidden, false otherwise
      * @apiUse TokenHeaderRequired
@@ -883,15 +883,6 @@ module.exports = function(app) {
      * @apiName GetTimer
      * @apiGroup Timer
      * @apiDescription Get timer data (only peek at one point in time. For real-time refresh, use the socket timer api).
-     * @apiParam (query) {Number} tid Timer identifier.
-     * @apiParam (body) {String} timer_type=`COUNT_UP` The type of timer to create. One of: `COUNT_UP`, `COUNT_DOWN `or `RELOAD`.
-     * @apiParam (body) {Number} initial_duration=0 Start time of all players' timers in milliseconds.
-     * @apiParam (body) {Number} reload_increment=0 If the timer is of type `RELOAD`, the amount of time add every at every `next()` action.
-     * @apiParam (body) [Player[]] player_timers Individual player timers information.
-     * @apiParam {Number} player_timers.id_user Player user identifier if registered on the app (mutually exclusive with `name`), or `null`.
-     * @apiParam {String} player_timers.name Player name if the player is not registered on the application (mutually
-     * exclusive with `user`), or `null`.
-     * @apiParam {Number} player_timers.color Player's color (hexcode, e.g.: `#ffffff`).
      * @apiUse TokenHeaderRequired
      * @apiUse TimerDescriptor
      */
