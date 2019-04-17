@@ -258,30 +258,32 @@ module.exports = function(io) {
             });
         });
 
+        socket.on('timer_change_color', async function(id_player_timer, new_color) {
+            if (timer_room === null) {
+                sendErrorEvent(socket, "not following any timer: cannot change player color");
+                return;
+            }
+            console.debug('timer_change_color - ' + timer_room.getRoomName());
+
+            if (!new_color.match(/^#[a-fAF0-9]{6}$/)) {
+                sendErrorEvent(socket, "cannot update player timer color: invalid color code '" + new_color + "'");
+                return;
+            }
+
+            db.GamePlayerTimer.update({
+                color: new_color
+            }, {
+                where: { id_timer: timer_room.id_timer, id: id_player_timer }
+            }).then(async () => {
+                await timer_room.emitWithState("timer_change_color");
+            }).catch(async (e) => {
+                sendErrorEvent(socket, "cannot update player timer color: " + e.message)
+            });
+        });
+
         socket.on('error', function(err) {
             console.log(err);
         });
-
-        // socket.on('timer_edit', async function(timer) {
-        //     console.log('timer_edit');
-        //     console.log(timer);
-        //     const room = getTimerRoomName(timer.id);
-        //     io.broadcast.to(room).emit('timer_update', timer);
-        // });
-
-        // socket.on('timer_next', async function(id_timer) {
-        //     console.log('timer_next - ' + id_timer);
-        //     const game_player = await db.GamePlayerTimer.update({
-        //         elapsed: [['elapsed', '+', ()]]
-        //     })
-        //     }).catch(err => {
-        //         sendErrorEvent(socket, "cannot find timer");
-        //     })
-        // });
-
-        // socket.on('timer_start', async function() {
-        //     console.log('timer_start');
-        // });
 
         socket.on('disconnect', () => {
             if (timer_room !== null) {
