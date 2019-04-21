@@ -24,3 +24,21 @@ exports.getTokenPayload = function(req) {
 exports.getCurrUserId = function(req) {
     return exports.getTokenPayload(req).id;
 };
+
+function generateSecretForUser(oldpasswordHash, userCreatedAt) {
+    return oldpasswordHash + userCreatedAt;
+}
+
+exports.getResetPasswordToken = function(userId, userEmail, oldpasswordHash, userCreatedAt) {
+    let secret = generateSecretForUser(oldpasswordHash, userCreatedAt);
+    let payload = {
+        email: userEmail,
+        id: userId
+    };
+
+    return jwt.sign(payload, secret);
+};
+
+exports.getPayloadFromResetPasswordToken = function(token, oldpasswordHash, userCreatedAt) {
+    return jwt.decode(token, generateSecretForUser(oldpasswordHash, userCreatedAt));
+}

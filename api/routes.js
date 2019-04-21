@@ -186,7 +186,7 @@ module.exports = function(app) {
         .post(UserController.signIn);
 
     // authentication middleware, applied to all except login and register
-    app.use(/^\/(?!user\/register|user\/login).*/, function(req, res, next) {
+    app.use(/^\/(?!user\/register|user\/login|auth\/forgot_password|auth\/reset_password).*/, function(req, res, next) {
         let token = userutil.getToken(req);
         if (!token) {
             return util.detailErrorResponse(res, 401, "No token provided.");
@@ -860,5 +860,18 @@ module.exports = function(app) {
      */
     app.route("/admin/user")
         .put(AdminController.updateUserStatus);
+
+
+    /**
+     * @api {post} /user/forgot_password Send password recovery email
+     * @apiName ForgotPassword
+     * @apiGroup User
+     * @apiDescription Send password recovery email for user linked to the email address.
+     */
+    app.route("/auth/forgot_password")
+        .post(UserController.forgotPassword);
+
+    app.route("/auth/reset_password")
+        .post(UserController.resetPassword);
 
 };
