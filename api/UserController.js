@@ -131,7 +131,6 @@ exports.updateUser = function(req, res) {
 };
 
 exports.forgotPassword = function(req, res) {
-    console.log(req.body);
     return db.User.findOne({
         where: {email: req.body.email}
     }).then(user => {
@@ -139,14 +138,14 @@ exports.forgotPassword = function(req, res) {
             return util.detailErrorResponse(res, 404, 'User not found.');
         } else {
             emailutil.sendResetPasswordEmail(
-                            user.dataValues.email, 
+                            user.email, 
                             'info@boardgameweekend.party',
                             'BoardGameCompanion', 
-                            user.dataValues.name, 
-                            'http://localhost:8080/#/auth/reset_password?token=' + 
-                                userutil.getResetPasswordToken(user.dataValues.id, user.dataValues.email,
-                                                                user.dataValues.password, user.dataValues.createdAt)
-                                + '&id=' + user.dataValues.id)
+                            user.name, 
+                            config.frontend_url + '/#/auth/reset_password?token=' + 
+                                userutil.getResetPasswordToken(user.id, user.email,
+                                                                user.password, user.createdAt)
+                                + '&id=' + user.id)
                             .then(() => {
                                 return util.successResponse(res);
                             })
@@ -166,14 +165,12 @@ exports.resetPassword = function(req, res) {
         .then(user => {
             console.log(user);
             try {
-                let payload = userutil.getPayloadFromResetPasswordToken(token, user.dataValues.password, user.dataValues.createdAt);
+                let payload = userutil.getPayloadFromResetPasswordToken(token, user.password, user.createdAt);
             } catch (error) {
                 return util.detailErrorResponse(res, 403, "failed to process the token");
             }
 
             // Token is ok
-            user.username = user.username;
-            user.email = user.email;
             return bcrypt.hash(password, 10, function(err, hash) {
                 user.password = hash;
                 return handleUserResponse(res, user.save());

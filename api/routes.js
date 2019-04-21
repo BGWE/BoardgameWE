@@ -169,7 +169,7 @@ module.exports = function(app) {
      * the application data.
      *
      * @apiUse UserDescriptor
-     * @apiUse DBDatetimeFields
+     * @ƒr DBDatetimeFields
      */
     app.route("/user")
         .post(UserController.register);
@@ -184,6 +184,24 @@ module.exports = function(app) {
      */
     app.route("/user/login")
         .post(UserController.signIn);
+
+    /**
+     * @api {post} /user/forgot_password Send password recovery email
+     * @apiName ForgotPassword
+     * @apiGroup User
+     * @apiDescription Send password recovery email for user linked to the email address.
+     */
+    app.route("/user/forgot_password")
+        .post(UserController.forgotPassword);
+
+        /**
+     * @api {post} /user/reset_password Reset the password of a user.
+     * @apiName ResetPassword
+     * @apiGroup User
+     * @apiDescription Reset the password of a user by another one given in the payload. This uses the token provided in the ForgotPassword API.
+     */
+    app.route("/user/reset_password")
+        .post(UserController.resetPassword);
 
     // authentication middleware, applied to all except login and register
     app.use(/^\/(?!user\/register|user\/login|auth\/forgot_password|auth\/reset_password).*/, function(req, res, next) {
@@ -860,18 +878,5 @@ module.exports = function(app) {
      */
     app.route("/admin/user")
         .put(AdminController.updateUserStatus);
-
-
-    /**
-     * @api {post} /user/forgot_password Send password recovery email
-     * @apiName ForgotPassword
-     * @apiGroup User
-     * @apiDescription Send password recovery email for user linked to the email address.
-     */
-    app.route("/auth/forgot_password")
-        .post(UserController.forgotPassword);
-
-    app.route("/auth/reset_password")
-        .post(UserController.resetPassword);
 
 };
