@@ -202,7 +202,7 @@ module.exports = function(io) {
             console.debug('timer_start - ' + timer_room.getRoomName());
             try {
                 const timer = await timer_room.getTimer();
-                if (!(await timer_room.startTimer(timer.current_player))) {
+                if (await timer_room.startTimer(timer.current_player)) {
                     sendErrorEvent(socket, 'timer already started');
                 } else {
                     await timer_room.emitWithState("timer_start");
