@@ -890,8 +890,8 @@ module.exports = function(app) {
         .get(TimerController.getTimer);
 
     /**
-     * @api {post} /timers Get timers
-     * @apiName GetTimers
+     * @api {post} /timers Get current user timers
+     * @apiName GetCurrentUserTimers
      * @apiGroup Timer
      * @apiDescription Get all the timers the current user is involved in.
      * @apiUse TokenHeaderRequired

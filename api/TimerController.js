@@ -8,16 +8,12 @@ const _ = require("lodash");
 
 exports.expectedTypes = ["COUNT_UP", "COUNT_DOWN", "RELOAD"];
 
-exports.getFullTimerIncludes = function(player_timers_options) {
-    let array = [];
-    array.push(includes.getUserIncludeSQ("creator"));
-    array.push(includes.getGameIncludeSQ("game", [includes.defaultBoardGameIncludeSQ]));
-    let player_timer_include = includes.genericIncludeSQ(db.PlayerGameTimer, "player_timers", [includes.defaultUserIncludeSQ]);
-    if (player_timers_options !== undefined) {
-        player_timer_include = Object.assign(player_timer_include, player_timers_options);
-    }
-    array.push(player_timer_include);
-    return array;
+exports.getFullTimerIncludes = function() {
+    return [
+        includes.getUserIncludeSQ("creator"),
+        includes.getGameIncludeSQ("game", [includes.defaultBoardGameIncludeSQ]),
+        includes.genericIncludeSQ(db.PlayerGameTimer, "player_timers", [includes.defaultUserIncludeSQ])
+    ];
 };
 
 
@@ -166,14 +162,27 @@ exports.createTimer = function(req, res) {
     }).then(timer => {
         return util.sendModelOrError(res, exports.buildFullTimer(timer.id));
     }).catch(err => {
-        console.log(err);
         return util.detailErrorResponse(res, 400, "cannot create timer");
     });
 };
 
 exports.getCurrentUserTimers = function(req, res) {
-    return util.sendModelOrError(res, db.GameTimer.findAll({
-        where: { id_creator: userutil.getCurrUserId(req) },
-        include: exports.getFullTimerIncludes()
-    }));
+    const currUserId = userutil.getCurrUserId(req);
+    return db.PlayerGameTimer.findAll({
+        attributes: [[db.sequelize.fn('DISTINCT', db.sequelize.col('id_timer')), 'id_timer']],
+        where: {id_user: currUserId},
+        raw: true
+    }).then(timers => {
+        return util.sendModelOrError(res, db.GameTimer.findAll({
+            where: {
+                [db.sequelize.Op.or]: [
+                    {id_creator: currUserId},
+                    {id: {[db.sequelize.Op.in]: timers.map(t => t.id_timer)}}
+                ]
+            },
+            include: exports.getFullTimerIncludes()
+        }));
+    }).catch(err => {
+        return util.detailErrorResponse(res, 500, "cannot fetch timers");
+    });
 };
