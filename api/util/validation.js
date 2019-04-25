@@ -1,9 +1,49 @@
-
-
 const moment = require("moment");
+const _ = require("lodash");
+const { body, param } = require('express-validator/check');
+const db = require('../models/index');
+
+/**
+ * Extract the value located at the given validation path in obj
+ * @param obj object
+ * @param path string Validation path
+ * @returns *
+ */
+const valueByPath = (obj, path) =>  {
+    const pattern = /^(.+)\[([0-9]+)]$/;
+    const parts = path.split(".");
+    let curr = obj;
+    for (let i = 0; i < parts.length; ++i) {
+        const part = parts[i];
+        const match = part.match(pattern);
+        if (match) {
+            curr = curr[match[1]][parseInt(match[2])];
+        } else {
+            curr = curr[part];
+        }
+    }
+    return curr;
+};
+
+/**
+ * 'path1.path2[1].path3' -> 'path1.path2[1].{last}'
+ * @param path
+ * @param last
+ */
+const replacePathLast = (path, last) => {
+    let splitted = path.split(".");
+    splitted[splitted.length - 1] = last;
+    return splitted.join(".");
+};
+
+const conditionallyOptional = (builder, isOptional) => {
+    return isOptional ? builder.optional() : builder;
+};
 
 exports.toMoment = value => moment.utc(value, moment.ISO_8061);
+
 exports.checkIso8601 = value => exports.toMoment(value).isValid();
+
 exports.isAfter = function(other) {
     return (value, { req, location, path }) => {
         const after = exports.toMoment(value);
@@ -13,4 +53,57 @@ exports.isAfter = function(other) {
         }
         return true;
     }
+};
+
+exports.isPositive = value => {
+    return value > 0;
+};
+
+exports.checkScore = ranking_method_field => {
+    return (value, { req, location }) => {
+        const ranking_method = req[location][ranking_method_field];
+        const invalid = (ranking_method === "WIN_LOSE" && (value !== 0 && value !== 1));
+        if (invalid) {
+            throw new Error("Invalid score '" + value + "' for ranking method '" + ranking_method + "'");
+        }
+        return true;
+    };
+};
+
+exports.mutuallyExclusive = function(other) {
+    return (value, { req, location, path}) => {
+        if(!!value ^ !!valueByPath(req[location], replacePathLast(path, other))) {
+           return true;
+        }
+        throw new Error("'id_user' and 'name' fields are mutually exclusive.")
+    };
+};
+
+exports.model = function(model) {
+    return value => model.findByPk(value);
+};
+
+/**
+ * Get validators for event game
+ * @param is_create bool True if the validator should be created for a new game, false of an edited game
+ * @returns {*[]}
+ */
+exports.getGameValidators = function(is_create) {
+    return [
+        conditionallyOptional(body('players'), !is_create).isArray().not().isEmpty(),
+        body('players.*.score').isNumeric().custom(exports.checkScore("ranking_method")),
+        body('players.*.id_user')
+            .custom(exports.mutuallyExclusive("name"))
+            .optional({nullable: true}).isNumeric().custom(exports.model(db.User)),
+        body('players.*.name')
+            .custom(exports.mutuallyExclusive("id_user"))
+            .optional({nullable: true}).isString().trim().not().isEmpty(),
+        body('duration').optional({nullable: true}).isInt().custom(exports.isPositive),
+        exports.modelExists(conditionallyOptional(body('id_board_game'), !is_create), db.BoardGame),
+        conditionallyOptional(body('ranking_method'), !is_create).isIn(["WIN_LOSE", "POINTS_HIGHER_BETTER", "POINTS_LOWER_BETTER"])
+    ];
+};
+
+exports.modelExists = (builder, model) => {
+    return builder.isNumeric().toInt().custom(exports.model(model));
 };

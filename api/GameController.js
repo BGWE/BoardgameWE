@@ -1,6 +1,7 @@
 const db = require("./models/index");
 const util = require("./util/util");
 const includes = require("./util/db_include");
+const { validationResult } = require('express-validator/check');
 
 exports.gameFullIncludesSQ = [
     includes.defaultBoardGameIncludeSQ,
@@ -75,7 +76,7 @@ const getGamePlayerData = function(game, validated_players) {
         return {
             id_game: game.id,
             score: item.score,
-            id_user: item.user || null,
+            id_user: item.id_user || null,
             name: item.name || null
         };
     });
@@ -89,24 +90,18 @@ const getGamePlayerData = function(game, validated_players) {
  * @returns {*}
  */
 exports.addGameQuery = function(eid, req, res) {
-    const game_data = preprocessGameData(req.body);
-    if (!game_data.has_players) {
-        return util.detailErrorResponse(res, 400, "missing players");
-    }
-    if (!game_data.ranking_validation.valid) {
-        return util.detailErrorResponse(res, 400, game_data.ranking_validation.error);
-    }
-    if (!game_data.players_validation.valid) {
-        return util.detailErrorResponse(res, 400, game_data.players_validation.error);
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+        return util.detailErrorResponse(res, 400, "cannot update event", errors);
     }
     return db.sequelize.transaction(t => {
         return db.Game.create({
             id_event: eid,
-            id_board_game: game_data.id_board_game,
-            duration: game_data.duration,
-            ranking_method: game_data.ranking_method
+            id_board_game: req.body.id_board_game,
+            duration: req.body.duration || null,
+            ranking_method: req.body.ranking_method
         }, {transaction: t}).then((game) => {
-            const player_data = getGamePlayerData(game, game_data.players);
+            const player_data = getGamePlayerData(game, req.body.players);
             return db.GamePlayer.bulkCreate(player_data, {
                 returning: true,
                 transaction: t
@@ -126,37 +121,35 @@ exports.addGame = function (req, res) {
 };
 
 exports.addEventGame = function(req, res) {
-    return exports.addGameQuery(parseInt(req.params.eid), req, res);
+    return exports.addGameQuery(req.params.eid, req, res);
 };
 
 exports.updateEventGame = function(req, res) {
-    let gid = parseInt(req.params.gid);
-    let eid = parseInt(req.params.eid);
-    const game_data = preprocessGameData(req.body);
-    if (game_data.has_players && !game_data.ranking_validation.valid) {
-        return util.detailErrorResponse(res, 400, game_data.ranking_validation.error);
-    }
-    if (game_data.has_players && !game_data.players_validation.valid) {
-        return util.detailErrorResponse(res, 400, game_data.players_validation.error);
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+        return util.detailErrorResponse(res, 400, "cannot update event", errors);
     }
     return db.sequelize.transaction(t => {
-        return db.Game.findByPk(gid, {transaction: t})
+        return db.Game.findByPk(req.params.gid, {transaction: t})
             .then(game => {
+                if (req.body.ranking_method !== game.ranking_method && !req.body.players) {
+                    return util.detailErrorResponse(res, 400, "'players' list should be provided when 'ranking_method' changes");
+                }
                 return db.Game.update({
-                    id_board_game: game_data.id_board_game || game.id_board_game,
-                    duration: game_data.duration || game.duration,
-                    ranking_method: game_data.ranking_method || game.ranking_method,
-                    id_event: req.body.id_event || eid
+                    id_board_game: req.body.id_board_game || game.id_board_game,
+                    duration: req.body.duration || game.duration,
+                    ranking_method: req.body.ranking_method || game.ranking_method,
+                    id_event: req.body.id_event || req.params.eid
                 }, {
-                    where: {id: game.id, id_event: eid},
+                    where: {id: game.id, id_event: req.params.eid},
                     transaction: t
                 }).then(updated => {
-                    if (game_data.has_players) {
+                    if (req.body.players) {
                         return db.GamePlayer.destroy({
                             transaction: t,
                             where: {id_game: game.id}
                         }).then(deleted => {
-                            const playersData = getGamePlayerData(game, game_data.players);
+                            const playersData = getGamePlayerData(game, req.body.players);
                             return db.GamePlayer.bulkCreate(playersData, {
                                 transaction: t
                             }).then(players => { return game; });
@@ -164,11 +157,12 @@ exports.updateEventGame = function(req, res) {
                     } else {
                         return game;
                     }
-                })
+                });
             });
     }).then(game => {
         return exports.buildFullGame(game.id, res);
     }).catch(err => {
+        console.error(err);
         return util.errorResponse(res);
     });
 };

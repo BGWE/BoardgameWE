@@ -5,9 +5,10 @@ const jwt = require("jsonwebtoken");
 const userutil = require("./util/user");
 const util = require("./util/util");
 const db = require("./models/index");
+const _ = require("lodash");
 
 module.exports = function(app) {
-    const { body } = require('express-validator/check');
+    const { body, param, check } = require('express-validator/check');
     const { asyncMiddleware } = require('./util/util');
     const validation = require('./util/validation');
     const BoardGameController = require("./BoardGameController");
@@ -594,14 +595,16 @@ module.exports = function(app) {
      * @apiParam (body) {Number} players.score Player score
      * @apiParam (body) {String} players.name Player name if not registered on the platform (mutually exclusive with
      * 'user') or `null`.
-     * @apiParam (body) {Number} players.user Player user identifier (mutually exclusive with 'name') or `null`.
+     * @apiParam (body) {Number} players.id_user Player user identifier (mutually exclusive with 'name') or `null`.
      * @apiUse TokenHeaderRequired
      *
      * @apiUse FullGameDescriptor
      * @apiUse DBDatetimeFields
      */
     app.route("/event/:eid/game")
-        .post(GameController.addEventGame);
+        .post(validation.getGameValidators(true).concat([
+            validation.modelExists(check('eid'), db.Event)
+        ]), GameController.addEventGame);
 
     /**
      * @api {put} /event/:eid/game/:gid Update event game
@@ -620,14 +623,17 @@ module.exports = function(app) {
      * @apiParam (body) {Number} players.score Player score
      * @apiParam (body) {String} players.name Player name if not registered on the platform (mutually exclusive with
      * 'user') or `null`.
-     * @apiParam (body) {Number} players.user Player user identifier (mutually exclusive with 'name') or `null`.
+     * @apiParam (body) {Number} players.id_user Player user identifier (mutually exclusive with 'name') or `null`.
      *
      * @apiUse TokenHeaderRequired
      * @apiUse FullGameDescriptor
      * @apiUse DBDatetimeFields
      */
     app.route("/event/:eid/game/:gid")
-        .put(GameController.updateEventGame);
+        .put(validation.getGameValidators(false).concat([
+            validation.modelExists(check('eid'), db.Event),
+            validation.modelExists(check('gid'), db.Game)
+        ]), GameController.updateEventGame);
 
     /**
      * @api {get} /event/:id/games Get event games
