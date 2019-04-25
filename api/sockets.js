@@ -51,7 +51,7 @@ module.exports = function(io) {
          * @returns {Promise<void>}
          */
         async emitWithState(action) {
-            const timer = await db.GameTimer.find({
+            const timer = await db.GameTimer.findOne({
                 where: {id: this.id_timer},
                 include: TimerController.getFullTimerIncludes()
             });
@@ -64,7 +64,7 @@ module.exports = function(io) {
         }
 
         async getTimer(options) {
-            return await db.GameTimer.find(Object.assign({
+            return await db.GameTimer.findOne(Object.assign({
                 where: {id: this.id_timer}
             }, options));
         }
@@ -74,7 +74,7 @@ module.exports = function(io) {
         }
 
         async getPlayerPerTurn(player_turn, options) {
-            return await db.PlayerGameTimer.find({ where: { id_timer: this.id_timer, turn_order: player_turn }}, options);
+            return await db.PlayerGameTimer.findOne({ where: { id_timer: this.id_timer, turn_order: player_turn }}, options);
         }
 
         /**

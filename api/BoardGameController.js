@@ -4,7 +4,7 @@ const bgg = require("./util/bgg");
 const util = require("./util/util");
 
 exports.getBoardGame = function(req, res) {
-    return util.sendModelOrError(res, db.BoardGame.findById(parseInt(req.params.bgid)));
+    return util.sendModelOrError(res, db.BoardGame.findByPk(parseInt(req.params.bgid)));
 };
 
 exports.updateBoardGame = function(req, res) {
@@ -19,7 +19,7 @@ exports.updateBoardGame = function(req, res) {
         where: {id: bgid},
         fields: ["gameplay_video_url"]
     }).then(() => {
-        return util.sendModelOrError(res, db.BoardGame.findById(bgid));
+        return util.sendModelOrError(res, db.BoardGame.findByPk(bgid));
     }).catch(err => {
         return util.errorResponse(res);
     });
@@ -60,7 +60,7 @@ exports.executeIfBoardGameExists = function(gid, source, req, res, actionFn) {
     if (source !== "bgg") {
         return util.detailErrorResponse(res, 400, "Invalid source '" + source + "' (only supported are {bgg,}).");
     }
-    return db.BoardGame.find({where: {bgg_id: gid}}).then(board_game => {
+    return db.BoardGame.findOne({where: {bgg_id: gid}}).then(board_game => {
         if (board_game !== null) {
             return actionFn(board_game, req, res);
         } else {

@@ -227,7 +227,7 @@ module.exports = function(app) {
             return util.detailErrorResponse(res, 401, "Failed to authenticate token.");
         }
         try {
-            const user = await db.User.findById(verified.decoded.id);
+            const user = await db.User.findByPk(verified.decoded.id);
             if (!user.validated){
                 return util.detailErrorResponse(res, 403, UserController.notValidatedErrorMsg);
             }

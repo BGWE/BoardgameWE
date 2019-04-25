@@ -37,7 +37,7 @@ exports.arePlayerTimerDataValid = function(players) {
  * @param data
  */
 exports.buildFullTimer = function(tid) {
-    return db.GameTimer.find({
+    return db.GameTimer.findOne({
         where: {id: tid},
         include: exports.getFullTimerIncludes()
     });
@@ -117,7 +117,7 @@ exports.addTimerFromGame = function(req, res) {
         duration_increment: req.body.reload_increment || 0
     };
 
-    return db.Game.find({
+    return db.Game.findOne({
         where: {id: gid},
         include: [includes.genericIncludeSQ(db.GamePlayer, "game_players", [includes.defaultUserIncludeSQ])]
     }).then(game => {
@@ -175,9 +175,9 @@ exports.getCurrentUserTimers = function(req, res) {
     }).then(timers => {
         return util.sendModelOrError(res, db.GameTimer.findAll({
             where: {
-                [db.sequelize.Op.or]: [
+                [db.Op.or]: [
                     {id_creator: currUserId},
-                    {id: {[db.sequelize.Op.in]: timers.map(t => t.id_timer)}}
+                    {id: {[db.Op.in]: timers.map(t => t.id_timer)}}
                 ]
             },
             include: exports.getFullTimerIncludes()

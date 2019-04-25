@@ -44,7 +44,7 @@ exports.fromGamePlayersToRanks = function(game) {
 };
 
 exports.buildFullGame = (gameId, res) => {
-    return util.sendModelOrError(res, db.Game.find({
+    return util.sendModelOrError(res, db.Game.findOne({
         where: {id: gameId},
         include: exports.gameFullIncludesSQ
     }), g => exports.fromGamePlayersToRanks(g));
@@ -140,7 +140,7 @@ exports.updateEventGame = function(req, res) {
         return util.detailErrorResponse(res, 400, game_data.players_validation.error);
     }
     return db.sequelize.transaction(t => {
-        return db.Game.findById(gid, {transaction: t})
+        return db.Game.findByPk(gid, {transaction: t})
             .then(game => {
                 return db.Game.update({
                     id_board_game: game_data.id_board_game || game.id_board_game,
