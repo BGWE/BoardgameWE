@@ -234,10 +234,14 @@ exports.getEventStats = function(req, res) {
             order: [['count', 'DESC']],
             group: 'id_board_game'
         }).then(data => {
-            return Promise.all([
-                new Promise((resolve, reject) => { resolve(parseInt(data.count)); }),
-                db.BoardGame.findByPk(data.id_board_game)
-            ]);
+            if (data) {
+                return Promise.all([
+                    new Promise((resolve) => resolve(parseInt(data.count))),
+                    db.BoardGame.findByPk(data.id_board_game)
+                ]);
+            } else {
+                return new Promise((resolve) => resolve([0, null]));
+            }
         })
     ]), values => {
         return {
