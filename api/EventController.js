@@ -223,7 +223,7 @@ exports.getEventStats = function(req, res) {
             col: 'id_board_game'
         }),
         db.Game.findOne({
-            where: {id_event: eid},
+            where: {id_event: eid, duration: {[db.Op.ne]: null}},
             order: [['duration', 'DESC']],
             include: GameController.gameFullIncludesSQ
         }),
@@ -245,7 +245,7 @@ exports.getEventStats = function(req, res) {
             board_games_played: values[1],
             minutes_played: values[2],
             provided_board_games: values[3],
-            longest_game: GameController.fromGamePlayersToRanks(values[4]),
+            longest_game: values[4] ? GameController.fromGamePlayersToRanks(values[4]) : null,
             most_played: { count: values[5][0], board_game: values[5][1] }
         }
     });
