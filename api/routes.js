@@ -97,7 +97,7 @@ module.exports = function(app) {
 
     /**
      * @apiDefine BoardGameDescriptor
-     *
+
      * @apiSuccess {Number} id Board game identifier
      * @apiSuccess {String} name Board game name
      * @apiSuccess {Number} bgg_id BGG identifier of the board game
@@ -190,6 +190,12 @@ module.exports = function(app) {
      * @apiError {String} errors.location Location of the parameter (e.g. `body`)
      * @apiError {String} errors.msg Description for this error
      * @apiError {String} errors.param Name of the erroneous parameter
+     */
+
+    /**
+     * @apiDefine PaginationParameters
+     * @apiParam (query) {Number} [max_items] Maximum number of items to return
+     * @apiParam (query) {Number} [start] Pagination offset (resources are sorted by decreasing creation time)
      */
 
     // User routes
@@ -644,6 +650,7 @@ module.exports = function(app) {
      * @apiParam {Number} id Event identifier.
      *
      * @apiUse TokenHeaderRequired
+     * @apiUse PaginationParameters
      *
      * @apiSuccess {Game[]} games List of the games of the event (see "Add event game" for Game structure). Note: the
      * returned data is a list (not an actual object).

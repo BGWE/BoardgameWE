@@ -204,7 +204,10 @@ exports.deleteGame = function (req, res) {
 };
 
 exports.getEventGames = function(req, res) {
-    return exports.sendAllGamesFiltered({id_event: parseInt(req.params.eid)}, res)
+    return exports.sendAllGamesFiltered(
+        { id_event: parseInt(req.params.eid) }, res,
+        util.getPaginationParams(req, [["createdAt", "DESC"]])
+    );
 };
 
 exports.getRecentEventGames = function(req, res) {
