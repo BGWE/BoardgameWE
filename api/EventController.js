@@ -45,6 +45,7 @@ exports.updateEvent = function(req, res) {
         }
         event.description = req.body.description || event.description;
         event.name = req.body.name || event.name;
+        location = req.body.location || event.location;
         event.start = req.body.start || event.start;
         event.end = req.body.end || event.end;
         event.hide_rankings = req.body.hide_rankings === undefined ? event.hide_rankings : req.body.hide_rankings;
