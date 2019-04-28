@@ -388,18 +388,7 @@ module.exports = function(app) {
      * @apiUse ErrorDescriptor
      */
     app.route("/event")
-        .post([
-            body('description').isString(),
-            body('name').isString().isLength({min: 1}),
-            body('end')
-                .custom(validation.checkIso8601)
-                .custom(validation.isAfter('start'))
-                .customSanitizer(validation.toMoment),
-            body('start')
-                .custom(validation.checkIso8601)
-                .customSanitizer(validation.toMoment),
-            body('hide_rankings').optional().isBoolean()
-        ], EventController.createEvent);
+        .post(validation.getEventValidators(true), EventController.createEvent);
 
     /**
      * @api {get} /event/:id Get event
@@ -444,18 +433,7 @@ module.exports = function(app) {
     app.route("/event/:eid")
         .get(EventController.getFullEvent)
         .delete(EventController.deleteEvent)
-        .put([
-            body('description').optional().isString(),
-            body('name').optional().isString().isLength({min: 1}),
-            body('end').optional()
-                .custom(validation.checkIso8601)
-                .custom(validation.isAfter('start'))
-                .customSanitizer(validation.toMoment),
-            body('start').optional()
-                .custom(validation.checkIso8601)
-                .customSanitizer(validation.toMoment),
-            body('hide_rankings').optional().isBoolean()
-        ], EventController.updateEvent);
+        .put(validation.getEventValidators(false), EventController.updateEvent);
 
     /**
      * @api {get} /event/:id Get events

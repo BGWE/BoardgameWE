@@ -40,6 +40,9 @@ const conditionallyOptional = (builder, isOptional) => {
     return isOptional ? builder.optional() : builder;
 };
 
+/** shortcut for conditionallyOptional */
+const co = (b, opt) => conditionallyOptional(b, opt);
+
 exports.toMoment = value => moment.utc(value, moment.ISO_8061);
 
 exports.checkIso8601 = value => exports.toMoment(value).isValid();
@@ -90,7 +93,7 @@ exports.model = function(model) {
  */
 exports.getGameValidators = function(is_create) {
     return [
-        conditionallyOptional(body('players'), !is_create).isArray().not().isEmpty(),
+        co(body('players'), !is_create).isArray().not().isEmpty(),
         body('players.*.score').isNumeric().custom(exports.checkScore("ranking_method")),
         body('players.*.id_user')
             .custom(exports.mutuallyExclusive("name"))
@@ -99,8 +102,23 @@ exports.getGameValidators = function(is_create) {
             .custom(exports.mutuallyExclusive("id_user"))
             .optional({nullable: true}).isString().trim().not().isEmpty(),
         body('duration').optional({nullable: true}).isInt().custom(exports.isPositive),
-        exports.modelExists(conditionallyOptional(body('id_board_game'), !is_create), db.BoardGame),
-        conditionallyOptional(body('ranking_method'), !is_create).isIn(["WIN_LOSE", "POINTS_HIGHER_BETTER", "POINTS_LOWER_BETTER"])
+        exports.modelExists(co(body('id_board_game'), !is_create), db.BoardGame),
+        co(body('ranking_method'), !is_create).isIn(["WIN_LOSE", "POINTS_HIGHER_BETTER", "POINTS_LOWER_BETTER"])
+    ];
+};
+
+exports.getEventValidators = function(is_create) {
+    return [
+        co(body('description'), !is_create).isString(),
+        co(body('name'), !is_create).optional().isString().isLength({min: 1}),
+        co(body('end'), !is_create)
+            .custom(validation.checkIso8601)
+            .custom(validation.isAfter('start'))
+            .customSanitizer(validation.toMoment),
+        co(body('start'), !is_create)
+            .custom(validation.checkIso8601)
+            .customSanitizer(validation.toMoment),
+        body('hide_rankings').optional().isBoolean()
     ];
 };
 
