@@ -139,13 +139,10 @@ exports.forgotPassword = function(req, res) {
         } else {
             emailutil.sendResetPasswordEmail(
                             user.email, 
-                            'info@boardgameweekend.party',
-                            'BoardGameCompanion', 
+                            config.email_settings.email_address,
+                            config.email_settings.sender_name, 
                             user.name, 
-                            config.frontend_url + '/#/auth/reset_password?token=' + 
-                                userutil.getResetPasswordToken(user.id, user.email,
-                                                                user.password, user.createdAt)
-                                + '&id=' + user.id)
+                            userutil.getResetPasswordFrontendUrl(user.id, user.email, user.password, user.createdAt))
                             .then(() => {
                                 return util.successResponse(res);
                             })

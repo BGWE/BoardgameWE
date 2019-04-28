@@ -1,6 +1,7 @@
 const sgMail = require('@sendgrid/mail');
+const config = require("../config/config.js");
 
-sgMail.setApiKey(process.env.SENDGRID_API_KEY);
+sgMail.setApiKey(config.sendgrid_api_key);
 
 exports.sendResetPasswordEmail = (toAddress, fromAddress, fromName, first_name, link) => {
     const msg = {

@@ -27,5 +27,6 @@ module.exports = {
         sender_name: 'BoardGameCompanion',
         email_address: 'info@boardgameweekend.party'
     },
+    sendgrid_api_key: process.env.SENDGRID_API_KEY,
     [process.env.NODE_ENV]: database
 };

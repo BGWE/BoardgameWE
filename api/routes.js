@@ -190,6 +190,8 @@ module.exports = function(app) {
      * @apiName ForgotPassword
      * @apiGroup User
      * @apiDescription Send password recovery email for user linked to the email address.
+     * 
+     * @apiParam (body) {String} email Email of the user that has forgotten the associated password.
      */
     app.route("/user/forgot_password")
         .post(UserController.forgotPassword);
@@ -199,6 +201,10 @@ module.exports = function(app) {
      * @apiName ResetPassword
      * @apiGroup User
      * @apiDescription Reset the password of a user by another one given in the payload. This uses the token provided in the ForgotPassword API.
+     * 
+     * @apiParam (body) {String} token Reset password token.
+     * @apiParam (body) {String} id User ID.
+     * @apiParam (body) {String} password New password.
      */
     app.route("/user/reset_password")
         .post(UserController.resetPassword);
