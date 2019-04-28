@@ -5,9 +5,11 @@ const jwt = require("jsonwebtoken");
 const userutil = require("./util/user");
 const util = require("./util/util");
 const db = require("./models/index");
+const _ = require("lodash");
 
 module.exports = function(app) {
-    const {check, body} = require('express-validator/check');
+    const { body, param, check } = require('express-validator/check');
+    const { asyncMiddleware } = require('./util/util');
     const validation = require('./util/validation');
     const BoardGameController = require("./BoardGameController");
     const GameController = require("./GameController");
@@ -15,6 +17,7 @@ module.exports = function(app) {
     const UserController = require("./UserController");
     const EventController = require("./EventController");
     const AdminController = require("./AdminController");
+    const TimerController = require("./TimerController");
 
     /**
      * @apiDefine TokenHeaderRequired
@@ -94,7 +97,7 @@ module.exports = function(app) {
 
     /**
      * @apiDefine BoardGameDescriptor
-     *
+
      * @apiSuccess {Number} id Board game identifier
      * @apiSuccess {String} name Board game name
      * @apiSuccess {Number} bgg_id BGG identifier of the board game
@@ -118,6 +121,12 @@ module.exports = function(app) {
     /**
      * @apiDefine EventListDescriptor
      * @apiSuccess {Event[]} events List of events. See "Create event" request for event object structure. Note: the
+     * returned data is a list (not an actual object).
+     */
+
+    /**
+     * @apiDefine TimerListDescriptor
+     * @apiSuccess {Timer[]} timers List of timers. See "Create timer" request for timer object structure. Note: the
      * returned data is a list (not an actual object).
      */
 
@@ -146,6 +155,29 @@ module.exports = function(app) {
      */
 
     /**
+     * @apiDefine TimerDescriptor
+     *
+     * @apiSuccess {Number} id Timer identifier
+     * @apiSuccess {Number} id_game Game identifier (or null if not tied to a game)
+     * @apiSuccess {Game} game Game data (see 'Get game' request for game structure).
+     * @apiSuccess {String} timer_type Type of timer. One of: 'COUNT_UP', 'COUNT_DOWN' or 'RELOAD'
+     * @apiSuccess {Number} id_creator Identifier of the user who has created the timer.
+     * @apiSuccess {User} creator User data (see 'Get current user' request for user structure)
+     * @apiSuccess {Number} initial_duration Number of millisecond that each player's timer should start from.
+     * @apiSuccess {PlayerTimer[]} player_timers The individual player timers
+     * @apiSuccess {Number} player_timers.id_timer Timer identifier.
+     * @apiSuccess {Number} player_timers.id_user Player user identifier (mutually exclusive with `name`), or `null`.
+     * @apiSuccess {User} player_timers.user If `id_user` is not `null`, user data (see 'Get current user' request for user
+     * structure)
+     * @apiSuccess {String} player_timers.name Player name if the player is not registered on the application (mutually
+     * exclusive with `user`), or `null`.
+     * @apiSuccess {Number} player_timers.color Player's color (hexcode, e.g.: `#ffffff`).
+     * @apiSuccess {Number} player_timers.elapsed Number of millisecond elapsed since the beginning of the player's timer.
+     * @apiSuccess {Number} player_timers.start Start datetime of the player's timer (iso8601, UTC), or `null` if this timer is not running.
+     * @apiSuccess {Boolean} player_timers.running `true` if the player's timer is running, `false` otherwise.
+     */
+
+    /**
      * @apiDefine SuccessObjDescriptor
      * @apiSuccess {Boolean} success True if success
      */
@@ -158,6 +190,12 @@ module.exports = function(app) {
      * @apiError {String} errors.location Location of the parameter (e.g. `body`)
      * @apiError {String} errors.msg Description for this error
      * @apiError {String} errors.param Name of the erroneous parameter
+     */
+
+    /**
+     * @apiDefine PaginationParameters
+     * @apiParam (query) {Number} [max_items] Maximum number of items to return
+     * @apiParam (query) {Number} [start] Pagination offset (resources are sorted by decreasing creation time)
      */
 
     // User routes
@@ -210,33 +248,28 @@ module.exports = function(app) {
         .post(UserController.resetPassword);
 
     // authentication middleware, applied to all except login and register
-    app.use(/^\/(?!user\/register|user\/login|auth\/forgot_password|auth\/reset_password).*/, function(req, res, next) {
+    app.use(/^\/(?!user\/register|user\/login|auth\/forgot_password|auth\/reset_password).*/, asyncMiddleware(async function(req, res, next) {
         let token = userutil.getToken(req);
         if (!token) {
             return util.detailErrorResponse(res, 401, "No token provided.");
         }
-        jwt.verify(token, config.jwt_secret_key, function(err, decoded) {
-            if (err) {
-                return util.detailErrorResponse(res, 401, "Failed to authenticate token.");
-            } else {
-                // if everything is good, save to request for use in other route
-                req.decoded = decoded;
-                // check that current user still exists and is validated !
-                return db.User.findById(decoded.id)
-                    .then(user => {
-                        if (user.validated) {
-                            req.is_admin = user.admin;
-                            return next();
-                        } else {
-                            return util.detailErrorResponse(res, 403, UserController.notValidatedErrorMsg);
-                        }
-                    }).catch(err => {
-                        // user doesn't exist anymore (shouldn't happen)
-                        return util.detailErrorResponse(res, 401, "Unknown user.");
-                    });
+        const verified = jwt.verify(token, config.jwt_secret_key, (error, decoded) => { return {error, decoded}; });
+        if (verified.error) {
+            return util.detailErrorResponse(res, 401, "Failed to authenticate token.");
+        }
+        try {
+            const user = await db.User.findByPk(verified.decoded.id);
+            if (!user.validated){
+                return util.detailErrorResponse(res, 403, UserController.notValidatedErrorMsg);
             }
-        });
-    });
+            req.decoded = verified.decoded;
+            req.is_admin = user.admin;
+            next();
+        } catch(err) {
+            console.log(err);
+            return util.detailErrorResponse(res, 401, "Unknown user.");
+        }
+    }));
 
     // User (protected)
     /**
@@ -364,13 +397,31 @@ module.exports = function(app) {
 
     // Event
     /**
+     * Ensures that only the creator and the participating players can update event data.
+     * @param req Request Express request object (there should be an eid parameters)
+     * @param res
+     * @param next
+     */
+    const eventAccessMiddleware = async function (req, res, next) {
+        const eid = parseInt(req.params.eid);
+        const uid = userutil.getCurrUserId(req);
+        const creator = await db.Event.count({where: {id_creator: uid, id: eid}});
+        const attendee = db.EventAttendee.count({where: {id_user: uid, id_event: eid}});
+        if (creator === 1 || attendee === 1) {
+            next();
+        } else {
+            return util.detailErrorResponse(res, 403, "you must be either an attendee or the creator of the event to access this endpoint");
+        }
+    };
+
+    /**
      * @api {post} /event Create event
      * @apiName CreateEvent
      * @apiGroup Event
      * @apiDescription Create an event.
      * @apiParam (body) {String} name Event name
      * @apiParam (body) {String} start Start datetime (ISO8601)
-     * @apiParam (body) {String} end End datetimer (ISO8601)
+     * @apiParam (body) {String} end End datetime (ISO8601)
      * @apiParam (body) {String} description Event description
      * @apiParam (body) {Boolean} hide_rankings True if rankings should be hidden, false otherwise
      * @apiUse TokenHeaderRequired
@@ -379,18 +430,7 @@ module.exports = function(app) {
      * @apiUse ErrorDescriptor
      */
     app.route("/event")
-        .post([
-            body('description').isString(),
-            body('name').isString().isLength({min: 1}),
-            body('end')
-                .custom(validation.checkIso8601)
-                .custom(validation.isAfter('start'))
-                .customSanitizer(validation.toMoment),
-            body('start')
-                .custom(validation.checkIso8601)
-                .customSanitizer(validation.toMoment),
-            body('hide_rankings').optional().isBoolean()
-        ], EventController.createEvent);
+        .post(validation.getEventValidators(true), EventController.createEvent);
 
     /**
      * @api {get} /event/:id Get event
@@ -410,6 +450,7 @@ module.exports = function(app) {
      * @apiName DeleteEvent
      * @apiGroup Event
      * @apiDescription Delete the event.
+     * Note: only the creator can use this endpoint.
      *
      * @apiParam {Number} id The event identifier
      *
@@ -422,6 +463,8 @@ module.exports = function(app) {
      * @apiName UpdateEvent
      * @apiGroup Event
      * @apiDescription Update an event.
+     * Note: only the creator can use this endpoint.
+     *
      * @apiParam (body) {String} name Event name
      * @apiParam (body) {String} start Start datetime (ISO8601)
      * @apiParam (body) {String} end End datetime (ISO8601)
@@ -435,18 +478,7 @@ module.exports = function(app) {
     app.route("/event/:eid")
         .get(EventController.getFullEvent)
         .delete(EventController.deleteEvent)
-        .put([
-            body('description').optional().isString(),
-            body('name').optional().isString().isLength({min: 1}),
-            body('end').optional()
-                .custom(validation.checkIso8601)
-                .custom(validation.isAfter('start'))
-                .customSanitizer(validation.toMoment),
-            body('start').optional()
-                .custom(validation.checkIso8601)
-                .customSanitizer(validation.toMoment),
-            body('hide_rankings').optional().isBoolean()
-        ], EventController.updateEvent);
+        .put(validation.getEventValidators(false), EventController.updateEvent);
 
     /**
      * @api {get} /event/:id Get events
@@ -528,13 +560,14 @@ module.exports = function(app) {
      * @apiGroup Event board game
      * @apiDescription Add a new board game from the given source to the application, then add this game to the
      * specified event.
+     * Note: only the creator or an attendee can use this endpoint.
      * @apiUse SourceParameter
      * @apiParam {Number} eid Event identifier.
      * @apiUse TokenHeaderRequired
      * @apiUse ProvidedBoardGamesListDescriptor
      */
     app.route("/event/:eid/board_game/:source/:id")
-        .post(EventController.addBoardGameAndAddToEvent);
+        .post(eventAccessMiddleware, EventController.addBoardGameAndAddToEvent);
 
 
     /**
@@ -554,6 +587,7 @@ module.exports = function(app) {
      * @apiName AddProvidedBoardGames
      * @apiGroup Event board game
      * @apiDescription Add all the given board games to the the current user's 'provided' list of the specified event.
+     * Note: only the creator or an attendee can use this endpoint.
      *
      * @apiParam {Number} id Event identifier.
      *
@@ -566,6 +600,7 @@ module.exports = function(app) {
      * @apiName DeleteProvidedBoardGames
      * @apiGroup Event board game
      * @apiDescription Remove all the given board games to the the current user's 'provided' list of the specified event.
+     * Note: only the creator or an attendee can use this endpoint.
      *
      * @apiParam {Number} id Event identifier.
      *
@@ -574,14 +609,15 @@ module.exports = function(app) {
      */
     app.route("/event/:eid/board_games")
         .get(EventController.getProvidedBoardGames)
-        .post(EventController.addProvidedBoardGames)
-        .delete(EventController.deleteProvidedBoardGames);
+        .post(eventAccessMiddleware, EventController.addProvidedBoardGames)
+        .delete(eventAccessMiddleware, EventController.deleteProvidedBoardGames);
 
     /**
      * @api {post} /event/:id/game Add event game
      * @apiName AddEventGame
      * @apiGroup Event game
      * @apiDescription Add a game at the specified event.
+     * Note: only the creator or an attendee can use this endpoint.
      *
      * @apiParam {Number} id Event identifier.
      *
@@ -592,20 +628,27 @@ module.exports = function(app) {
      * @apiParam (body) {Number} players.score Player score
      * @apiParam (body) {String} players.name Player name if not registered on the platform (mutually exclusive with
      * 'user') or `null`.
-     * @apiParam (body) {Number} players.user Player user identifier (mutually exclusive with 'name') or `null`.
+     * @apiParam (body) {Number} players.id_user Player user identifier (mutually exclusive with 'name') or `null`.
      * @apiUse TokenHeaderRequired
      *
      * @apiUse FullGameDescriptor
      * @apiUse DBDatetimeFields
      */
     app.route("/event/:eid/game")
-        .post(GameController.addEventGame);
+        .post(
+            eventAccessMiddleware,
+            validation.getGameValidators(true).concat([
+                validation.modelExists(check('eid'), db.Event)
+            ]),
+            GameController.addEventGame
+        );
 
     /**
      * @api {put} /event/:eid/game/:gid Update event game
      * @apiName UpdateEventGame
      * @apiGroup Event game
      * @apiDescription Update a game of the specified event. If a list of players is provided, it replaces the old list of players completely .
+     * Note: only the creator or an attendee can use this endpoint.
      *
      * @apiParam {Number} eid Event identifier.
      * @apiParam {Number} gid Game identifier.
@@ -618,14 +661,20 @@ module.exports = function(app) {
      * @apiParam (body) {Number} players.score Player score
      * @apiParam (body) {String} players.name Player name if not registered on the platform (mutually exclusive with
      * 'user') or `null`.
-     * @apiParam (body) {Number} players.user Player user identifier (mutually exclusive with 'name') or `null`.
+     * @apiParam (body) {Number} players.id_user Player user identifier (mutually exclusive with 'name') or `null`.
      *
      * @apiUse TokenHeaderRequired
      * @apiUse FullGameDescriptor
      * @apiUse DBDatetimeFields
      */
     app.route("/event/:eid/game/:gid")
-        .put(GameController.updateEventGame);
+        .put(
+            eventAccessMiddleware,
+            validation.getGameValidators(false).concat([
+                validation.modelExists(check('eid'), db.Event),
+                validation.modelExists(check('gid'), db.Game)
+            ]), GameController.updateEventGame
+        );
 
     /**
      * @api {get} /event/:id/games Get event games
@@ -636,6 +685,7 @@ module.exports = function(app) {
      * @apiParam {Number} id Event identifier.
      *
      * @apiUse TokenHeaderRequired
+     * @apiUse PaginationParameters
      *
      * @apiSuccess {Game[]} games List of the games of the event (see "Add event game" for Game structure). Note: the
      * returned data is a list (not an actual object).
@@ -676,6 +726,7 @@ module.exports = function(app) {
      * @apiName AddEventAttendees
      * @apiGroup Event attendee
      * @apiDescription Add attendees to the specified event.
+     * Note: only the creator or an attendee can use this endpoint.
      *
      * @apiParam {Number} id Event identifier.
      *
@@ -687,6 +738,7 @@ module.exports = function(app) {
      * @apiName DeleteEventAttendees
      * @apiGroup Event attendee
      * @apiDescription Remove attendees from the specified event.
+     * Note: only the creator or an attendee can use this endpoint.
      *
      * @apiParam {Number} id Event identifier.
      *
@@ -694,8 +746,8 @@ module.exports = function(app) {
      */
     app.route("/event/:eid/attendees")
         .get(EventController.getEventAttendees)
-        .post(EventController.addEventAttendees)
-        .delete(EventController.deleteEventAttendees);
+        .post(eventAccessMiddleware, EventController.addEventAttendees)
+        .delete(eventAccessMiddleware, EventController.deleteEventAttendees);
 
     /**
      * @api {post} /event/:id/subscribe Subscribe to event
@@ -833,13 +885,70 @@ module.exports = function(app) {
      * @apiGroup Game
      * @apiDescription Get the specified game data
      *
-     * @apiParam {String} id Game identifier.
+     * @apiParam {Number} id Game identifier.
      *
      * @apiUse TokenHeaderRequired
      */
     app.route("/game/:gid")
         .get(GameController.getGame)
         .delete(GameController.deleteGame);
+
+    /**
+     * @api {post} /game/:gid/timer Create timer from game
+     * @apiName Create TimerFromGame
+     * @apiGroup Timer
+     * @apiDescription Create a new timer from an existing game (extract players from the game).
+     * @apiParam (query) {Number} gid Game identifier.
+     * @apiParam (body) {String} timer_type=`COUNT_UP` The type of timer to create. One of: `COUNT_UP`, `COUNT_DOWN `or `RELOAD`.
+     * @apiParam (body) {Number} initial_duration=0 Start time of all players' timers in milliseconds.
+     * @apiParam (body) {Number} reload_increment=0 If the timer is of type `RELOAD`, the amount of time add every at every `next()` action.
+     * @apiUse TokenHeaderRequired
+     * @apiUse TimerDescriptor
+     */
+    app.route("/game/:gid/timer")
+        .post(TimerController.addTimerFromGame);
+
+    // timer api
+    /**
+     * @api {post} /timer Create timer
+     * @apiName CreateTimer
+     * @apiGroup Timer
+     * @apiDescription Create a new timer.
+     * @apiParam (body) {String} timer_type=`COUNT_UP` The type of timer to create. One of: `COUNT_UP`, `COUNT_DOWN `or `RELOAD`.
+     * @apiParam (body) {Number} initial_duration=0 Start time of all players' timers in milliseconds.
+     * @apiParam (body) {Number} reload_increment=0 If the timer is of type `RELOAD`, the amount of time add every at every `next()` action.
+     * @apiParam (body) {PlayerTimer[]} players Individual player timers information.
+     * @apiParam (body) {Number} players.id_user Player user identifier if registered on the app (mutually exclusive with `name`), or `null`.
+     * @apiParam (body) {String} players.name Player name if the player is not registered on the application (mutually
+     * exclusive with `user`), or `null`.
+     * @apiParam (body) {Number} players.color=#ffffff Player's color (hexcode, e.g.: `#ffffff`).
+     * @apiUse TokenHeaderRequired
+     * @apiUse TimerDescriptor
+     */
+    app.route("/timer")
+        .post(TimerController.createTimer);
+
+    /**
+     * @api {post} /timer/:tid Get timer
+     * @apiName GetTimer
+     * @apiGroup Timer
+     * @apiDescription Get timer data (only peek at one point in time. For real-time refresh, use the socket timer api).
+     * @apiUse TokenHeaderRequired
+     * @apiUse TimerDescriptor
+     */
+    app.route("/timer/:tid")
+        .get(TimerController.getTimer);
+
+    /**
+     * @api {post} /timers Get current user timers
+     * @apiName GetCurrentUserTimers
+     * @apiGroup Timer
+     * @apiDescription Get all the timers the current user is involved in.
+     * @apiUse TokenHeaderRequired
+     * @apiUse TimerListDescriptor
+     */
+    app.route("/timers")
+        .get(TimerController.getCurrentUserTimers);
 
     // Disabled, games are mostly seen through event
     // app.route("/games")

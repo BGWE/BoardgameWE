@@ -123,6 +123,7 @@ exports.sendModelOrError = function(res, promise, transform) {
             return exports.successResponse(res, transform(obj));
         })
         .catch(err => {
+            console.log(err);
             return exports.errorResponse(res);
         })
 };
@@ -136,4 +137,25 @@ exports.handleDeletion = function(res, promise) {
         .catch(err => {
             return exports.errorResponse(res);
         })
+};
+
+exports.asyncMiddleware = function(fn) {
+    return (req, res, next) => {
+        Promise.resolve(fn(req, res, next))
+            .catch(next);
+    };
+};
+
+/**
+ * Extract pagination param from a request. Parameters are sought for in the query paramters.
+ * @param req Request Express request object
+ * @param order A list of database field to order on (sequelize convention)
+ * @returns {{limit: (*|undefined), offset: (*|number), order: *}}
+ */
+exports.getPaginationParams = function(req, order) {
+    return {
+        limit: req.query.max_items || undefined,
+        offset: req.query.start || 0,
+        order
+    };
 };

@@ -19,6 +19,9 @@ if (process.env.USE_SSL) {
     database.dialectOptions = {ssl: true};
 }
 
+// for sequelize to return bigint as int and not string
+require('pg').defaults.parseInt8 = true;
+
 module.exports = {
     jwt_secret_key: process.env.JWT_SECRET_KEY,
     jwt_duration: process.env.JWT_DURATION || "4 days",

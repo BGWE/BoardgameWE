@@ -85,7 +85,7 @@ exports.register = function(req, res) {
 
 exports.getCurrentUser = function(req, res) {
     let userId = userutil.getCurrUserId(req);
-    return handleUserResponse(res, db.User.findById(userId));
+    return handleUserResponse(res, db.User.findByPk(userId));
 };
 
 
@@ -96,7 +96,7 @@ exports.updateUser = function(req, res) {
         return util.detailErrorResponse(res, 404, "cannot update data of another user");
     }
 
-    return db.User.findById(userId)
+    return db.User.findByPk(userId)
         .then(user => {
             let updateFn = function() {
                 user.username = req.body.username || user.username;
@@ -268,7 +268,7 @@ exports.getUserStats = function(req, res) {
             if (data.length === 0) {
                 return {count: 0, board_game: null};
             }
-            return db.BoardGame.findById(data[0].id_board_game).then(board_game => {
+            return db.BoardGame.findByPk(data[0].id_board_game).then(board_game => {
                 return {board_game: board_game, count: parseInt(data[0].count)};
             });
         }),
@@ -276,7 +276,7 @@ exports.getUserStats = function(req, res) {
         db.GamePlayer.findAll({
             where: clause,
             include: [Object.assign(includes.defaultGameIncludeSQ, {
-                where: {["duration"]: {[db.sequelize.Op.ne]: null}},
+                where: {["duration"]: {[db.Op.ne]: null}},
                 attributes: []
             })],
             attributes: [[db.sequelize.fn("SUM", db.sequelize.col('game.duration')), "total"]],

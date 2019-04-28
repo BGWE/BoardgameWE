@@ -39,12 +39,13 @@ exports.updateEvent = function(req, res) {
     if (!errors.isEmpty()) {
         return util.detailErrorResponse(res, 400, "cannot update event", errors);
     }
-    return db.Event.findById(parseInt(req.params.eid)).then(event => {
+    return db.Event.findByPk(parseInt(req.params.eid)).then(event => {
         if (event.id_creator !== userutil.getCurrUserId(req)) {
             return util.detailErrorResponse(res, 403, "only the event creator can update the event");
         }
         event.description = req.body.description || event.description;
         event.name = req.body.name || event.name;
+        location = req.body.location || event.location;
         event.start = req.body.start || event.start;
         event.end = req.body.end || event.end;
         event.hide_rankings = req.body.hide_rankings === undefined ? event.hide_rankings : req.body.hide_rankings;
@@ -55,11 +56,11 @@ exports.updateEvent = function(req, res) {
 };
 
 exports.getEvent = function(req, res) {
-    return util.sendModelOrError(res, db.Event.findById(parseInt(req.params.eid)));
+    return util.sendModelOrError(res, db.Event.findByPk(parseInt(req.params.eid)));
 };
 
 exports.getFullEvent = function(req, res) {
-    return util.sendModelOrError(res, db.Event.find({
+    return util.sendModelOrError(res, db.Event.findOne({
         where: {id: parseInt(req.params.eid)},
         include: eventFullIncludeSQ
     }));
@@ -70,13 +71,13 @@ exports.getAllEvents = function(req, res) {
     let currIncludes = [];
     if (req.query.ongoing !== undefined) {
         let between = {
-            start: {[db.Sequelize.Op.lte]: db.Sequelize.fn("date", db.Sequelize.fn("now"))},
-            end: {[db.Sequelize.Op.gte]: db.Sequelize.fn("date", db.Sequelize.fn("now"))}
+            start: {[db.Op.lte]: db.Sequelize.fn("date", db.Sequelize.fn("now"))},
+            end: {[db.Op.gte]: db.Sequelize.fn("date", db.Sequelize.fn("now"))}
         };
         if (req.query.ongoing) {
-            where[db.Sequelize.Op.and] = between;
+            where[db.Op.and] = between;
         } else {
-            where[db.Sequelize.Op.not] = {[db.Sequelize.Op.and] : between};
+            where[db.Op.not] = {[db.Op.and] : between};
         }
     }
     if (req.query.registered !== undefined) {
@@ -93,9 +94,15 @@ exports.getAllEvents = function(req, res) {
 
 exports.deleteEvent = function(req, res) {
     let eid = parseInt(req.params.eid);
-    return util.handleDeletion(res, db.Event.destroy({
+    return db.Event.destroy({
         where: {id: eid, id_creator: userutil.getCurrUserId(req)}  // restrict suppression of events to the creator
-    }));
+    }).then(count => {
+        if (count === 0) {
+            return util.detailErrorResponse(res, 403, "you must be the creator of the event to delete it, and the event must exist");
+        } else {
+            return util.successResponse(res, util.successObj);
+        }
+    });
 };
 
 exports.sendProvidedBoardGames = function(eid, res) {
@@ -112,13 +119,12 @@ exports.addProvidedBoardGames = function(req, res) {
     let eid = parseInt(req.params.eid);
     let userId = userutil.getCurrUserId(req);
     let board_games = req.body.board_games.map(g => { return { id_user: userId, id_board_game: g, id_event: eid }});
-    return db.ProvidedBoardGame.bulkCreate(board_games, { ignoreDuplicates: true })
-        .then(() => {
-            return exports.sendProvidedBoardGames(eid, res);
-        })
-        .catch(err => {
-            return util.errorResponse(res);
-        });
+    return db.ProvidedBoardGame.bulkCreate(board_games, { ignoreDuplicates: true }).then(() => {
+        return exports.sendProvidedBoardGames(eid, res);
+    }).catch(err => {
+        console.log(err);
+        return util.errorResponse(res);
+    });
 };
 
 exports.getProvidedBoardGames = function(req, res) {
@@ -223,22 +229,26 @@ exports.getEventStats = function(req, res) {
             distinct: true,
             col: 'id_board_game'
         }),
-        db.Game.find({
-            where: {id_event: eid},
+        db.Game.findOne({
+            where: {id_event: eid, duration: {[db.Op.ne]: null}},
             order: [['duration', 'DESC']],
             include: GameController.gameFullIncludesSQ
         }),
-        db.Game.find({
+        db.Game.findOne({
             where: {id_event: eid},
             attributes: ['id_board_game', [db.sequelize.fn('count', 'id_board_game'), 'count']],
             raw: true,
             order: [['count', 'DESC']],
             group: 'id_board_game'
         }).then(data => {
-            return Promise.all([
-                new Promise((resolve, reject) => { resolve(parseInt(data.count)); }),
-                db.BoardGame.findById(data.id_board_game)
-            ]);
+            if (data) {
+                return Promise.all([
+                    new Promise((resolve) => resolve(parseInt(data.count))),
+                    db.BoardGame.findByPk(data.id_board_game)
+                ]);
+            } else {
+                return new Promise((resolve) => resolve([0, null]));
+            }
         })
     ]), values => {
         return {
@@ -246,7 +256,7 @@ exports.getEventStats = function(req, res) {
             board_games_played: values[1],
             minutes_played: values[2],
             provided_board_games: values[3],
-            longest_game: GameController.fromGamePlayersToRanks(values[4]),
+            longest_game: values[4] ? GameController.fromGamePlayersToRanks(values[4]) : null,
             most_played: { count: values[5][0], board_game: values[5][1] }
         }
     });
