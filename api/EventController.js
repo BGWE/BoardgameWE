@@ -93,9 +93,15 @@ exports.getAllEvents = function(req, res) {
 
 exports.deleteEvent = function(req, res) {
     let eid = parseInt(req.params.eid);
-    return util.handleDeletion(res, db.Event.destroy({
+    return db.Event.destroy({
         where: {id: eid, id_creator: userutil.getCurrUserId(req)}  // restrict suppression of events to the creator
-    }));
+    }).then(count => {
+        if (count === 0) {
+            return util.detailErrorResponse(res, 403, "you must be the creator of the event to delete it, and the event must exist");
+        } else {
+            return util.successResponse(res, util.successObj);
+        }
+    });
 };
 
 exports.sendProvidedBoardGames = function(eid, res) {

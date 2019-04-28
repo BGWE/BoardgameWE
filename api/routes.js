@@ -373,6 +373,24 @@ module.exports = function(app) {
 
     // Event
     /**
+     * Ensures that only the creator and the participating players can update event data.
+     * @param req Request Express request object (there should be an eid parameters)
+     * @param res
+     * @param next
+     */
+    const eventAccessMiddleware = async function (req, res, next) {
+        const eid = parseInt(req.params.eid);
+        const uid = userutil.getCurrUserId(req);
+        const creator = await db.Event.count({where: {id_creator: uid, id: eid}});
+        const attendee = db.EventAttendee.count({where: {id_user: uid, id_event: eid}});
+        if (creator === 1 || attendee === 1) {
+            next();
+        } else {
+            return util.detailErrorResponse(res, 403, "you must be either an attendee or the creator of the event to access this endpoint");
+        }
+    };
+
+    /**
      * @api {post} /event Create event
      * @apiName CreateEvent
      * @apiGroup Event
@@ -408,6 +426,7 @@ module.exports = function(app) {
      * @apiName DeleteEvent
      * @apiGroup Event
      * @apiDescription Delete the event.
+     * Note: only the creator can use this endpoint.
      *
      * @apiParam {Number} id The event identifier
      *
@@ -420,6 +439,8 @@ module.exports = function(app) {
      * @apiName UpdateEvent
      * @apiGroup Event
      * @apiDescription Update an event.
+     * Note: only the creator can use this endpoint.
+     *
      * @apiParam (body) {String} name Event name
      * @apiParam (body) {String} start Start datetime (ISO8601)
      * @apiParam (body) {String} end End datetime (ISO8601)
@@ -515,13 +536,14 @@ module.exports = function(app) {
      * @apiGroup Event board game
      * @apiDescription Add a new board game from the given source to the application, then add this game to the
      * specified event.
+     * Note: only the creator or an attendee can use this endpoint.
      * @apiUse SourceParameter
      * @apiParam {Number} eid Event identifier.
      * @apiUse TokenHeaderRequired
      * @apiUse ProvidedBoardGamesListDescriptor
      */
     app.route("/event/:eid/board_game/:source/:id")
-        .post(EventController.addBoardGameAndAddToEvent);
+        .post(eventAccessMiddleware, EventController.addBoardGameAndAddToEvent);
 
 
     /**
@@ -541,6 +563,7 @@ module.exports = function(app) {
      * @apiName AddProvidedBoardGames
      * @apiGroup Event board game
      * @apiDescription Add all the given board games to the the current user's 'provided' list of the specified event.
+     * Note: only the creator or an attendee can use this endpoint.
      *
      * @apiParam {Number} id Event identifier.
      *
@@ -553,6 +576,7 @@ module.exports = function(app) {
      * @apiName DeleteProvidedBoardGames
      * @apiGroup Event board game
      * @apiDescription Remove all the given board games to the the current user's 'provided' list of the specified event.
+     * Note: only the creator or an attendee can use this endpoint.
      *
      * @apiParam {Number} id Event identifier.
      *
@@ -561,14 +585,15 @@ module.exports = function(app) {
      */
     app.route("/event/:eid/board_games")
         .get(EventController.getProvidedBoardGames)
-        .post(EventController.addProvidedBoardGames)
-        .delete(EventController.deleteProvidedBoardGames);
+        .post(eventAccessMiddleware, EventController.addProvidedBoardGames)
+        .delete(eventAccessMiddleware, EventController.deleteProvidedBoardGames);
 
     /**
      * @api {post} /event/:id/game Add event game
      * @apiName AddEventGame
      * @apiGroup Event game
      * @apiDescription Add a game at the specified event.
+     * Note: only the creator or an attendee can use this endpoint.
      *
      * @apiParam {Number} id Event identifier.
      *
@@ -586,15 +611,20 @@ module.exports = function(app) {
      * @apiUse DBDatetimeFields
      */
     app.route("/event/:eid/game")
-        .post(validation.getGameValidators(true).concat([
-            validation.modelExists(check('eid'), db.Event)
-        ]), GameController.addEventGame);
+        .post(
+            eventAccessMiddleware,
+            validation.getGameValidators(true).concat([
+                validation.modelExists(check('eid'), db.Event)
+            ]),
+            GameController.addEventGame
+        );
 
     /**
      * @api {put} /event/:eid/game/:gid Update event game
      * @apiName UpdateEventGame
      * @apiGroup Event game
      * @apiDescription Update a game of the specified event. If a list of players is provided, it replaces the old list of players completely .
+     * Note: only the creator or an attendee can use this endpoint.
      *
      * @apiParam {Number} eid Event identifier.
      * @apiParam {Number} gid Game identifier.
@@ -614,10 +644,13 @@ module.exports = function(app) {
      * @apiUse DBDatetimeFields
      */
     app.route("/event/:eid/game/:gid")
-        .put(validation.getGameValidators(false).concat([
-            validation.modelExists(check('eid'), db.Event),
-            validation.modelExists(check('gid'), db.Game)
-        ]), GameController.updateEventGame);
+        .put(
+            eventAccessMiddleware,
+            validation.getGameValidators(false).concat([
+                validation.modelExists(check('eid'), db.Event),
+                validation.modelExists(check('gid'), db.Game)
+            ]), GameController.updateEventGame
+        );
 
     /**
      * @api {get} /event/:id/games Get event games
@@ -669,6 +702,7 @@ module.exports = function(app) {
      * @apiName AddEventAttendees
      * @apiGroup Event attendee
      * @apiDescription Add attendees to the specified event.
+     * Note: only the creator or an attendee can use this endpoint.
      *
      * @apiParam {Number} id Event identifier.
      *
@@ -680,6 +714,7 @@ module.exports = function(app) {
      * @apiName DeleteEventAttendees
      * @apiGroup Event attendee
      * @apiDescription Remove attendees from the specified event.
+     * Note: only the creator or an attendee can use this endpoint.
      *
      * @apiParam {Number} id Event identifier.
      *
@@ -687,8 +722,8 @@ module.exports = function(app) {
      */
     app.route("/event/:eid/attendees")
         .get(EventController.getEventAttendees)
-        .post(EventController.addEventAttendees)
-        .delete(EventController.deleteEventAttendees);
+        .post(eventAccessMiddleware, EventController.addEventAttendees)
+        .delete(eventAccessMiddleware, EventController.deleteEventAttendees);
 
     /**
      * @api {post} /event/:id/subscribe Subscribe to event
