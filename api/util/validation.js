@@ -110,14 +110,14 @@ exports.getGameValidators = function(is_create) {
 exports.getEventValidators = function(is_create) {
     return [
         co(body('description'), !is_create).isString(),
-        co(body('name'), !is_create).optional().isString().isLength({min: 1}),
+        co(body('name'), !is_create).isString().isLength({min: 1}),
         co(body('end'), !is_create)
-            .custom(validation.checkIso8601)
-            .custom(validation.isAfter('start'))
-            .customSanitizer(validation.toMoment),
+            .custom(exports.checkIso8601)
+            .custom(exports.isAfter('start'))
+            .customSanitizer(exports.toMoment),
         co(body('start'), !is_create)
-            .custom(validation.checkIso8601)
-            .customSanitizer(validation.toMoment),
+            .custom(exports.checkIso8601)
+            .customSanitizer(exports.toMoment),
         body('hide_rankings').optional().isBoolean()
     ];
 };
