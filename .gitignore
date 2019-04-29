@@ -60,6 +60,9 @@ typings/
 # doc
 doc/
 
+# dev env
+docker/docker-compose.yml
+docker/postgres-data
+
 .idea
 .DS_Store
-docker/postgres-data

@@ -5,9 +5,9 @@ services:
     image: postgres:9.6
     restart: always
     environment:
-      POSTGRES_USER: dbadmin
-      POSTGRES_PASSWORD: Bgwe1234
-      POSTGRES_DB: bgwe_dev
+      POSTGRES_USER: POSTGRES_USER
+      POSTGRES_PASSWORD: POSTGRES_PASSWORD
+      POSTGRES_DB: POSTGRES_DB
     expose:
       - "5432"
     volumes:
@@ -26,11 +26,13 @@ services:
     environment:
       PORT: 3000
       NODE_ENV: development
-      JWT_SECRET_KEY: "bgwe1234"
-      DB_HOSTNAME: "bgwe_backend_db_1"
-      DB_NAME: bgwe_dev
-      DB_PASSWORD: Bgwe1234
-      DB_USERNAME: dbadmin
+      JWT_SECRET_KEY: JWT_SECRET_KEY
+      DB_HOSTNAME: DB_HOSTNAME
+      DB_NAME: DB_NAME
+      DB_PASSWORD: DB_PASSWORD
+      DB_USERNAME: DB_USERNAME
+      FRONTEND_URL: FRONTEND_URL
+      SENDGRID_API_KEY: SENDGRID_API_KEY
     expose:
       - "3000"
     ports:
@@ -43,6 +45,5 @@ services:
       && sleep 15
       && cd api/
       && ../node_modules/.bin/sequelize db:migrate
-      && ../node_modules/.bin/sequelize db:seed:all
       && cd ..
       && npm start"

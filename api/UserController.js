@@ -4,6 +4,7 @@ const jwt = require("jsonwebtoken");
 const bcrypt = require("bcryptjs");
 const util = require("./util/util");
 const userutil = require("./util/user");
+const emailutil = require("./util/email");
 const includes = require("./util/db_include");
 const BoardGameController = require("./BoardGameController");
 const Sequelize = require("sequelize");
@@ -127,6 +128,54 @@ exports.updateUser = function(req, res) {
         .catch(err => {
             return util.detailErrorResponse(res, 404, "user not found");
         })
+};
+
+exports.forgotPassword = function(req, res) {
+    return db.User.findOne({
+        where: {email: req.body.email}
+    }).then(user => {
+        if (!user) {
+            return util.detailErrorResponse(res, 404, 'User not found.');
+        } else {
+            emailutil.sendResetPasswordEmail(
+                            user.email, 
+                            config.email_settings.email_address,
+                            config.email_settings.sender_name, 
+                            user.name, 
+                            userutil.getResetPasswordFrontendUrl(user.id, user.email, user.password, user.createdAt))
+                            .then(() => {
+                                return util.successResponse(res);
+                            })
+                            .catch(err => {
+                                return util.detailErrorResponse(res, 500, "failed to send password recovery email");
+                            });
+        }
+    });
+};
+
+exports.resetPassword = function(req, res) {
+    let token = req.body.token;
+    let userId = req.body.id;
+    let password = req.body.password;
+
+    return db.User.findById(userId)
+        .then(user => {
+            console.log(user);
+            try {
+                let payload = userutil.getPayloadFromResetPasswordToken(token, user.password, user.createdAt);
+            } catch (error) {
+                return util.detailErrorResponse(res, 403, "failed to process the token");
+            }
+
+            // Token is ok
+            return bcrypt.hash(password, 10, function(err, hash) {
+                user.password = hash;
+                return handleUserResponse(res, user.save());
+            });
+        })
+        .catch(err => {
+            return util.detailErrorResponse(res, 404, "user not found");
+        });
 };
 
 /**

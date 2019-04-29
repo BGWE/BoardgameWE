@@ -25,5 +25,11 @@ require('pg').defaults.parseInt8 = true;
 module.exports = {
     jwt_secret_key: process.env.JWT_SECRET_KEY,
     jwt_duration: process.env.JWT_DURATION || "4 days",
+    frontend_url: process.env.FRONTEND_URL || 'https://boardgameweekend.party',
+    email_settings: {
+        sender_name: 'BoardGameCompanion',
+        email_address: 'info@boardgameweekend.party'
+    },
+    sendgrid_api_key: process.env.SENDGRID_API_KEY,
     [process.env.NODE_ENV]: database
 };
