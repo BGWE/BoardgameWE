@@ -4,6 +4,7 @@ const util = require("./util/util");
 const game = require("./GameController");
 const includes = require("./util/db_include");
 const _ = require("lodash");
+const { validationResult } = require('express-validator/check');
 
 
 exports.expectedTypes = ["COUNT_UP", "COUNT_DOWN", "RELOAD"];
@@ -101,11 +102,12 @@ exports.createTimerPromise = function(timer_data, individual_timers, per_type_da
 };
 
 exports.addTimerFromGame = function(req, res) {
-    const gid = parseInt(req.params.gid);
-    if (!exports.isTimerDataValid(req.body)) {
-        return util.detailErrorResponse(res, 400, "invalid timer data");
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+        return util.detailErrorResponse(res, 400, "cannot create timer", errors);
     }
 
+    const gid = parseInt(req.params.gid);
     const timer_data = {
         id_creator: userutil.getCurrUserId(req),
         id_game: gid,
@@ -141,11 +143,9 @@ exports.getTimer = function(req, res) {
 };
 
 exports.createTimer = function(req, res) {
-    if (!exports.isTimerDataValid(req.body)) {
-        return util.detailErrorResponse(res, 400, "invalid timer data");
-    }
-    if (!exports.arePlayerTimerDataValid(req.body.players)) {
-        return util.detailErrorResponse(res, 400, "invalid player timer data");
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+        return util.detailErrorResponse(res, 400, "cannot create timer", errors);
     }
 
     return exports.createTimerPromise({
@@ -162,6 +162,7 @@ exports.createTimer = function(req, res) {
     }).then(timer => {
         return util.sendModelOrError(res, exports.buildFullTimer(timer.id));
     }).catch(err => {
+        console.log(err);
         return util.detailErrorResponse(res, 400, "cannot create timer");
     });
 };

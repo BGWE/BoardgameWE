@@ -194,7 +194,7 @@ module.exports = function(app) {
 
     /**
      * @apiDefine PaginationParameters
-     * @apiParam (query) {Number} [max_items] Maximum number of items to return
+     * @apiParam (query) { Number} [max_items] Maximum number of items to return
      * @apiParam (query) {Number} [start] Pagination offset (resources are sorted by decreasing creation time)
      */
 
@@ -207,7 +207,7 @@ module.exports = function(app) {
      * the application data.
      *
      * @apiUse UserDescriptor
-     * @ƒr DBDatetimeFields
+     * @apiUse DBDatetimeFields
      */
     app.route("/user")
         .post(UserController.register);
@@ -900,13 +900,17 @@ module.exports = function(app) {
      * @apiDescription Create a new timer from an existing game (extract players from the game).
      * @apiParam (query) {Number} gid Game identifier.
      * @apiParam (body) {String} timer_type=`COUNT_UP` The type of timer to create. One of: `COUNT_UP`, `COUNT_DOWN `or `RELOAD`.
-     * @apiParam (body) {Number} initial_duration=0 Start time of all players' timers in milliseconds.
-     * @apiParam (body) {Number} reload_increment=0 If the timer is of type `RELOAD`, the amount of time add every at every `next()` action.
+     * @apiParam (body) {Number} [initial_duration=0] Start time of all players' timers in milliseconds.
+     * @apiParam (body) {Number} [current_player=0] Turn order of the current player (an integer in `[0, n_players[`)
+     * @apiParam (body) {Number} [reload_increment=0] If the timer is of type `RELOAD`, the amount of time add every at every `next()` action.
      * @apiUse TokenHeaderRequired
      * @apiUse TimerDescriptor
      */
     app.route("/game/:gid/timer")
-        .post(TimerController.addTimerFromGame);
+        .post(
+            validation.getTimerValidators(true).concat([ validation.modelExists(check('gid'), db.Game) ]),
+            TimerController.addTimerFromGame
+        );
 
     // timer api
     /**
@@ -915,8 +919,9 @@ module.exports = function(app) {
      * @apiGroup Timer
      * @apiDescription Create a new timer.
      * @apiParam (body) {String} timer_type=`COUNT_UP` The type of timer to create. One of: `COUNT_UP`, `COUNT_DOWN `or `RELOAD`.
-     * @apiParam (body) {Number} initial_duration=0 Start time of all players' timers in milliseconds.
-     * @apiParam (body) {Number} reload_increment=0 If the timer is of type `RELOAD`, the amount of time add every at every `next()` action.
+     * @apiParam (body) {Number} [initial_duration=0] Start time of all players' timers in milliseconds.
+     * @apiParam (body) {Number} [current_player=0] Turn order of the current player (an integer in `[0, n_players[`)
+     * @apiParam (body) {Number} [reload_increment=0] If the timer is of type `RELOAD`, the amount of time add every at every `next()` action.
      * @apiParam (body) {PlayerTimer[]} players Individual player timers information.
      * @apiParam (body) {Number} players.id_user Player user identifier if registered on the app (mutually exclusive with `name`), or `null`.
      * @apiParam (body) {String} players.name Player name if the player is not registered on the application (mutually
@@ -926,7 +931,7 @@ module.exports = function(app) {
      * @apiUse TimerDescriptor
      */
     app.route("/timer")
-        .post(TimerController.createTimer);
+        .post(validation.getTimerValidators(true), TimerController.createTimer);
 
     /**
      * @api {post} /timer/:tid Get timer

@@ -2,6 +2,7 @@ const moment = require("moment");
 const _ = require("lodash");
 const { body, param } = require('express-validator/check');
 const db = require('../models/index');
+const TimerController = require('../TimerController');
 
 /**
  * Extract the value located at the given validation path in obj
@@ -62,6 +63,14 @@ exports.isPositive = value => {
     return value > 0;
 };
 
+exports.isGT = function(v) {
+    return value => value > v;
+};
+
+exports.isGTE = function(v) {
+    return value => value >= v;
+};
+
 exports.checkScore = ranking_method_field => {
     return (value, { req, location }) => {
         const ranking_method = req[location][ranking_method_field];
@@ -120,6 +129,23 @@ exports.getEventValidators = function(is_create) {
             .customSanitizer(exports.toMoment),
         body('hide_rankings').optional().isBoolean()
     ];
+};
+
+exports.getTimerValidators = function(is_create) {
+    return [
+        co(body('timer_type'), !is_create).isString().isIn(TimerController.expectedTypes),
+        body('initial_duration').optional().isInt().custom(exports.isGTE(0)),
+        body('current_player').optional().isInt().custom(exports.isGTE(0)),
+        body('reload_increment').optional().isInt().custom(exports.isGTE(0)),
+        co(body('players'), !is_create).isArray().not().isEmpty(),
+        body('players.*.id_user')
+            .custom(exports.mutuallyExclusive("name"))
+            .optional({nullable: true}).isNumeric().custom(exports.model(db.User)),
+        body('players.*.name')
+            .custom(exports.mutuallyExclusive("id_user"))
+            .optional({nullable: true}).isString().trim().not().isEmpty(),
+        body('players.*.color').isString().matches(/^#[a-f0-9]{6}([a-f0-9]{2})?$/i)
+    ]
 };
 
 exports.modelExists = (builder, model) => {
