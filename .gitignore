@@ -63,6 +63,7 @@ doc/
 # dev env
 docker/docker-compose.yml
 docker/postgres-data
+.disable.ebextensions/*
 
 .idea
 .DS_Store
