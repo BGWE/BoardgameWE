@@ -25,7 +25,7 @@ exports.isTimerDataValid = function(data) {
 };
 
 exports.arePlayerTimerDataValid = function(players) {
-    let color_regex = new RegExp(/^#[0-9a-f]{6}$/i);
+    let color_regex = new RegExp(/^#[0-9a-f]{6}([0-9a-f]{2})?$/i);
     return players !== undefined && players.map(p => {
         return color_regex.test(p.color) && (p.name === null ^ p.id_user === null);
     }).reduce((a, b) => a && b, true);
