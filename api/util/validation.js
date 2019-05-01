@@ -137,14 +137,14 @@ exports.getTimerValidators = function(is_create) {
         body('initial_duration').optional().isInt().custom(exports.isGTE(0)),
         body('current_player').optional().isInt().custom(exports.isGTE(0)),
         body('reload_increment').optional().isInt().custom(exports.isGTE(0)),
-        co(body('players'), !is_create).isArray().not().isEmpty(),
-        body('players.*.id_user')
+        co(body('player_timers'), !is_create).isArray().not().isEmpty(),
+        body('player_timers.*.id_user')
             .custom(exports.mutuallyExclusive("name"))
             .optional({nullable: true}).isNumeric().custom(exports.model(db.User)),
-        body('players.*.name')
+        body('player_timers.*.name')
             .custom(exports.mutuallyExclusive("id_user"))
             .optional({nullable: true}).isString().trim().not().isEmpty(),
-        body('players.*.color').isString().matches(/^#[a-f0-9]{6}([a-f0-9]{2})?$/i)
+        body('player_timers.*.color').isString().matches(/^#[a-f0-9]{6}([a-f0-9]{2})?$/i)
     ]
 };
 

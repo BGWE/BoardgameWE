@@ -154,8 +154,8 @@ exports.createTimer = function(req, res) {
         timer_type: req.body.timer_type || "COUNT_UP",
         initial_duration: req.body.initial_duration || 0,
         current_player: req.body.current_player || 0
-    }, _.range(req.body.players.length).map(index => {
-        const timer = req.body.players[index];
+    }, _.range(req.body.player_timers.length).map(index => {
+        const timer = req.body.player_timers[index];
         return exports.getDefaultPlayerTimer(timer.id_user, timer.name, index, timer.color);
     }),{
         duration_increment: req.body.reload_increment || 0

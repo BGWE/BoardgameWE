@@ -922,11 +922,11 @@ module.exports = function(app) {
      * @apiParam (body) {Number} [initial_duration=0] Start time of all players' timers in milliseconds.
      * @apiParam (body) {Number} [current_player=0] Turn order of the current player (an integer in `[0, n_players[`)
      * @apiParam (body) {Number} [reload_increment=0] If the timer is of type `RELOAD`, the amount of time add every at every `next()` action.
-     * @apiParam (body) {PlayerTimer[]} players Individual player timers information.
-     * @apiParam (body) {Number} players.id_user Player user identifier if registered on the app (mutually exclusive with `name`), or `null`.
-     * @apiParam (body) {String} players.name Player name if the player is not registered on the application (mutually
+     * @apiParam (body) {PlayerTimer[]} player_timers Individual player timers information.
+     * @apiParam (body) {Number} player_timers.id_user Player user identifier if registered on the app (mutually exclusive with `name`), or `null`.
+     * @apiParam (body) {String} player_timers.name Player name if the player is not registered on the application (mutually
      * exclusive with `user`), or `null`.
-     * @apiParam (body) {Number} players.color=#ffffff Player's color (hexcode, e.g.: `#ffffff`).
+     * @apiParam (body) {Number} player_timers.color=#ffffff Player's color (hexcode, e.g.: `#ffffff`).
      * @apiUse TokenHeaderRequired
      * @apiUse TimerDescriptor
      */
