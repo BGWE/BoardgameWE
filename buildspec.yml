@@ -1,8 +1,37 @@
-version: 0.1
+version: 0.2
+
+#env:
+  #variables:
+     # key: "value"
+     # key: "value"
+  #parameter-store:
+     # key: "value"
+     # key: "value"
+
 phases:
-  install:
+  #install:
+    #commands:
+      # - command
+      # - command
+  #pre_build:
+    #commands:
+      # - command
+      # - command
+  build:
     commands:
       - npm install
-
+      # - command
+  post_build:
+    commands:
+      - ./node_modules/apidoc/bin/apidoc -i api/ -o doc/
+      # - command
 artifacts:
-  type: zip
+  files:
+     - '**/*'
+    # - location
+  #name: $(date +%Y-%m-%d)
+  #discard-paths: yes
+  #base-directory: location
+#cache:
+  #paths:
+    # - paths
