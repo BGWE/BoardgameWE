@@ -45,5 +45,6 @@ services:
       && sleep 15
       && cd api/
       && ../node_modules/.bin/sequelize db:migrate
+      && ../node_modules/.bin/sequelize db:seed:all
       && cd ..
       && npm start"
