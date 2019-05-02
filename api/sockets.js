@@ -88,7 +88,7 @@ module.exports = function(io) {
         }
 
         /**
-         * Broadcast the action to the timer room, and sends the current state of the timer as message
+         * Broadcast the action to the timer room, and sends the current state of the timer as message (fetches is from the database
          * @param action str
          * @returns {Promise<void>}
          */
@@ -154,7 +154,7 @@ module.exports = function(io) {
                 return {success: false, error: this.errors.TIMER_ALREADY_STOPPED};
             }
             let data = { elapsed: player.elapsed + moment().diff(player.start), start: null };
-            if (this.timer.timer_type === db.GameTimer.RELOAD) { // deduce duration increment
+            if (this.timer.timer_type === db.GameTimer.RELOAD) { // subtract duration increment
                 data.elapsed = Math.max(0, data.elapsed - this.reload.duration_increment);
             }
             await player.update(data, options);

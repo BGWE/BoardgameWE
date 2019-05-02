@@ -9,7 +9,12 @@ module.exports = (sequelize, DataTypes) => {
     duration_increment: DataTypes.BIGINT // in ms
   }, {});
   ReloadGameTimer.associate = function(models) {
-    models.ReloadGameTimer.belongsTo(models.GameTimer, { foreignKey: 'id' })
+    models.ReloadGameTimer.hasOne(models.GameTimer, {
+      onDelete: "CASCADE",
+      targetKey: 'id',
+      foreignKey: 'id',
+      as: 'timer'
+    })
   };
   return ReloadGameTimer;
 };

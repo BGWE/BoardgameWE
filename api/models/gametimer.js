@@ -28,10 +28,6 @@ module.exports = (sequelize, DataTypes) => {
           sourceKey: 'id',
           as: 'player_timers'
       });
-      models.GameTimer.hasOne(models.ReloadGameTimer, {
-          onDelete: "CASCADE",
-          as: 'reload_timer'
-      });
   };
   GameTimer.COUNT_UP = "COUNT_UP";
   GameTimer.COUNT_DOWN = "COUNT_DOWN";
