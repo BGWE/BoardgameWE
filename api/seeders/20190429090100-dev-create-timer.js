@@ -10,12 +10,12 @@ module.exports = {
             createdAt: now, updatedAt: now
         }, {
             id_game: null, id_creator: 2,
-            initial_duration: 0, current_player: 0,
+            initial_duration: 400000, current_player: 0,
             timer_type: "COUNT_DOWN",
             createdAt: now, updatedAt: now
         }, {
             id_game: null, id_creator: 2,
-            initial_duration: 0, current_player: 0,
+            initial_duration: 400000, current_player: 0,
             timer_type: "RELOAD",
             createdAt: now, updatedAt: now
         }]).then(() => {
