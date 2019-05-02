@@ -57,17 +57,17 @@ module.exports = function(io) {
         }
 
         /** Fetches current timer data and set class attributes accordingly */
-        async setTimer() {
-            this.timer = await db.GameTimer.findByPk(this.id_timer);
+        async setTimer(options) {
+            this.timer = await db.GameTimer.findByPk(this.id_timer, options);
             if (this.timer.timer_type === db.GameTimer.RELOAD) {
-                this.reload = await db.ReloadGameTimer.findByPk(this.id_timer);
+                this.reload = await db.ReloadGameTimer.findByPk(this.id_timer, options);
             }
         }
 
         /** Check that timer object has been set */
-        async checkTimerIsSet() {
+        async checkTimerIsSet(options) {
             if (!this.timer) {
-                await this.setTimer();
+                await this.setTimer(options);
             }
         }
 
@@ -127,7 +127,7 @@ module.exports = function(io) {
          * success is false)
          */
         async startTimer(player_turn, options) {
-            await this.checkTimerIsSet();
+            await this.checkTimerIsSet(options);
             const player = await this.getPlayerPerTurn(player_turn, options);
             const is_started = player.start !== null;
             if (is_started) {
@@ -147,7 +147,7 @@ module.exports = function(io) {
          * success is false)
          */
         async stopTimer(player_turn, options) {
-            await this.checkTimerIsSet();
+            await this.checkTimerIsSet(options);
             const player = await this.getPlayerPerTurn(player_turn, options);
             const is_started = player.start !== null;
             if (!is_started) {
@@ -187,9 +187,9 @@ module.exports = function(io) {
                 ]).then(values => {
                     const count = values[0], timer = values[1];
                     const next_player = (timer.current_player + (take_next ? 1 : count - 1)) % count;
-                    return self.stopTimer(timer.current_player, t).then(is_started => {
+                    return self.stopTimer(timer.current_player, t).then(action => {
                         let promises = [self.updateCurrentPlayer(next_player, t)];
-                        if (is_started) {
+                        if (action.success) {
                             promises.push(self.startTimer(next_player, t));
                         }
                         return Promise.all(promises);
