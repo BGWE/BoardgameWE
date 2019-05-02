@@ -33,5 +33,9 @@ module.exports = (sequelize, DataTypes) => {
           as: 'reload_timer'
       });
   };
+  GameTimer.COUNT_UP = "COUNT_UP";
+  GameTimer.COUNT_DOWN = "COUNT_DOWN";
+  GameTimer.RELOAD = "RELOAD";
+  GameTimer.TYPES = [GameTimer.COUNT_UP, GameTimer.COUNT_DOWN, GameTimer.RELOAD];
   return GameTimer;
 };

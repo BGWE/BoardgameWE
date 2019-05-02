@@ -6,9 +6,6 @@ const includes = require("./util/db_include");
 const _ = require("lodash");
 const { validationResult } = require('express-validator/check');
 
-
-exports.expectedTypes = ["COUNT_UP", "COUNT_DOWN", "RELOAD"];
-
 exports.getFullTimerIncludes = function() {
     return [
         includes.getUserIncludeSQ("creator"),
@@ -16,22 +13,6 @@ exports.getFullTimerIncludes = function() {
         includes.genericIncludeSQ(db.PlayerGameTimer, "player_timers", [includes.defaultUserIncludeSQ])
     ];
 };
-
-
-exports.isTimerDataValid = function(data) {
-    const typeSet = new Set(exports.expectedTypes);
-    return (data.timer_type === undefined || typeSet.has(data.timer_type))
-                && (data.initial_duration === undefined || data.initial_duration >= 0)
-                && (data.timer_type !== "RELOAD" || (data.reload_increment === undefined || data.reload_increment >= 0));
-};
-
-exports.arePlayerTimerDataValid = function(players) {
-    let color_regex = new RegExp(/^#[0-9a-f]{6}([0-9a-f]{2})?$/i);
-    return players !== undefined && players.map(p => {
-        return color_regex.test(p.color) && (p.name === null ^ p.id_user === null);
-    }).reduce((a, b) => a && b, true);
-};
-
 
 /**
  * Return a promise that creates a full game object
