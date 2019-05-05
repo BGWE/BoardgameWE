@@ -26,8 +26,8 @@ exports.createEvent = function(req, res) {
     return util.sendModelOrError(res, db.Event.create({
         name: req.body.name,
         location: req.body.location,
-        start: req.body.start.toDate(),
-        end: req.body.end.toDate(),
+        start: req.body.start.utc(),
+        end: req.body.end.utc(),
         id_creator: userutil.getCurrUserId(req),
         description: req.body.description,
         hide_rankings: req.body.hide_rankings || false
@@ -46,8 +46,8 @@ exports.updateEvent = function(req, res) {
         event.description = req.body.description || event.description;
         event.name = req.body.name || event.name;
         location = req.body.location || event.location;
-        event.start = req.body.start || event.start;
-        event.end = req.body.end || event.end;
+        event.start = req.body.start.utc() || event.start;
+        event.end = req.body.end.utc() || event.end;
         event.hide_rankings = req.body.hide_rankings === undefined ? event.hide_rankings : req.body.hide_rankings;
         return util.sendModelOrError(res, event.save());
     }).catch(err => {
