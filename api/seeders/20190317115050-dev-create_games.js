@@ -8,7 +8,7 @@ module.exports = {
         {id_board_game: 1, id_event: 1, ranking_method: 'POINTS_HIGHER_BETTER', duration: 180, createdAt: now, updatedAt: now},
         {id_board_game: 2, id_event: 1, ranking_method: 'WIN_LOSE', duration: 60, createdAt: now, updatedAt: now}
     ]).then(inserted => {
-        queryInterface.bulkInsert("GamePlayers", [
+        return queryInterface.bulkInsert("GamePlayers", [
             {id_game: 1, id_user: 1, score: 100, name: null, createdAt: now, updatedAt: now},
             {id_game: 1, id_user: 2, score: 10, name: null, createdAt: now, updatedAt: now},
             {id_game: 1, id_user: null, score: 58, name: "john", createdAt: now, updatedAt: now},
