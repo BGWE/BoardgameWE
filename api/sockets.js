@@ -32,6 +32,16 @@ const genericHandleChangePlayer = function(timer_room, next) {
     }
 };
 
+const getPlayerGameTimerFromIdInList = function(players_game_timer, player_id) {
+    for (let i = 0; i < players_game_timer.length; i++) {
+        const player = players_game_timer[i];
+        if (player.id == player_id) {
+            return player;
+        }
+        return null;
+    }
+}
+
 module.exports = function(io) {
     // timer namespace
     // vue-socket.io-extended does not support namespaces
@@ -115,8 +125,19 @@ module.exports = function(io) {
             return await db.PlayerGameTimer.count({ where: { id_timer: this.id_timer } }, options);
         }
 
+        async getPlayerById(player_id, options) {
+            return await db.PlayerGameTimer.findOne({ where: { id_timer: this.id_timer, id: player_id }}, options);
+        }
+
         async getPlayerPerTurn(player_turn, options) {
             return await db.PlayerGameTimer.findOne({ where: { id_timer: this.id_timer, turn_order: player_turn }}, options);
+        }
+
+        async getPlayers() {
+            return await db.PlayerGameTimer.findAll({
+                attributes: ['id', 'id_timer', 'id_user', 'turn_order'],
+                where: {id_timer: this.id_timer}
+            });
         }
 
         /**
@@ -129,7 +150,9 @@ module.exports = function(io) {
         async startTimer(player_turn, options) {
             await this.checkTimerIsSet(options);
             const player = await this.getPlayerPerTurn(player_turn, options);
+            console.log("Player ID whose turn it is: ", player.id);
             const is_started = player.start !== null;
+
             if (is_started) {
                 return {success: false, error: this.errors.TIMER_ALREADY_STARTED};
             } else if (this.timer.timer_type !== db.GameTimer.COUNT_UP && this.timer.initial_duration - player.elapsed <= 0) {
@@ -205,6 +228,16 @@ module.exports = function(io) {
         async prevPlayer() {
             return this.changePlayer(false);
         }
+
+        async changePlayerTurnOrder(player_id, turn_order) {
+            return await db.PlayerGameTimer.update({
+                turn_order: turn_order,
+                start: null
+            }, {
+                where: { id_timer: this.id_timer, id: player_id }
+            });
+        }
+
     }
 
     // user must be authenticated to use this namespace
@@ -251,6 +284,8 @@ module.exports = function(io) {
             console.debug('timer_start - ' + timer_room.getRoomName());
             try {
                 await timer_room.setTimer(); // refresh internal timer object
+                console.log("Current player (turn) is: ", timer_room.timer.current_player);
+                console.log("Timer ID: ", timer_room.timer.id);
                 const action = await timer_room.startTimer(timer_room.timer.current_player);
                 if (action.success) {
                     await timer_room.emitWithState("timer_start");
@@ -327,6 +362,24 @@ module.exports = function(io) {
                 sendErrorEvent(socket, "cannot update player timer color: " + e.message)
             });
         });
+
+        socket.on('change_player_turn_order', async function(new_player_turn_order) {
+            if (!timer_room) {
+                sendErrorEvent(socket, "not following any timer: cannot change player turn order");
+                return;
+            }
+
+            console.debug('change_player_turn_order - ' + timer_room.getRoomName());
+            console.debug(new_player_turn_order);
+
+            for (let i = 0; i < new_player_turn_order.length; i++) {
+                const player = new_player_turn_order[i];
+                await timer_room.changePlayerTurnOrder(player.id, player.turn_order);
+                await timer_room.updateCurrentPlayer(0);
+            }
+
+            timer_room.emitWithState('change_player_turn_order');
+        })
 
         socket.on('error', function(err) {
             console.log(err);
