@@ -133,7 +133,7 @@ exports.getEventValidators = function(is_create) {
 
 exports.getTimerValidators = function(is_create) {
     return [
-        co(body('timer_type'), !is_create).isString().isIn(db.GameTimer.types),
+        co(body('timer_type'), !is_create).isString().isIn(db.GameTimer.TYPES),
         body('initial_duration').optional().isInt().custom(exports.isGTE(0)),
         body('current_player').optional().isInt().custom(exports.isGTE(0)),
         body('reload_increment').optional().isInt().custom(exports.isGTE(0)),
