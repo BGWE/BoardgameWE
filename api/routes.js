@@ -178,6 +178,17 @@ module.exports = function(app) {
      */
 
     /**
+     * @apiDefine WishToPlayBoardGamesListDescriptor
+     * @apiSuccess {WishToPlayBoardGame[]} wish_to_play List of wish-to-play board games. Note: the
+     * returned data is a list (not an actual object).
+     * @apiSuccess {Number} wish_to_play.id_user User (the wish-to-play list belongs to) identifier
+     * @apiSuccess {Number} wish_to_play.id_board_game Wish-to-play board game identifier.
+     * @apiSuccess {BoardGame} wish_to_play.board_game Board game data (see "Add board game" request for structure)
+     * @apiSuccess {String} wish_to_play.createdAt Creation datetime of the resource (ISO8601, UTC)
+     * @apiSuccess {String} wish_to_play.updatedAt Latest update datetime of the resource (ISO8061, UTC)
+     */
+
+    /**
      * @apiDefine SuccessObjDescriptor
      * @apiSuccess {Boolean} success True if success
      */
@@ -234,7 +245,7 @@ module.exports = function(app) {
     app.route("/user/forgot_password")
         .post(UserController.forgotPassword);
 
-        /**
+    /**
      * @api {post} /user/reset_password Reset the password of a user.
      * @apiName ResetPassword
      * @apiGroup User
@@ -253,19 +264,19 @@ module.exports = function(app) {
         if (!token) {
             return util.detailErrorResponse(res, 401, "No token provided.");
         }
-        const verified = jwt.verify(token, config.jwt_secret_key, (error, decoded) => { return {error, decoded}; });
+        const verified = jwt.verify(token, config.jwt_secret_key, (error, decoded) => { return { error, decoded }; });
         if (verified.error) {
             return util.detailErrorResponse(res, 401, "Failed to authenticate token.");
         }
         try {
             const user = await db.User.findByPk(verified.decoded.id);
-            if (!user.validated){
+            if (!user.validated) {
                 return util.detailErrorResponse(res, 403, UserController.notValidatedErrorMsg);
             }
             req.decoded = verified.decoded;
             req.is_admin = user.admin;
             next();
-        } catch(err) {
+        } catch (err) {
             console.log(err);
             return util.detailErrorResponse(res, 401, "Unknown user.");
         }
@@ -395,6 +406,40 @@ module.exports = function(app) {
     app.route("/user/:uid/library_games")
         .get(UserController.getUserLibraryGames);
 
+    // Wish to play list
+    /**
+     * @api {get} /user/wish_to_play Get wish to play list
+     * @apiName GetCurrentUserWishToPlayList
+     * @apiGroup User wish to play
+     * @apiDescription Get the current user's board game wish to play list.
+     * @apiUse TokenHeaderRequired
+     * @apiUse WishToPlayBoardGamesListDescriptor
+     */
+
+    /**
+     * @api {post} /user/wish_to_play Add to wish to play list
+     * @apiName AddBoardGameToWishToPlayList
+     * @apiGroup User wish to play
+     * @apiDescription Add a board game to the current user wish-to-play list.
+     * @apiParam {Number[]} board_games List of identifiers of the board games to add to the user wish to play list .
+     * @apiUse TokenHeaderRequired
+     * @apiUse WishToPlayBoardGamesListDescriptor
+     */
+
+    /**
+     * @api {delete} /user/wish_to_play Delete wish to play list
+     * @apiName DeleteBoardGameFromWishToPlayList
+     * @apiGroup User wish to play
+     * @apiDescription Delete a board game from the current user wish-to-play list.
+     * @apiUse TokenHeaderRequired
+     *
+     * @apiUse WishToPlayBoardGamesListDescriptor
+     */
+    app.route("/user/:uid/wish_to_play")
+        .get(UserController.getWishToPlayBoardGames)
+        .post([body('board_games').isArray().not().isEmpty()], UserController.addToWishToPlayBoardGames)
+        .delete([body('board_games').isArray().not().isEmpty()], UserController.deleteFromWishToPlayList);
+
     // Event
     /**
      * Ensures that only the creator and the participating players can update event data.
@@ -402,11 +447,11 @@ module.exports = function(app) {
      * @param res
      * @param next
      */
-    const eventAccessMiddleware = async function (req, res, next) {
+    const eventAccessMiddleware = async function(req, res, next) {
         const eid = parseInt(req.params.eid);
         const uid = userutil.getCurrUserId(req);
-        const creator = await db.Event.count({where: {id_creator: uid, id: eid}});
-        const attendee = db.EventAttendee.count({where: {id_user: uid, id_event: eid}});
+        const creator = await db.Event.count({ where: { id_creator: uid, id: eid } });
+        const attendee = db.EventAttendee.count({ where: { id_user: uid, id_event: eid } });
         if (creator === 1 || attendee === 1) {
             next();
         } else {
@@ -908,7 +953,7 @@ module.exports = function(app) {
      */
     app.route("/game/:gid/timer")
         .post(
-            validation.getTimerValidators(true).concat([ validation.modelExists(check('gid'), db.Game) ]),
+            validation.getTimerValidators(true).concat([validation.modelExists(check('gid'), db.Game)]),
             TimerController.addTimerFromGame
         );
 
