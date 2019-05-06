@@ -150,7 +150,6 @@ module.exports = function(io) {
         async startTimer(player_turn, options) {
             await this.checkTimerIsSet(options);
             const player = await this.getPlayerPerTurn(player_turn, options);
-            console.log("Player ID whose turn it is: ", player.id);
             const is_started = player.start !== null;
 
             if (is_started) {
@@ -285,8 +284,6 @@ module.exports = function(io) {
             console.debug('timer_start - ' + timer_room.getRoomName());
             try {
                 await timer_room.setTimer(); // refresh internal timer object
-                console.log("Current player (turn) is: ", timer_room.timer.current_player);
-                console.log("Timer ID: ", timer_room.timer.id);
                 const action = await timer_room.startTimer(timer_room.timer.current_player);
                 if (action.success) {
                     await timer_room.emitWithState("timer_start");
