@@ -1,4 +1,4 @@
-runtime: custom
+runtime: nodejs
 env: flex
 
 env_variables:
