@@ -366,14 +366,14 @@ module.exports = function(io) {
                     timer_room.updateCurrentPlayer(0, t), 
                     ...new_player_turn_order.map(player => timer_room.changePlayerTurnOrder(player.id, player.turn_order, t))
                 ])
-            }).then(values => {
+            }).then(async values => {
                 console.debug('change_player_turn_order - Transaction completed with values: ', values);
-                timer_room.emitWithState('change_player_turn_order');
+                await timer_room.emitWithState('change_player_turn_order');
             }).catch(error => {
                 console.debug('change_player_turn_order - Transaction error: ', error);
                 sendErrorEvent(socket, "failed to update player order");
             });            
-        })
+        });
 
         socket.on('error', function(err) {
             console.log(err);
