@@ -32,16 +32,6 @@ const genericHandleChangePlayer = function(timer_room, next) {
     }
 };
 
-const getPlayerGameTimerFromIdInList = function(players_game_timer, player_id) {
-    for (let i = 0; i < players_game_timer.length; i++) {
-        const player = players_game_timer[i];
-        if (player.id == player_id) {
-            return player;
-        }
-        return null;
-    }
-}
-
 module.exports = function(io) {
     // timer namespace
     // vue-socket.io-extended does not support namespaces
@@ -126,7 +116,7 @@ module.exports = function(io) {
         }
 
         async getPlayerById(player_id, options) {
-            return await db.PlayerGameTimer.findOne({ where: { id_timer: this.id_timer, id: player_id }}, options);
+            return await db.PlayerGameTimer.findByPk(player_id, options);
         }
 
         async getPlayerPerTurn(player_turn, options) {
