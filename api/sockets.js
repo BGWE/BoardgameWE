@@ -218,7 +218,7 @@ module.exports = function(io) {
                         return Promise.all(promises);
                     });
                 });
-            })
+            });
         }
 
         async nextPlayer() {
@@ -229,11 +229,12 @@ module.exports = function(io) {
             return this.changePlayer(false);
         }
 
-        async changePlayerTurnOrder(player_id, turn_order) {
-            return await db.PlayerGameTimer.update({
+        async changePlayerTurnOrder(player_id, turn_order, options) {
+            return db.PlayerGameTimer.update({
                 turn_order: turn_order,
                 start: null
             }, {
+                ...options,
                 where: { id_timer: this.id_timer, id: player_id }
             });
         }
@@ -363,7 +364,7 @@ module.exports = function(io) {
             });
         });
 
-        socket.on('change_player_turn_order', async function(new_player_turn_order) {
+        socket.on('change_player_turn_order', function(new_player_turn_order) {
             if (!timer_room) {
                 sendErrorEvent(socket, "not following any timer: cannot change player turn order");
                 return;
@@ -372,13 +373,19 @@ module.exports = function(io) {
             console.debug('change_player_turn_order - ' + timer_room.getRoomName());
             console.debug(new_player_turn_order);
 
-            for (let i = 0; i < new_player_turn_order.length; i++) {
-                const player = new_player_turn_order[i];
-                await timer_room.changePlayerTurnOrder(player.id, player.turn_order);
-                await timer_room.updateCurrentPlayer(0);
-            }
-
-            timer_room.emitWithState('change_player_turn_order');
+            db.sequelize.transaction(function(transaction) {
+                const t = {transaction};
+                return Promise.all([
+                    timer_room.updateCurrentPlayer(0, t), 
+                    ...new_player_turn_order.map(player => timer_room.changePlayerTurnOrder(player.id, player.turn_order, t))
+                ])
+            }).then(values => {
+                console.debug('change_player_turn_order - Transaction completed with values: ', values);
+                timer_room.emitWithState('change_player_turn_order');
+            }).catch(error => {
+                console.debug('change_player_turn_order - Transaction error: ', error);
+                sendErrorEvent(socket, "failed to update player order");
+            });            
         })
 
         socket.on('error', function(err) {
