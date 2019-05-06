@@ -115,8 +115,19 @@ module.exports = function(io) {
             return await db.PlayerGameTimer.count({ where: { id_timer: this.id_timer } }, options);
         }
 
+        async getPlayerById(player_id, options) {
+            return await db.PlayerGameTimer.findByPk(player_id, options);
+        }
+
         async getPlayerPerTurn(player_turn, options) {
             return await db.PlayerGameTimer.findOne({ where: { id_timer: this.id_timer, turn_order: player_turn }}, options);
+        }
+
+        async getPlayers() {
+            return await db.PlayerGameTimer.findAll({
+                attributes: ['id', 'id_timer', 'id_user', 'turn_order'],
+                where: {id_timer: this.id_timer}
+            });
         }
 
         /**
@@ -130,6 +141,7 @@ module.exports = function(io) {
             await this.checkTimerIsSet(options);
             const player = await this.getPlayerPerTurn(player_turn, options);
             const is_started = player.start !== null;
+
             if (is_started) {
                 return {success: false, error: this.errors.TIMER_ALREADY_STARTED};
             } else if (this.timer.timer_type !== db.GameTimer.COUNT_UP && this.timer.initial_duration - player.elapsed <= 0) {
@@ -195,7 +207,7 @@ module.exports = function(io) {
                         return Promise.all(promises);
                     });
                 });
-            })
+            });
         }
 
         async nextPlayer() {
@@ -205,6 +217,17 @@ module.exports = function(io) {
         async prevPlayer() {
             return this.changePlayer(false);
         }
+
+        async changePlayerTurnOrder(player_id, turn_order, options) {
+            return db.PlayerGameTimer.update({
+                turn_order: turn_order,
+                start: null
+            }, {
+                ...options,
+                where: { id_timer: this.id_timer, id: player_id }
+            });
+        }
+
     }
 
     // user must be authenticated to use this namespace
@@ -326,6 +349,30 @@ module.exports = function(io) {
             }).catch(async (e) => {
                 sendErrorEvent(socket, "cannot update player timer color: " + e.message)
             });
+        });
+
+        socket.on('change_player_turn_order', function(new_player_turn_order) {
+            if (!timer_room) {
+                sendErrorEvent(socket, "not following any timer: cannot change player turn order");
+                return;
+            }
+
+            console.debug('change_player_turn_order - ' + timer_room.getRoomName());
+            console.debug(new_player_turn_order);
+
+            db.sequelize.transaction(function(transaction) {
+                const t = {transaction};
+                return Promise.all([
+                    timer_room.updateCurrentPlayer(0, t), 
+                    ...new_player_turn_order.map(player => timer_room.changePlayerTurnOrder(player.id, player.turn_order, t))
+                ])
+            }).then(async values => {
+                console.debug('change_player_turn_order - Transaction completed with values: ', values);
+                await timer_room.emitWithState('change_player_turn_order');
+            }).catch(error => {
+                console.debug('change_player_turn_order - Transaction error: ', error);
+                sendErrorEvent(socket, "failed to update player order");
+            });            
         });
 
         socket.on('error', function(err) {
