@@ -378,8 +378,8 @@ module.exports = function(app) {
      */
     app.route("/user/library_games")
         .get(UserController.getCurrentUserLibraryGames)
-        .post(UserController.addLibraryGames)
-        .delete(UserController.deleteLibraryGames);
+        .post([body('board_games').isArray().not().isEmpty()], UserController.addLibraryGames)
+        .delete([body('board_games').isArray().not().isEmpty()], UserController.deleteLibraryGames);
 
     /**
      * @api {post} /user/library_games/:source/:id Add to library from source
@@ -435,10 +435,23 @@ module.exports = function(app) {
      *
      * @apiUse WishToPlayBoardGamesListDescriptor
      */
-    app.route("/user/:uid/wish_to_play")
-        .get(UserController.getWishToPlayBoardGames)
+    app.route("/user/wish_to_play")
+        .get(UserController.getCurrentUserWishToPlayBoardGames)
         .post([body('board_games').isArray().not().isEmpty()], UserController.addToWishToPlayBoardGames)
         .delete([body('board_games').isArray().not().isEmpty()], UserController.deleteFromWishToPlayList);
+
+    /**
+     * @api {get} /user/:id/wish_to_play Get user wish to play list
+     * @apiName GetUserWishToPlayList
+     * @apiGroup User wish to play
+     * @apiDescription Get the specified user's wish to play board games.
+     * @apiParam {Number} id User identifier.
+     * @apiUse TokenHeaderRequired
+     * @apiUse WishToPlayBoardGamesListDescriptor
+     */
+    app.route("/user/:uid/library_games")
+        .get(UserController.getUserWishToPlayBoardGames);
+
 
     // Event
     /**

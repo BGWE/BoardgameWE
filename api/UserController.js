@@ -9,6 +9,7 @@ const includes = require("./util/db_include");
 const BoardGameController = require("./BoardGameController");
 const Sequelize = require("sequelize");
 const Activity = require("./util/activities");
+const m2m = require('./util/m2m_helpers');
 
 /**
  *
@@ -192,35 +193,37 @@ exports.sendCurrUserGames = function(req, res) {
  * @returns {Promise<Array<Model>>}
  */
 exports.sendUserLibraryGames = function(uid, req, res) {
-    return util.sendModelOrError(res, db.LibraryGame.findAll({
-        where: { id_user: uid },
-        include: [includes.defaultBoardGameIncludeSQ]
-    }));
+    return m2m.sendAssociations(req, res, {
+        model_class: db.LibraryGame,
+        fixed: { id: uid, field: 'id_user' },
+        other: { includes: [includes.defaultBoardGameIncludeSQ] }
+    });
 };
 
 exports.addLibraryGames = function(req, res) {
-    if (!req.body.board_games) {
-        return res.status(403).send({ error: "missing games field" });
-    }
-    let userId = userutil.getCurrUserId(req);
-    let games = req.body.board_games.map(g => { return { id_user: userId, id_board_game: g } });
-    return db.LibraryGame.bulkCreate(games, { ignoreDuplicates: true })
-        .then(() => { return exports.sendCurrUserGames(req, res); })
-        .catch(err => { return util.errorResponse(res); });
+    return m2m.addAssociations(req, res, {
+        model_class: db.LibraryGame,
+        fixed: { id: userutil.getCurrUserId(req), field: 'id_user' },
+        other: {
+            field: 'id_board_game',
+            ids: req.body.board_games,
+            includes: [includes.defaultBoardGameIncludeSQ]
+        },
+        error_message: "cannot update library"
+    });
 };
 
 exports.deleteLibraryGames = function(req, res) {
-    if (!req.body.board_games) {
-        return util.detailErrorResponse(res, 403, "missing games field");
-    }
-    let userId = userutil.getCurrUserId(req);
-    return db.LibraryGame.destroy({
-            where: {
-                id_user: userId,
-                id_board_game: req.body.board_games
-            }
-        }).then(() => { return exports.sendCurrUserGames(req, res); })
-        .catch(err => { return util.errorResponse(res); });
+    return m2m.deleteAssociations(req, res, {
+        model_class: db.LibraryGame,
+        fixed: { id: userutil.getCurrUserId(req), field: 'id_user' },
+        other: {
+            field: 'id_board_game',
+            ids: req.body.board_games,
+            includes: [includes.defaultBoardGameIncludeSQ]
+        },
+        error_message: "cannot update library"
+    });
 };
 
 exports.getCurrentUserLibraryGames = function(req, res) {
@@ -313,32 +316,47 @@ exports.getUserActivities = function(req, res) {
 
 // Wish-to-play list
 exports.addToWishToPlayBoardGames = function(req, res) {
-    let id_user = userutil.getCurrUserId(req);
-    let board_games = req.body.board_games.map(g => { return { id_user: id_user, id_board_game: g } });
-    return db.WishToPlayBoardGame.bulkCreate(board_games, { ignoreDuplicates: true })
-        .then(() => { return exports.sendCurrWishToPlayList(req, res); })
-        .catch(err => { return util.errorResponse(res); });
+    return m2m.addAssociations(req, res, {
+        model_class: db.WishToPlayBoardGame,
+        fixed: { id: userutil.getCurrUserId(req), field: 'id_user' },
+        other: {
+            ids: req.body.board_games,
+            field: 'id_board_game',
+            includes: [includes.defaultBoardGameIncludeSQ]
+        },
+        error_message: "cannot update wish to play list"
+    })
 };
 
 exports.sendWishToPlayList = function(uid, req, res) {
-    return util.sendModelOrError(res, db.sendCurrWishToPlayList.findAll({
-        where: { id_user: uid },
-        include: [includes.defaultBoardGameIncludeSQ]
-    }));
+    return m2m.sendAssociations(req, res, {
+        model_class: db.WishToPlayBoardGame,
+        fixed: { id: uid, field: 'id_user' },
+        other: {
+            ids: req.body.board_games,
+            field: 'id_board_game',
+            includes: [includes.defaultBoardGameIncludeSQ]
+        }
+    });
 };
 
-exports.sendCurrWishToPlayList = function(req, res) {
+exports.getCurrentUserWishToPlayBoardGames = function(req, res) {
     return exports.sendWishToPlayList(userutil.getCurrUserId(req), req, res);
 };
 
-exports.getWishToPlayBoardGames = function(req, res) {
-    return exports.sendCurrWishToPlayList(req, res);
+exports.getUserWishToPlayBoardGames = function(req, res) {
+    return exports.sendWishToPlayList(parsetInt(req.params.uid), req, res);
 };
 
 exports.deleteFromWishToPlayList = function(req, res) {
-    const id_user = userutil.getCurrUserId(req);
-    return db.LibraryGame.destroy({
-            where: { id_user, id_board_game: req.body.board_games }
-        }).then(() => { return exports.sendCurrUserGames(req, res); })
-        .catch(err => { return util.errorResponse(res); });
+    return m2m.deleteAssociations(req, res, {
+        model_class: db.WishToPlayBoardGame,
+        fixed: { id: userutil.getCurrUserId(req), field: 'id_user' },
+        other: {
+            ids: req.body.board_games,
+            field: 'id_board_game',
+            includes: [includes.defaultBoardGameIncludeSQ]
+        },
+        error_message: "cannot update wish to play list"
+    })
 };
