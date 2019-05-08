@@ -235,7 +235,7 @@ module.exports = function(app) {
         .post(UserController.forgotPassword);
 
         /**
-     * @api {post} /user/reset_password Reset the password of a user.
+     * @api {post} /user/reset_password Reset the password of a user
      * @apiName ResetPassword
      * @apiGroup User
      * @apiDescription Reset the password of a user by another one given in the payload. This uses the token provided in the ForgotPassword API.
