@@ -849,6 +849,21 @@ module.exports = function(app) {
     app.route("/event/:eid/ranking/:type(" + StatsController.availableRankings.join("|") + ")")
         .get(StatsController.getEventRanking);
 
+
+    /**
+     * @api {get} /event/:id/matchmaking Get event matchmaking
+     * @apiName GetEventMatchmaking
+     * @apiGroup Event
+     * @apiDescription Get the current user matchmaking recommendations at the given event. List board games that were
+     * brought to the event and that the current user and other players have marked in their wish to play list.
+     * @apiParam {Number} id Event identifier.
+     * @apiSuccess {Match[]} matchmaking List of possible playable games
+     * @apiSuccess {BoardGame} matchmaking.board_game The board game the current player wishes to play to
+     * @apiSuccess {User[]} matchmaking.users List of other users wishing to play the game
+     */
+    app.route("/event/:eid/matchmaking")
+        .get(EventController.getEventMatchmaking);
+
     // Board game
     /**
      * @api {get} /board_game/search Search board games
