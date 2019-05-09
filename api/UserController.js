@@ -9,6 +9,7 @@ const includes = require("./util/db_include");
 const BoardGameController = require("./BoardGameController");
 const Sequelize = require("sequelize");
 const Activity = require("./util/activities");
+const m2m = require('./util/m2m_helpers');
 
 /**
  *
@@ -23,7 +24,7 @@ exports.notValidatedErrorMsg = 'An admin must accept your registration request b
  */
 exports.removeSensitive = function(user) {
     const attributes = includes.userExcludedAttributes;
-    for(var i = 0; i < attributes.length; ++i) {
+    for (var i = 0; i < attributes.length; ++i) {
         user[attributes[i]] = undefined;
     }
     return user;
@@ -35,7 +36,8 @@ const handleUserResponse = function(res, promise) {
 
 exports.signIn = function(req, res) {
     return db.User.findOne({
-        where: {username: {[Sequelize.Op.iLike]: "%" + req.body.username + "%"}}
+        where: { username: {
+                [Sequelize.Op.iLike]: "%" + req.body.username + "%" } }
     }).then(user => {
         if (!user) {
             return util.detailErrorResponse(res, 401, 'Authentication failed. User not found.');
@@ -55,7 +57,7 @@ exports.signIn = function(req, res) {
                         return util.detailErrorResponse(res, 403, exports.notValidatedErrorMsg);
                     } else {
                         return util.successResponse(res, {
-                            token: jwt.sign(token_payload, config.jwt_secret_key, {expiresIn: config.jwt_duration}) // 4 days
+                            token: jwt.sign(token_payload, config.jwt_secret_key, { expiresIn: config.jwt_duration }) // 4 days
                         });
                     }
                 }
@@ -67,19 +69,19 @@ exports.signIn = function(req, res) {
 exports.register = function(req, res) {
     return bcrypt.hash(req.body.password, 10, function(err, hash) {
         return db.User.create({
-            name: req.body.name,
-            surname: req.body.surname,
-            email: req.body.email,
-            password: hash,
-            username: req.body.username,
-            admin: false,  // by default not admin
-            validated: null    // by default not accepted nor refused
-        }).then((user) => {
-            return util.successResponse(res, exports.removeSensitive(user));
-        })
-        .catch((err) => {
-            return util.detailErrorResponse(res, 403, "username or email exists");
-        });
+                name: req.body.name,
+                surname: req.body.surname,
+                email: req.body.email,
+                password: hash,
+                username: req.body.username,
+                admin: false, // by default not admin
+                validated: null // by default not accepted nor refused
+            }).then((user) => {
+                return util.successResponse(res, exports.removeSensitive(user));
+            })
+            .catch((err) => {
+                return util.detailErrorResponse(res, 403, "username or email exists");
+            });
     });
 };
 
@@ -92,7 +94,7 @@ exports.getCurrentUser = function(req, res) {
 exports.updateUser = function(req, res) {
     // TODO security: implement token invalidation check when password changes
     let userId = userutil.getCurrUserId(req);
-    if(userId !== parseInt(req.params.uid)) { // TODO: allow update of another user for admins?
+    if (userId !== parseInt(req.params.uid)) { // TODO: allow update of another user for admins?
         return util.detailErrorResponse(res, 404, "cannot update data of another user");
     }
 
@@ -132,23 +134,23 @@ exports.updateUser = function(req, res) {
 
 exports.forgotPassword = function(req, res) {
     return db.User.findOne({
-        where: {email: req.body.email}
+        where: { email: req.body.email }
     }).then(user => {
         if (!user) {
             return util.detailErrorResponse(res, 404, 'User not found.');
         } else {
             emailutil.sendResetPasswordEmail(
-                            user.email, 
-                            config.email_settings.email_address,
-                            config.email_settings.sender_name, 
-                            user.name, 
-                            userutil.getResetPasswordFrontendUrl(user.id, user.email, user.password, user.createdAt))
-                            .then(() => {
-                                return util.successResponse(res);
-                            })
-                            .catch(err => {
-                                return util.detailErrorResponse(res, 500, "failed to send password recovery email");
-                            });
+                    user.email,
+                    config.email_settings.email_address,
+                    config.email_settings.sender_name,
+                    user.name,
+                    userutil.getResetPasswordFrontendUrl(user.id, user.email, user.password, user.createdAt))
+                .then(() => {
+                    return util.successResponse(res);
+                })
+                .catch(err => {
+                    return util.detailErrorResponse(res, 500, "failed to send password recovery email");
+                });
         }
     });
 };
@@ -191,35 +193,37 @@ exports.sendCurrUserGames = function(req, res) {
  * @returns {Promise<Array<Model>>}
  */
 exports.sendUserLibraryGames = function(uid, req, res) {
-    return util.sendModelOrError(res, db.LibraryGame.findAll({
-        where: {id_user: uid},
-        include: [includes.defaultBoardGameIncludeSQ]
-    }));
+    return m2m.sendAssociations(req, res, {
+        model_class: db.LibraryGame,
+        fixed: { id: uid, field: 'id_user' },
+        other: { includes: [includes.defaultBoardGameIncludeSQ] }
+    });
 };
 
 exports.addLibraryGames = function(req, res) {
-    if (!req.body.board_games) {
-        return res.status(403).send({error: "missing games field"});
-    }
-    let userId = userutil.getCurrUserId(req);
-    let games = req.body.board_games.map(g => { return { id_user: userId, id_board_game: g }});
-    return db.LibraryGame.bulkCreate(games, { ignoreDuplicates: true })
-        .then(() => { return exports.sendCurrUserGames(req, res); })
-        .catch(err => { return util.errorResponse(res); });
+    return m2m.addAssociations(req, res, {
+        model_class: db.LibraryGame,
+        fixed: { id: userutil.getCurrUserId(req), field: 'id_user' },
+        other: {
+            field: 'id_board_game',
+            ids: req.body.board_games,
+            includes: [includes.defaultBoardGameIncludeSQ]
+        },
+        error_message: "cannot update library"
+    });
 };
 
 exports.deleteLibraryGames = function(req, res) {
-    if (!req.body.board_games) {
-        return util.detailErrorResponse(res, 403, "missing games field");
-    }
-    let userId = userutil.getCurrUserId(req);
-    return db.LibraryGame.destroy({
-        where: {
-            id_user: userId,
-            id_board_game: req.body.board_games
-        }
-    }).then(() => { return exports.sendCurrUserGames(req, res); })
-      .catch(err => { return util.errorResponse(res); });
+    return m2m.deleteAssociations(req, res, {
+        model_class: db.LibraryGame,
+        fixed: { id: userutil.getCurrUserId(req), field: 'id_user' },
+        other: {
+            field: 'id_board_game',
+            ids: req.body.board_games,
+            includes: [includes.defaultBoardGameIncludeSQ]
+        },
+        error_message: "cannot update library"
+    });
 };
 
 exports.getCurrentUserLibraryGames = function(req, res) {
@@ -235,7 +239,7 @@ exports.addBoardGameAndAddToLibrary = function(req, res) {
         return db.LibraryGame.create({
             id_user: userutil.getCurrUserId(req),
             id_board_game: board_game.id
-        }, {ignoreDuplicates: true}).then(l => {
+        }, { ignoreDuplicates: true }).then(l => {
             return exports.sendCurrUserGames(req, res);
         }).catch(err => {
             return util.errorResponse(res);
@@ -247,39 +251,46 @@ exports.addBoardGameAndAddToLibrary = function(req, res) {
 };
 
 exports.getUserStats = function(req, res) {
-    const clause = {id_user: req.params.uid};
+    const clause = { id_user: req.params.uid };
     return Promise.all([
         // get number of games played
-        db.GamePlayer.count({where: clause}),
+        db.GamePlayer.count({ where: clause }),
         // get number of attended events
-        db.EventAttendee.count({where: clause}),
+        db.EventAttendee.count({ where: clause }),
         // get size of library
-        db.LibraryGame.count({where: clause, distinct: true, col: "id_board_game"}),
+        db.LibraryGame.count({ where: clause, distinct: true, col: "id_board_game" }),
         // get most played board game and play count
         db.Game.findAll({
             attributes: ["id_board_game", [db.sequelize.fn("COUNT", "id_board_game"), "count"]],
             include: [Object.assign(includes.genericIncludeSQ(db.GamePlayer, 'game_players'), {
-                where: clause, attributes: []
+                where: clause,
+                attributes: []
             })],
             group: db.sequelize.col('id_board_game'),
-            order: [["count", "DESC"]],
+            order: [
+                ["count", "DESC"]
+            ],
             raw: true
         }).then(data => {
             if (data.length === 0) {
-                return {count: 0, board_game: null};
+                return { count: 0, board_game: null };
             }
             return db.BoardGame.findByPk(data[0].id_board_game).then(board_game => {
-                return {board_game: board_game, count: parseInt(data[0].count)};
+                return { board_game: board_game, count: parseInt(data[0].count) };
             });
         }),
         // get total play time (exclude null duration)
         db.GamePlayer.findAll({
             where: clause,
             include: [Object.assign(includes.defaultGameIncludeSQ, {
-                where: {["duration"]: {[db.Op.ne]: null}},
+                where: {
+                    ["duration"]: {
+                        [db.Op.ne]: null } },
                 attributes: []
             })],
-            attributes: [[db.sequelize.fn("SUM", db.sequelize.col('game.duration')), "total"]],
+            attributes: [
+                [db.sequelize.fn("SUM", db.sequelize.col('game.duration')), "total"]
+            ],
             group: 'id_user',
             raw: true
         }).then(data => {
@@ -301,4 +312,51 @@ exports.getUserStats = function(req, res) {
 exports.getUserActivities = function(req, res) {
     const uid = parseInt(req.params.uid);
     return util.sendModelOrError(res, Activity.getUserActivitiesPromise(uid, 10));
+};
+
+// Wish-to-play list
+exports.addToWishToPlayBoardGames = function(req, res) {
+    return m2m.addAssociations(req, res, {
+        model_class: db.WishToPlayBoardGame,
+        fixed: { id: userutil.getCurrUserId(req), field: 'id_user' },
+        other: {
+            ids: req.body.board_games,
+            field: 'id_board_game',
+            includes: [includes.defaultBoardGameIncludeSQ]
+        },
+        error_message: "cannot update wish to play list"
+    })
+};
+
+exports.sendWishToPlayList = function(uid, req, res) {
+    return m2m.sendAssociations(req, res, {
+        model_class: db.WishToPlayBoardGame,
+        fixed: { id: uid, field: 'id_user' },
+        other: {
+            ids: req.body.board_games,
+            field: 'id_board_game',
+            includes: [includes.defaultBoardGameIncludeSQ]
+        }
+    });
+};
+
+exports.getCurrentUserWishToPlayBoardGames = function(req, res) {
+    return exports.sendWishToPlayList(userutil.getCurrUserId(req), req, res);
+};
+
+exports.getUserWishToPlayBoardGames = function(req, res) {
+    return exports.sendWishToPlayList(parsetInt(req.params.uid), req, res);
+};
+
+exports.deleteFromWishToPlayList = function(req, res) {
+    return m2m.deleteAssociations(req, res, {
+        model_class: db.WishToPlayBoardGame,
+        fixed: { id: userutil.getCurrUserId(req), field: 'id_user' },
+        other: {
+            ids: req.body.board_games,
+            field: 'id_board_game',
+            includes: [includes.defaultBoardGameIncludeSQ]
+        },
+        error_message: "cannot update wish to play list"
+    })
 };

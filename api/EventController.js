@@ -266,3 +266,52 @@ exports.getEventActivities = function(req, res) {
     const eid = parseInt(req.params.eid);
     return util.sendModelOrError(res, Activity.getEventActivitiesPromise(eid, 10));
 };
+
+exports.getEventMatchmaking = function(req, res) {
+    const uid = userutil.getCurrUserId(req);
+    const provided_query = db.sequelize.dialect.QueryGenerator.selectQuery("ProvidedBoardGames", {
+        attributes: ['id_board_game'],
+        where: { id_event: parseInt(req.params.eid) }
+    }).slice(0, -1);
+    return db.WishToPlayBoardGame.findAll({
+        attributes: ['id_board_game'],
+        where: {
+            id_user: uid,
+            id_board_game: { [db.Op.in]: db.sequelize.literal('(' + provided_query + ')') }
+        }
+    }).then(data => {
+        /**
+         * `data` is a list of ids of board games that were brought to an event and that are in the
+         * wish to play list of the current user.
+         */
+        return util.sendModelOrError(res, db.WishToPlayBoardGame.findAll({
+            where: {
+                id_board_game: { [db.Op.in]: data.map(d => d.id_board_game )},
+                id_user: { [db.Op.ne]: uid }
+            },
+            include: [
+                includes.defaultUserIncludeSQ,
+                includes.defaultBoardGameIncludeSQ
+            ]
+        }), function(data) {
+            /** transform the list of board game and users into a list of baord games with interested users */
+            let matchmaking = [];
+            let board_game_index = {};
+            data.forEach(({id_board_game, id_user, user, board_game}) => {
+                if (id_board_game in board_game_index) {
+                    matchmaking[board_game_index[id_board_game]].users.push(user);
+                } else {
+                    board_game_index[id_board_game] = matchmaking.length;
+                    matchmaking.push({
+                        board_game: board_game,
+                        users: [user]
+                    });
+                }
+            });
+            return matchmaking;
+        });
+    }).catch(err => {
+        console.log(err);
+        return res.status(500).json({['err']: 'err'});
+    });
+};
