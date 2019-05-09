@@ -859,7 +859,7 @@ module.exports = function(app) {
      * @apiParam {Number} id Event identifier.
      * @apiSuccess {Match[]} matchmaking List of possible playable games
      * @apiSuccess {BoardGame} matchmaking.board_game The board game the current player wishes to play to
-     * @apiSuccess {User[]} matchmaking.users List of other users wishing to play the game
+     * @apiSuccess {User[]} matchmaking.users List of other users wishing to play the board game
      */
     app.route("/event/:eid/matchmaking")
         .get(EventController.getEventMatchmaking);
