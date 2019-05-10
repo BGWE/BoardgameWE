@@ -9,7 +9,8 @@ const { validationResult } = require('express-validator/check');
 exports.getFullTimerIncludes = function() {
     return [
         includes.getUserIncludeSQ("creator"),
-        includes.getGameIncludeSQ("game", [includes.defaultBoardGameIncludeSQ]),
+        includes.getEventIncludeSQ("event"),
+        includes.getBoardGameIncludeSQ("board_game"),
         includes.genericIncludeSQ(db.PlayerGameTimer, "player_timers", [includes.defaultUserIncludeSQ])
     ];
 };
@@ -82,41 +83,41 @@ exports.createTimerPromise = function(timer_data, individual_timers, per_type_da
     });
 };
 
-exports.addTimerFromGame = function(req, res) {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-        return util.detailErrorResponse(res, 400, "cannot create timer", errors);
-    }
-
-    const gid = parseInt(req.params.gid);
-    const timer_data = {
-        id_creator: userutil.getCurrUserId(req),
-        id_game: gid,
-        timer_type: req.body.timer_type || "COUNT_UP",
-        initial_duration: req.body.initial_duration || 0,
-        current_player: req.body.current_player || 0
-    };
-    const per_type_data = {
-        duration_increment: req.body.reload_increment || 0
-    };
-
-    return db.Game.findOne({
-        where: {id: gid},
-        include: [includes.genericIncludeSQ(db.GamePlayer, "game_players", [includes.defaultUserIncludeSQ])]
-    }).then(game => {
-        const timers = _.range(game.game_players.length).map(index => {
-            const player = game.game_players[index];
-            return exports.getDefaultPlayerTimer(player.id_user, player.name, index)
-        });
-        return exports.createTimerPromise(timer_data, timers, per_type_data).then(timer => {
-            return util.sendModelOrError(res, exports.buildFullTimer(timer.id));
-        }).catch(err => {
-            return util.detailErrorResponse(res, 500, "cannot create timer");
-        });
-    }).catch(err => {
-        return util.detailErrorResponse(res, 404, "game id:" + gid + " not found.");
-    })
-};
+// exports.addTimerFromGame = function(req, res) {
+//     const errors = validationResult(req);
+//     if (!errors.isEmpty()) {
+//         return util.detailErrorResponse(res, 400, "cannot create timer", errors);
+//     }
+//
+//     const gid = parseInt(req.params.gid);
+//     const timer_data = {
+//         id_creator: userutil.getCurrUserId(req),
+//         id_game: gid,
+//         timer_type: req.body.timer_type || "COUNT_UP",
+//         initial_duration: req.body.initial_duration || 0,
+//         current_player: req.body.current_player || 0
+//     };
+//     const per_type_data = {
+//         duration_increment: req.body.reload_increment || 0
+//     };
+//
+//     return db.Game.findOne({
+//         where: {id: gid},
+//         include: [includes.genericIncludeSQ(db.GamePlayer, "game_players", [includes.defaultUserIncludeSQ])]
+//     }).then(game => {
+//         const timers = _.range(game.game_players.length).map(index => {
+//             const player = game.game_players[index];
+//             return exports.getDefaultPlayerTimer(player.id_user, player.name, index)
+//         });
+//         return exports.createTimerPromise(timer_data, timers, per_type_data).then(timer => {
+//             return util.sendModelOrError(res, exports.buildFullTimer(timer.id));
+//         }).catch(err => {
+//             return util.detailErrorResponse(res, 500, "cannot create timer");
+//         });
+//     }).catch(err => {
+//         return util.detailErrorResponse(res, 404, "game id:" + gid + " not found.");
+//     })
+// };
 
 exports.getTimer = function(req, res) {
     const tid = parseInt(req.params.tid);
@@ -131,7 +132,8 @@ exports.createTimer = function(req, res) {
 
     return exports.createTimerPromise({
         id_creator: userutil.getCurrUserId(req),
-        id_game: null,
+        id_event: req.params.eid || null,  // can also be used with event-related endpoint
+        id_board_game: req.body.id_board_game || null,
         timer_type: req.body.timer_type || "COUNT_UP",
         initial_duration: req.body.initial_duration || 0,
         current_player: req.body.current_player || 0
