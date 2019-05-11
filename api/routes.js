@@ -466,7 +466,7 @@ module.exports = function(app) {
         const eid = parseInt(req.params.eid);
         const uid = userutil.getCurrUserId(req);
         const creator = await db.Event.count({ where: { id_creator: uid, id: eid } });
-        const attendee = db.EventAttendee.count({ where: { id_user: uid, id_event: eid } });
+        const attendee = await db.EventAttendee.count({ where: { id_user: uid, id_event: eid } });
         if (creator === 1 || attendee === 1) {
             next();
         } else {
