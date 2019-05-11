@@ -4,17 +4,17 @@ module.exports = {
     up: (queryInterface, Sequelize) => {
         let now = Sequelize.literal("(now() at time zone 'utc')");
         return queryInterface.bulkInsert("GameTimers", [{
-            id_game: null, id_creator: 2,
+            id_board_game: 1, id_event: null, id_creator: 2,
             initial_duration: 0, current_player: 0,
             timer_type: "COUNT_UP",
             createdAt: now, updatedAt: now
         }, {
-            id_game: null, id_creator: 2,
+            id_board_game: 2, id_event: null, id_creator: 2,
             initial_duration: 400000, current_player: 0,
             timer_type: "COUNT_DOWN",
             createdAt: now, updatedAt: now
         }, {
-            id_game: null, id_creator: 2,
+            id_board_game: 1, id_event: null, id_creator: 2,
             initial_duration: 400000, current_player: 0,
             timer_type: "RELOAD",
             createdAt: now, updatedAt: now

@@ -968,25 +968,6 @@ module.exports = function(app) {
         .get(GameController.getGame)
         .delete(GameController.deleteGame);
 
-    // /**
-    //  * @api {post} /game/:gid/timer Create timer from game
-    //  * @apiName Create TimerFromGame
-    //  * @apiGroup Timer
-    //  * @apiDescription Create a new timer from an existing game (extract players from the game).
-    //  * @apiParam (query) {Number} gid Game identifier.
-    //  * @apiParam (body) {String} timer_type=`COUNT_UP` The type of timer to create. One of: `COUNT_UP`, `COUNT_DOWN `or `RELOAD`.
-    //  * @apiParam (body) {Number} [initial_duration=0] Start time of all players' timers in milliseconds.
-    //  * @apiParam (body) {Number} [current_player=0] Turn order of the current player (an integer in `[0, n_players[`)
-    //  * @apiParam (body) {Number} [reload_increment=0] If the timer is of type `RELOAD`, the amount of time add every at every `next()` action.
-    //  * @apiUse TokenHeaderRequired
-    //  * @apiUse TimerDescriptor
-    //  */
-    // app.route("/game/:gid/timer")
-    //     .post(
-    //         validation.getTimerValidators(true).concat([validation.modelExists(check('gid'), db.Game)]),
-    //         TimerController.addTimerFromGame
-    //     );
-
     // timer api
     /**
      * @api {post} /timer Create timer
