@@ -360,3 +360,19 @@ exports.deleteFromWishToPlayList = function(req, res) {
         error_message: "cannot update wish to play list"
     })
 };
+
+exports.addBoardGameAndAddToWishToPlay = function(req, res) {
+    const createFn = (board_game, req, res) => {
+        return db.WishToPlayBoardGame.create({
+            id_user: userutil.getCurrUserId(req),
+            id_board_game: board_game.id
+        }, { ignoreDuplicates: true }).then(l => {
+            return exports.getCurrentUserWishToPlayBoardGames(req, res);
+        }).catch(err => {
+            return util.errorResponse(res);
+        });
+    };
+    const bggId = parseInt(req.params.id);
+    const source = req.params.source;
+    return BoardGameController.executeIfBoardGameExists(bggId, source, req, res, createFn);
+};
