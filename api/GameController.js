@@ -99,7 +99,8 @@ exports.addGameQuery = function(eid, req, res) {
             id_event: eid,
             id_board_game: req.body.id_board_game,
             duration: req.body.duration || null,
-            ranking_method: req.body.ranking_method
+            ranking_method: req.body.ranking_method,
+            id_timer: req.body.id_timer || null,
         }, {transaction: t}).then((game) => {
             const player_data = getGamePlayerData(game, req.body.players);
             return db.GamePlayer.bulkCreate(player_data, {

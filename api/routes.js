@@ -695,8 +695,9 @@ module.exports = function(app) {
      * @apiParam {Number} id Event identifier.
      *
      * @apiParam (body) {Number} id_board_game Board game identifier
-     * @apiParam (body) {Number} duration Duration of the board game, or `null`.
+     * @apiParam (body) {Number} [duration] Duration of the board game, or `null`.
      * @apiParam (body) {String} ranking_method The ranking method for the game. One of: `{WIN_LOSE, POINTS_LOWER_BETTER, POINTS_HIGHER_BETTER}`.
+     * @apiPAram (body) {Number} [id_timer] Add a timer identifier
      * @apiParam (body) {GamePlayer[]} players List of players involved with the game.
      * @apiParam (body) {Number} players.score Player score
      * @apiParam (body) {String} players.name Player name if not registered on the platform (mutually exclusive with
