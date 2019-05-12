@@ -56,6 +56,18 @@ exports.sendAssociations = function(req, res, m2m) {
     }));
 };
 
+/**
+ * @param req
+ * @param res
+ * @param m2m options
+ * @param m2m.model_class Sequelize model
+ * @param m2m.fixed.id int The fixed id
+ * @param m2m.fixed.field str
+ * @param m2m.other.ids Array Array of identifier for the second field
+ * @param m2m.other.field str The variable id field
+ * @param m2m.other.includes The includes for generating the response
+ * @returns {*}
+ */
 exports.deleteAssociations = function(req, res, m2m) {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {

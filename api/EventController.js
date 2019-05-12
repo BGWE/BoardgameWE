@@ -2,6 +2,7 @@ const db = require("./models/index");
 const util = require("./util/util");
 const userutil = require("./util/user");
 const moment = require("moment");
+const m2m = require("./util/m2m_helpers");
 const includes = require("./util/db_include");
 const BoardGameController = require("./BoardGameController");
 const { validationResult } = require('express-validator/check');
@@ -144,10 +145,11 @@ exports.deleteProvidedBoardGames = function(req, res) {
 };
 
 exports.sendEventAttendees = function(eid, res) {
-    return util.sendModelOrError(res, db.EventAttendee.findAll({
-        where: { id_event: eid },
-        include: [includes.defaultUserIncludeSQ]
-    }));
+    return m2m.sendAssociations(req, res, {
+        model_class: db.EventAttendee,
+        fixed: { id: eid, field: 'id_event' },
+        other: { includes: [includes.defaultUserIncludeSQ] }
+    });
 };
 
 exports.getEventAttendees = function(req, res) {
@@ -155,36 +157,40 @@ exports.getEventAttendees = function(req, res) {
 };
 
 exports.addEventAttendees = function(req, res) {
-    let eid = parseInt(req.params.eid);
-    let users = req.body.users.map(u => { return { id_user: u, id_event: eid }});
-    return db.EventAttendee.bulkCreate(users, { ignoreDuplicates: true })
-        .then(() => {
-            return exports.sendEventAttendees(eid, res);
-        })
-        .catch(err => {
-            return util.errorResponse(res);
-        });
+    return m2m.addAssociations(req, res, {
+        model_class: db.EventAttendee,
+        fixed: { id: parseInt(req.params.eid), field: 'id_event' },
+        other: {
+            ids: req.body.users,
+            field: 'id_user',
+            includes: [includes.defaultUserIncludeSQ]
+        },
+        error_message: 'cannot add attendees'
+    });
 };
 
 exports.deleteEventAttendees = function(req, res) {
-    let eid = parseInt(req.params.eid);
-    return util.handleDeletion(res, db.EventAttendee.destroy({
-        where: {
-            id_event: eid,
-            id_user: req.body.users
+    return m2m.deleteAssociations(req, res, {
+        model_class: db.EventAttendee,
+        fixed: { id: parseInt(req.params.eid), field: 'id_event' },
+        other: {
+            ids: req.body.users,
+            field: 'id_user',
+            includes: [includes.defaultUserIncludeSQ]
         }
-    }));
+    });
 };
 
 exports.subscribeToEvent = function(req, res) {
-    const eid = parseInt(req.params.eid);
-    return db.EventAttendee.create({
-        id_user: userutil.getCurrUserId(req),
-        id_event: eid
-    }, { ignoreDuplicates: true }).then(() => {
-        return util.successResponse(res, util.successObj);
-    }).catch(err => {
-        return util.errorResponse(res);
+    return m2m.addAssociations(req, res, {
+        model_class: db.EventAttendee,
+        fixed: { id: parseInt(req.params.eid), field: 'id_event' },
+        other: {
+            ids: [userutil.getCurrUserId(req)],
+            field: 'id_user',
+            includes: [includes.defaultUserIncludeSQ]
+        },
+        error_message: 'cannot add current user as attendee'
     });
 };
 

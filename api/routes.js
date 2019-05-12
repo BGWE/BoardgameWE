@@ -803,7 +803,7 @@ module.exports = function(app) {
      * Note: only the creator or an attendee can use this endpoint.
      *
      * @apiParam {Number} id Event identifier.
-     *
+     * @apiParam (body) {Number[]} users List of ids of user to add to the event
      * @apiUse TokenHeaderRequired
      */
 
@@ -815,13 +815,14 @@ module.exports = function(app) {
      * Note: only the creator or an attendee can use this endpoint.
      *
      * @apiParam {Number} id Event identifier.
+     * @apiParam (body) {Number[]} users List of ids of user to remove from the event
      *
      * @apiUse TokenHeaderRequired
      */
     app.route("/event/:eid/attendees")
         .get(EventController.getEventAttendees)
-        .post(eventAccessMiddleware, EventController.addEventAttendees)
-        .delete(eventAccessMiddleware, EventController.deleteEventAttendees);
+        .post(eventAccessMiddleware, [body('users').isArray().not().isEmpty()], EventController.addEventAttendees)
+        .delete(eventAccessMiddleware, [body('users').isArray().not().isEmpty()], EventController.deleteEventAttendees);
 
     /**
      * @api {post} /event/:id/subscribe Subscribe to event
