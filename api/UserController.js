@@ -193,7 +193,7 @@ exports.sendCurrUserGames = function(req, res) {
  * @returns {Promise<Array<Model>>}
  */
 exports.sendUserLibraryGames = function(uid, req, res) {
-    return m2m.sendAssociations(req, res, {
+    return m2m.sendAssociations(res, {
         model_class: db.LibraryGame,
         fixed: { id: uid, field: 'id_user' },
         other: { includes: [includes.defaultBoardGameIncludeSQ] }
@@ -329,14 +329,10 @@ exports.addToWishToPlayBoardGames = function(req, res) {
 };
 
 exports.sendWishToPlayList = function(uid, req, res) {
-    return m2m.sendAssociations(req, res, {
+    return m2m.sendAssociations(res, {
         model_class: db.WishToPlayBoardGame,
         fixed: { id: uid, field: 'id_user' },
-        other: {
-            ids: req.body.board_games,
-            field: 'id_board_game',
-            includes: [includes.defaultBoardGameIncludeSQ]
-        }
+        other: {  includes: [includes.defaultBoardGameIncludeSQ] }
     });
 };
 

@@ -32,7 +32,7 @@ exports.addAssociations = function(req, res, m2m) {
             ... m2m.attributes };
         }), {ignoreDuplicates: true}
     ).then(() => {
-        return exports.sendAssociations(req, res, m2m);
+        return exports.sendAssociations(res, m2m);
     }).catch(err => {
         console.debug(err);
         return util.errorResponse(res);
@@ -40,7 +40,6 @@ exports.addAssociations = function(req, res, m2m) {
 };
 
 /**
- * @param req
  * @param res
  * @param m2m helper options
  * @param m2m.model_class Sequelize model
@@ -49,7 +48,7 @@ exports.addAssociations = function(req, res, m2m) {
  * @param m2m.other.includes The includes for generating the response
  * @returns {*}
  */
-exports.sendAssociations = function(req, res, m2m) {
+exports.sendAssociations = function(res, m2m) {
     return util.sendModelOrError(res, m2m.model_class.findAll({
         where: { [m2m.fixed.field]: m2m.fixed.id },
         include: m2m.other.includes
@@ -79,7 +78,7 @@ exports.deleteAssociations = function(req, res, m2m) {
             [m2m.other.field]: m2m.other.ids
         }
     }).then(() => {
-        return exports.sendAssociations(req, res, m2m);
+        return exports.sendAssociations(res, m2m);
     }).catch(err => {
         console.debug(err);
         return util.errorResponse(res);

@@ -145,7 +145,7 @@ exports.deleteProvidedBoardGames = function(req, res) {
 };
 
 exports.sendEventAttendees = function(eid, res) {
-    return m2m.sendAssociations(req, res, {
+    return m2m.sendAssociations(res, {
         model_class: db.EventAttendee,
         fixed: { id: eid, field: 'id_event' },
         other: { includes: [includes.defaultUserIncludeSQ] }
