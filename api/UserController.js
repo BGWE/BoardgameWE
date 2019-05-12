@@ -345,7 +345,7 @@ exports.getCurrentUserWishToPlayBoardGames = function(req, res) {
 };
 
 exports.getUserWishToPlayBoardGames = function(req, res) {
-    return exports.sendWishToPlayList(parsetInt(req.params.uid), req, res);
+    return exports.sendWishToPlayList(parseInt(req.params.uid), req, res);
 };
 
 exports.deleteFromWishToPlayList = function(req, res) {
