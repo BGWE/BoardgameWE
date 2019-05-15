@@ -8,7 +8,7 @@ const db = require("./models/index");
 const _ = require("lodash");
 
 module.exports = function(app) {
-    const { body, param, check } = require('express-validator/check');
+    const { body, param, check, query } = require('express-validator/check');
     const { asyncMiddleware } = require('./util/util');
     const validation = require('./util/validation');
     const BoardGameController = require("./BoardGameController");
@@ -881,6 +881,23 @@ module.exports = function(app) {
      */
     app.route("/event/:eid/matchmaking")
         .get(EventController.getEventMatchmaking);
+
+    /**
+     * @api {get} /event/:id/wish_to_play Get event wish to play
+     * @apiName GetEventWishToPlay
+     * @apiGroup Event
+     * @apiDescription Get the board games that the event attendees have added to their wish to play list
+     * @apiParam {Number} id Event identifier.
+     * @apiParam (query) {Boolean} [exclude_current=false] True for not counting current user wish to play list, false
+     * otherwise.
+     * @apiSuccess {WishedBoardGames[]} wished List of wished board games. Note: the returned data is a list (not
+     * an actual object).
+     * @apiSuccess {Number} wished.id_board_game Board game identifier
+     * @apiSuccess {Number} wished.count Number of people who have added this board game to their wish to play list
+     * @apiSuccess {BoardGame} wished.board_game Board game data (see "Add board game" request for structure)
+     */
+    app.route("/event/:eid/wish_to_play")
+        .get(query('exclude_current').optional().isBoolean().toBoolean(), EventController.getEventWishToPlayGames);
 
     // Board game
     /**

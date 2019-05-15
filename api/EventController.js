@@ -321,3 +321,25 @@ exports.getEventMatchmaking = function(req, res) {
         return res.status(500).json({['err']: 'err'});
     });
 };
+
+exports.getEventWishToPlayGames = function(req, res) {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+        return util.detailErrorResponse(res, 400, "cannot fetch wish to play list for event", errors);
+    }
+    // secondary query for user filtering: attendees and (if indicated) not current user
+    const provided_query = db.sequelize.dialect.QueryGenerator.selectQuery("EventAttendees", {
+        attributes: ['id_user'],
+        where: { id_event: parseInt(req.params.eid), ... (!req.query.exclude_current ? {} : {
+            id_user: { [db.Op.ne]: userutil.getCurrUserId(req) }
+        })}
+    }).slice(0, -1);
+    return util.sendModelOrError(res, db.WishToPlayBoardGame.findAll({
+        attributes: ['id_board_game', [db.sequelize.fn('count', 'id_user'), 'count']],
+        where: {
+            id_user: { [db.Op.in]: db.sequelize.literal('(' + provided_query + ')') }
+        },
+        include: [{ attribute: [], ...includes.defaultBoardGameIncludeSQ }],
+        group: ['WishToPlayBoardGame.id_board_game', 'board_game.id']
+    }));
+};
