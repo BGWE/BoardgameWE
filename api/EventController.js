@@ -330,9 +330,10 @@ exports.getEventWishToPlayGames = function(req, res) {
     // secondary query for user filtering: attendees and (if indicated) not current user
     const provided_query = db.sequelize.dialect.QueryGenerator.selectQuery("EventAttendees", {
         attributes: ['id_user'],
-        where: { id_event: parseInt(req.params.eid), ... (!req.query.exclude_current ? {} : {
-            id_user: { [db.Op.ne]: userutil.getCurrUserId(req) }
-        })}
+        where: {
+            id_event: parseInt(req.params.eid),
+            ... (!req.query.exclude_current ? {} : { id_user: { [db.Op.ne]: userutil.getCurrUserId(req) } })
+        }
     }).slice(0, -1);
     return util.sendModelOrError(res, db.WishToPlayBoardGame.findAll({
         attributes: ['id_board_game', [db.sequelize.fn('count', 'id_user'), 'count']],
