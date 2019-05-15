@@ -3,6 +3,7 @@ const config = require("./config/config.js");
 const TimerController = require('./TimerController');
 const db = require('./models/index');
 const moment = require('moment');
+const includes = require('./util/db_include');
 
 
 const sendErrorEvent = function(socket, message, event) {
@@ -339,12 +340,14 @@ module.exports = function(io) {
         socket.on('timer_delete', function(id_timer) {
             db.sequelize.transaction(async function (transaction) {
                 const t = {transaction};
-                const timer = await db.GameTimer.findByPk(id_timer, t);
-                console.log("timer_delete");
-                console.log(timer.dataValues);
+                const timer = await db.GameTimer.findByPk(id_timer, {
+                    ...t,
+                    include: [includes.defaultEventIncludeSQ]
+                });
+                const id_user = getCurrentUser(socket).id;
                 if (timer === null) {
                     throw new Error("cannot delete timer: timer with id " + id_timer + " not found.");
-                } else if (timer.id_creator !== getCurrentUser(socket).id) {
+                } else if (timer.id_creator !== id_user && (timer.id_event === null || timer.event.id_creator !== id_user)) {
                     throw new Error("cannot delete timer: only the creator can delete a timer.");
                 }
                 return timer.destroy(t);
