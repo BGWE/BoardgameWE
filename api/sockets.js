@@ -71,8 +71,12 @@ module.exports = function(io) {
             }
         }
 
+        static buildRoomName(id_timer) {
+            return "timer/" + id_timer;
+        }
+
         getRoomName() {
-            return "timer/" + this.id_timer;
+            return TimerRoom.buildRoomName(this.id_timer);
         }
 
         join() {
@@ -328,26 +332,20 @@ module.exports = function(io) {
             });
         });
 
-        socket.on('timer_change_color', async function(id_player_timer, new_color) {
-            if (!timer_room) {
-                sendErrorEvent(socket, "not following any timer: cannot change player color");
-                return;
-            }
-            console.debug('timer_change_color - ' + timer_room.getRoomName());
-
-            if (!new_color.match(/^#[a-fAF0-9]{6}$/)) {
-                sendErrorEvent(socket, "cannot update player timer color: invalid color code '" + new_color + "'");
-                return;
-            }
-
-            db.GamePlayerTimer.update({
-                color: new_color
-            }, {
-                where: { id_timer: timer_room.id_timer, id: id_player_timer }
-            }).then(async () => {
-                await timer_room.emitWithState("timer_change_color");
-            }).catch(async (e) => {
-                sendErrorEvent(socket, "cannot update player timer color: " + e.message)
+        socket.on('timer_delete', function(id_timer) {
+            db.sequelize.transaction(async function (transaction) {
+                const t = {transaction};
+                const timer = await db.GameTimer.findByPk(id_timer, t);
+                if (timer === null) {
+                    throw new Error("cannot delete timer: timer with id " + id_timer + " not found.");
+                } else if (timer.id_creator !== socket.decoded_token.id_user) {
+                    throw new Error("cannot delete timer: only the creator can delete a timer.");
+                }
+                return timer.destroy(t);
+            }).then(() => {
+                io.to(TimerRoom.buildRoomName(id_timer)).emit("timer_delete", data);
+            }).catch(err => {
+                sendErrorEvent(socket, err.message)
             });
         });
 
