@@ -14,6 +14,10 @@ const sendErrorEvent = function(socket, message, event) {
     });
 };
 
+const getCurrentUser = function(socket) {
+    return socket.decoded_token;
+};
+
 /**
  * Success callback to either TimerRoom.nextPlayer or TimerRoom.prevPlayer
  * @param timer_room
@@ -58,7 +62,7 @@ module.exports = function(io) {
 
         /** Fetches current timer data and set class attributes accordingly */
         async setTimer(options) {
-            this.timer = await db.GameTimer.findByPk(this.id_timer, options);
+            this.timer = await db.GameTimer.findByPk(this.id_timer, {...options, rejectOnEmpty: true});
             if (this.timer.timer_type === db.GameTimer.RELOAD) {
                 this.reload = await db.ReloadGameTimer.findByPk(this.id_timer, options);
             }
@@ -336,14 +340,20 @@ module.exports = function(io) {
             db.sequelize.transaction(async function (transaction) {
                 const t = {transaction};
                 const timer = await db.GameTimer.findByPk(id_timer, t);
+                console.log("timer_delete");
+                console.log(timer.dataValues);
                 if (timer === null) {
                     throw new Error("cannot delete timer: timer with id " + id_timer + " not found.");
-                } else if (timer.id_creator !== socket.decoded_token.id_user) {
+                } else if (timer.id_creator !== getCurrentUser(socket).id) {
                     throw new Error("cannot delete timer: only the creator can delete a timer.");
                 }
                 return timer.destroy(t);
             }).then(() => {
-                io.to(TimerRoom.buildRoomName(id_timer)).emit("timer_delete", data);
+                // emit also to sender if he's not in the deleted timer's room
+                if (timer_room === null || timer_room.id_timer !== id_timer) {
+                    socket.emit('timer_delete', id_timer);
+                }
+                io.to(TimerRoom.buildRoomName(id_timer)).emit('timer_delete');
             }).catch(err => {
                 sendErrorEvent(socket, err.message)
             });
