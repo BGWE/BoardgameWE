@@ -899,6 +899,18 @@ module.exports = function(app) {
     app.route("/event/:eid/wish_to_play")
         .get(query('exclude_current').optional().isBoolean().toBoolean(), EventController.getEventWishToPlayGames);
 
+    /**
+     * @api {get} /event/:eid/timers Get current user event timers
+     * @apiName GetCurrentUserEventTimers
+     * @apiGroup Timer
+     * @apiDescription Get all the timers the current user is involved in at the given event.
+     * @apiParam {Number} id Event identifier.
+     * @apiUse TokenHeaderRequired
+     * @apiUse TimerListDescriptor
+     */
+    app.route("/event/:eid/timers")
+        .get(TimerController.getCurrentUserEventTimers);
+
     // Board game
     /**
      * @api {get} /board_game/search Search board games
@@ -1009,6 +1021,7 @@ module.exports = function(app) {
      * @apiDescription Create a new timer.
      * @apiParam (body) {String} timer_type=`COUNT_UP` The type of timer to create. One of: `COUNT_UP`, `COUNT_DOWN `or `RELOAD`.
      * @apiParam (body) {Number} [id_board_game=null] Board game identifier
+     * @apiParam (body) {Number} [id_event=null] Event identifier
      * @apiParam (body) {Number} [initial_duration=0] Start time of all players' timers in milliseconds.
      * @apiParam (body) {Number} [current_player=0] Turn order of the current player (an integer in `[0, n_players[`)
      * @apiParam (body) {Number} [reload_increment=0] If the timer is of type `RELOAD`, the amount of time add every at every `next()` action.
@@ -1057,7 +1070,7 @@ module.exports = function(app) {
         .get(TimerController.getTimer);
 
     /**
-     * @api {post} /timers Get current user timers
+     * @api {get} /timers Get current user timers
      * @apiName GetCurrentUserTimers
      * @apiGroup Timer
      * @apiDescription Get all the timers the current user is involved in.

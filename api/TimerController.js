@@ -132,7 +132,7 @@ exports.createTimer = function(req, res) {
 
     return exports.createTimerPromise({
         id_creator: userutil.getCurrUserId(req),
-        id_event: req.params.eid || null,  // can also be used with event-related endpoint
+        id_event: req.params.eid || req.body.id_event || null,  // can also be used with event-related endpoints
         id_board_game: req.body.id_board_game || null,
         timer_type: req.body.timer_type || "COUNT_UP",
         initial_duration: req.body.initial_duration || 0,
@@ -150,23 +150,27 @@ exports.createTimer = function(req, res) {
     });
 };
 
+exports.getTimersPromise = function(id_user, eid) {
+    const query = db.sequelize.dialect.QueryGenerator.selectQuery("PlayerGameTimers", {
+        attributes: ['id_timer'],
+        where: { id_user: id_user },
+    }).slice(0, -1);
+    let where = {
+        [db.Op.or]: [
+            {id_creator: id_user},
+            {id: {[db.Op.in]: db.sequelize.literal('(' + query + ')')}}
+        ]
+    };
+    if (eid) {  // if event id defined, filter also on events
+        where = { [db.Op.and]: [ where, {id_event: eid} ] };
+    }
+    return db.GameTimer.findAll({ where, include: exports.getFullTimerIncludes() });
+};
+
 exports.getCurrentUserTimers = function(req, res) {
-    const currUserId = userutil.getCurrUserId(req);
-    return db.PlayerGameTimer.findAll({
-        attributes: [[db.sequelize.fn('DISTINCT', db.sequelize.col('id_timer')), 'id_timer']],
-        where: {id_user: currUserId},
-        raw: true
-    }).then(timers => {
-        return util.sendModelOrError(res, db.GameTimer.findAll({
-            where: {
-                [db.Op.or]: [
-                    {id_creator: currUserId},
-                    {id: {[db.Op.in]: timers.map(t => t.id_timer)}}
-                ]
-            },
-            include: exports.getFullTimerIncludes()
-        }));
-    }).catch(err => {
-        return util.detailErrorResponse(res, 500, "cannot fetch timers");
-    });
+    return util.sendModelOrError(res, exports.getTimersPromise(userutil.getCurrUserId(req)));
+};
+
+exports.getCurrentUserEventTimers = function(req, res) {
+    return util.sendModelOrError(res, exports.getTimersPromise(userutil.getCurrUserId(req), parseInt(req.params.eid)));
 };
