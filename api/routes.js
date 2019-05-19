@@ -904,6 +904,8 @@ module.exports = function(app) {
      * @apiParam {Number} id Event identifier.
      * @apiParam (query) {Boolean} [exclude_current=false] True for not counting current user wish to play list, false
      * otherwise.
+     * @apiParam (query) {Boolean} [provided_games_only=false] True for only including board games that are provided at
+     * the event
      * @apiSuccess {WishedBoardGames[]} wished List of wished board games. Note: the returned data is a list (not
      * an actual object).
      * @apiSuccess {Number} wished.id_board_game Board game identifier
@@ -911,7 +913,10 @@ module.exports = function(app) {
      * @apiSuccess {BoardGame} wished.board_game Board game data (see "Add board game" request for structure)
      */
     app.route("/event/:eid/wish_to_play")
-        .get(query('exclude_current').optional().isBoolean().toBoolean(), EventController.getEventWishToPlayGames);
+        .get([
+            query('exclude_current').optional().isBoolean().toBoolean(),
+            query('provided_games_only').optional().isBoolean().toBoolean()
+        ], EventController.getEventWishToPlayGames);
 
     /**
      * @api {get} /event/:eid/timers Get current user event timers

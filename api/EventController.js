@@ -328,18 +328,23 @@ exports.getEventWishToPlayGames = function(req, res) {
         return util.detailErrorResponse(res, 400, "cannot fetch wish to play list for event", errors);
     }
     // secondary query for user filtering: attendees and (if indicated) not current user
-    const provided_query = db.sequelize.dialect.QueryGenerator.selectQuery("EventAttendees", {
-        attributes: ['id_user'],
-        where: {
-            id_event: parseInt(req.params.eid),
-            ... (!req.query.exclude_current ? {} : { id_user: { [db.Op.ne]: userutil.getCurrUserId(req) } })
-        }
-    }).slice(0, -1);
+    const eid = parseInt(req.params.eid);
+    const user_filtering_query = db.selectFieldQuery("EventAttendees", "id_user", {
+        id_event: eid,
+        ... (!req.query.exclude_current ? {} : { id_user: { [db.Op.ne]: userutil.getCurrUserId(req) } })
+    });
+    const board_games_filtering_query = db.selectFieldQuery("ProvidedBoardGames", 'id_board_game', {
+        id_event: eid
+    });
+
+    let where = { id_user: { [db.Op.in]: db.sequelize.literal('(' + user_filtering_query + ')') } };
+    if (req.query.provided_games_only) { // also filter out board games which were not provided
+        where.id_board_game = {[db.Op.in]: db.sequelize.literal('(' + board_games_filtering_query + ')') };
+    }
+
     return util.sendModelOrError(res, db.WishToPlayBoardGame.findAll({
         attributes: ['id_board_game', [db.sequelize.fn('count', 'id_user'), 'count']],
-        where: {
-            id_user: { [db.Op.in]: db.sequelize.literal('(' + provided_query + ')') }
-        },
+        where,
         include: [{ attribute: [], ...includes.defaultBoardGameIncludeSQ }],
         group: ['WishToPlayBoardGame.id_board_game', 'board_game.id']
     }));

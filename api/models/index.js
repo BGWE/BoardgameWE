@@ -30,4 +30,15 @@ db.sequelize = sequelize;
 db.Sequelize = Sequelize;
 db.Op = Sequelize.Op;
 
+/**
+ * Create a select query for selecting an attribute from a possibly filtered table
+ * @param table Table name
+ * @param attribute Attribute name
+ * @param where Fitlering clause
+ * @returns {*}
+ */
+db.selectFieldQuery = function(table, attribute, where) {
+  return db.sequelize.dialect.QueryGenerator.selectQuery(table, { attributes: [attribute], where }).slice(0, -1);
+};
+
 module.exports = db;
