@@ -18,6 +18,7 @@ module.exports = function(app) {
     const EventController = require("./EventController");
     const AdminController = require("./AdminController");
     const TimerController = require("./TimerController");
+    const AppWideController = require("./AppWideController");
 
     /**
      * @apiDefine TokenHeaderRequired
@@ -249,6 +250,19 @@ module.exports = function(app) {
         .post(UserController.forgotPassword);
 
     /**
+     * @api {get} /statistics Get application statistics
+     * @apiName GetAppStatistics
+     * @apiGroup Application
+     * @apiDescription Get application statistics
+     * @apiSuccess {Number} games_count Number of games played overall
+     * @apiSuccess {Number} users_count Number of active users
+     * @apiSuccess {Number} board_games_owned_count Number of board games owned by players on the application
+     * @apiSuccess {Number} events_count Number of organized events
+     */
+    app.route("/statistics")
+        .get(AppWideController.getAppStatistics);
+
+    /**
      * @api {post} /user/reset_password Reset the password of a user
      * @apiName ResetPassword
      * @apiGroup User
@@ -262,7 +276,7 @@ module.exports = function(app) {
         .post(UserController.resetPassword);
 
     // authentication middleware, applied to all except login and register
-    app.use(/^\/(?!user\/register|user\/login|auth\/forgot_password|auth\/reset_password).*/, asyncMiddleware(async function(req, res, next) {
+    app.use(/^\/(?!user\/register|user\/login|auth\/forgot_password|auth\/reset_password|statistics).*/, asyncMiddleware(async function(req, res, next) {
         let token = userutil.getToken(req);
         if (!token) {
             return util.detailErrorResponse(res, 401, "No token provided.");
