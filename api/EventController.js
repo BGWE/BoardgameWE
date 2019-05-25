@@ -275,10 +275,8 @@ exports.getEventActivities = function(req, res) {
 
 exports.getEventMatchmaking = function(req, res) {
     const uid = userutil.getCurrUserId(req);
-    const provided_query = db.sequelize.dialect.QueryGenerator.selectQuery("ProvidedBoardGames", {
-        attributes: ['id_board_game'],
-        where: { id_event: parseInt(req.params.eid) }
-    }).slice(0, -1);
+    const eid = parseInt(req.params.eid);
+    const provided_query = db.selectFieldQuery("ProvidedBoardGames", "id_board_game", { id_event: eid });
     return db.WishToPlayBoardGame.findAll({
         attributes: ['id_board_game'],
         where: {
@@ -290,10 +288,15 @@ exports.getEventMatchmaking = function(req, res) {
          * `data` is a list of ids of board games that were brought to an event and that are in the
          * wish to play list of the current user.
          */
+        const attendees_query = db.selectFieldQuery("EventAttendees", "id_user", { id_event: eid });
         return util.sendModelOrError(res, db.WishToPlayBoardGame.findAll({
             where: {
                 id_board_game: { [db.Op.in]: data.map(d => d.id_board_game )},
-                id_user: { [db.Op.ne]: uid }
+                id_user: { [db.Op.and]: [
+                        { [db.Op.ne]: uid },
+                        { [db.Op.in]: db.sequelize.literal('(' + attendees_query + ')') }
+                    ]
+                }
             },
             include: [
                 includes.defaultUserIncludeSQ,
