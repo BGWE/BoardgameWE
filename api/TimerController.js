@@ -8,6 +8,7 @@ const { validationResult } = require('express-validator/check');
 
 exports.getFullTimerIncludes = function() {
     return [
+        includes.getGameIncludeSQ("game"),
         includes.getUserIncludeSQ("creator"),
         includes.getEventIncludeSQ("event"),
         includes.getBoardGameIncludeSQ("board_game"),
