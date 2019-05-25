@@ -149,6 +149,7 @@ exports.forgotPassword = function(req, res) {
                     return util.successResponse(res);
                 })
                 .catch(err => {
+                    console.log(err);
                     return util.detailErrorResponse(res, 500, "failed to send password recovery email");
                 });
         }
@@ -160,7 +161,7 @@ exports.resetPassword = function(req, res) {
     let userId = req.body.id;
     let password = req.body.password;
 
-    return db.User.findById(userId)
+    return db.User.findByPk(userId)
         .then(user => {
             console.log(user);
             try {
@@ -169,7 +170,7 @@ exports.resetPassword = function(req, res) {
                 return util.detailErrorResponse(res, 403, "failed to process the token");
             }
 
-            // Token is ok
+            // Token is ok            
             return bcrypt.hash(password, 10, function(err, hash) {
                 user.password = hash;
                 return handleUserResponse(res, user.save());

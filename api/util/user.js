@@ -45,7 +45,7 @@ exports.getPayloadFromResetPasswordToken = function(token, oldpasswordHash, user
 };
 
 exports.getResetPasswordFrontendUrl = function(userId, email, password, createdAt) {
-    return config.frontend_url + '/#/auth/reset_password?token=' + 
+    return config.frontend_url + '/#/auth/reset-password?token=' + 
             getResetPasswordToken(userId, email, password, createdAt) + 
             '&id=' + userId;
 };
