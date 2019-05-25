@@ -27,7 +27,7 @@ module.exports = {
     jwt_duration: process.env.JWT_DURATION || "4 days",
     frontend_url: process.env.FRONTEND_URL || 'https://www.boardgamecomponion.com',
     email_settings: {
-        sender_name: 'BoardGameCompanion',
+        sender_name: 'BoardGameComponion',
         email_address: 'info@boardgamecomponion.com'
     },
     sendgrid_api_key: process.env.SENDGRID_API_KEY,
