@@ -40,6 +40,11 @@ module.exports = (sequelize, DataTypes) => {
             sourceKey: 'id',
             as: 'player_timers'
         });
+        models.GameTimer.hasOne(models.Game, {
+            targetKey: 'id_timer',
+            foreignKey: 'id',
+            as: 'game'
+        });
     };
     GameTimer.COUNT_UP = "COUNT_UP";
     GameTimer.COUNT_DOWN = "COUNT_DOWN";

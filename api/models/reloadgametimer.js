@@ -10,11 +10,10 @@ module.exports = (sequelize, DataTypes) => {
   }, {});
   ReloadGameTimer.associate = function(models) {
     models.ReloadGameTimer.hasOne(models.GameTimer, {
-      onDelete: "CASCADE",
       targetKey: 'id',
       foreignKey: 'id',
       as: 'timer'
-    })
+    });
   };
   return ReloadGameTimer;
 };

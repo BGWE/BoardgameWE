@@ -162,6 +162,7 @@ module.exports = function(app) {
      * @apiSuccess {Number} id Timer identifier
      * @apiSuccess {Number} id_board_game Board game identifier (or null if not linked to a board game)
      * @apiSuccess {BoardGame} board_game Board game data (see 'Get board game' request for board game structure).
+     * @apiSuccess {Game} game Associated game (or null if no game was created from the timer)
      * @apiSuccess {Number} id_event Event identifier (or null if not linked to an event)
      * @apiSuccess {Event} event Event data (see 'Get events' request for event structure).
      * @apiSuccess {String} timer_type Type of timer. One of: 'COUNT_UP', 'COUNT_DOWN' or 'RELOAD'

@@ -149,6 +149,7 @@ exports.forgotPassword = function(req, res) {
                     return util.successResponse(res);
                 })
                 .catch(err => {
+                    console.log(err);
                     return util.detailErrorResponse(res, 500, "failed to send password recovery email");
                 });
         }
