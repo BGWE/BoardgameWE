@@ -41,8 +41,8 @@ module.exports = (sequelize, DataTypes) => {
             as: 'player_timers'
         });
         models.GameTimer.hasOne(models.Game, {
-            targetKey: 'id_timer',
-            foreignKey: 'id',
+            targetKey: 'id',
+            foreignKey: 'id_timer',
             as: 'game'
         });
     };
