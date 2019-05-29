@@ -315,6 +315,19 @@ module.exports = function(app) {
         .get(UserController.getCurrentUser);
 
     /**
+     * @api {get} /user/:id Get user
+     * @apiName GetUser
+     * @apiGroup User
+     * @apiDescription Get the specified user data.
+     * @apiUse TokenHeaderRequired
+     *
+     * @apiParam {Number} id The user identifier
+     *
+     * @apiUse UserDescriptor
+     * @apiUse DBDatetimeFields
+     */
+
+    /**
      * @api {put} /user/:id Update user
      * @apiName UpdateUser
      * @apiGroup User
@@ -326,6 +339,7 @@ module.exports = function(app) {
      * @apiUse DBDatetimeFields
      */
     app.route("/user/:uid")
+        .get(UserController.getUser)
         .put(UserController.updateUser);
 
     /**
@@ -366,7 +380,7 @@ module.exports = function(app) {
 
     // Library
     /**
-     * @api {get} /user/library_games Get library
+     * @api {get} /user/current/library_games Get library
      * @apiName GetCurrentUserLibrary
      * @apiGroup User library
      * @apiDescription Get the current user's board game library.
@@ -375,7 +389,7 @@ module.exports = function(app) {
      */
 
     /**
-     * @api {post} /user/library_games Add to library
+     * @api {post} /user/current/library_games Add to library
      * @apiName AddBoardGameToLibrary
      * @apiGroup User library
      * @apiDescription Add a board game to the current user library.
@@ -386,7 +400,7 @@ module.exports = function(app) {
      */
 
     /**
-     * @api {delete} /user/library_games Delete from library
+     * @api {delete} /user/current/library_games Delete from library
      * @apiName DeleteBoardGameFromLibrary
      * @apiGroup User library
      * @apiDescription Delete a board game from the current user library.
@@ -394,13 +408,13 @@ module.exports = function(app) {
      *
      * @apiUse LibraryBoardGamesListDescriptor
      */
-    app.route("/user/library_games")
+    app.route("/user/current/library_games")
         .get(UserController.getCurrentUserLibraryGames)
         .post([body('board_games').isArray().not().isEmpty()], UserController.addLibraryGames)
         .delete([body('board_games').isArray().not().isEmpty()], UserController.deleteLibraryGames);
 
     /**
-     * @api {post} /user/library_games/:source/:id Add to library from source
+     * @api {post} /user/current/library_games/:source/:id Add to library from source
      * @apiName AddBoardGameFromSourceToLibrary
      * @apiGroup User library
      * @apiDescription Add a new board game from the given source to the application, then add this game to the current
@@ -409,7 +423,7 @@ module.exports = function(app) {
      * @apiUse TokenHeaderRequired
      * @apiUse LibraryBoardGamesListDescriptor
      */
-    app.route("/user/library_game/:source/:id")
+    app.route("/user/current/library_game/:source/:id")
         .post(UserController.addBoardGameAndAddToLibrary);
 
     /**
@@ -426,7 +440,7 @@ module.exports = function(app) {
 
     // Wish to play list
     /**
-     * @api {get} /user/wish_to_play Get wish to play list
+     * @api {get} /user/current/wish_to_play Get wish to play list
      * @apiName GetCurrentUserWishToPlayList
      * @apiGroup User wish to play
      * @apiDescription Get the current user's board game wish to play list.
@@ -435,7 +449,7 @@ module.exports = function(app) {
      */
 
     /**
-     * @api {post} /user/wish_to_play Add to wish to play list
+     * @api {post} /user/current/wish_to_play Add to wish to play list
      * @apiName AddBoardGameToWishToPlayList
      * @apiGroup User wish to play
      * @apiDescription Add a board game to the current user wish-to-play list.
@@ -445,7 +459,7 @@ module.exports = function(app) {
      */
 
     /**
-     * @api {delete} /user/wish_to_play Delete wish to play list
+     * @api {delete} /user/current/wish_to_play Delete wish to play list
      * @apiName DeleteBoardGameFromWishToPlayList
      * @apiGroup User wish to play
      * @apiDescription Delete a board game from the current user wish-to-play list.
@@ -453,13 +467,13 @@ module.exports = function(app) {
      *
      * @apiUse WishToPlayBoardGamesListDescriptor
      */
-    app.route("/user/wish_to_play")
+    app.route("/user/current/wish_to_play")
         .get(UserController.getCurrentUserWishToPlayBoardGames)
         .post([body('board_games').isArray().not().isEmpty()], UserController.addToWishToPlayBoardGames)
         .delete([body('board_games').isArray().not().isEmpty()], UserController.deleteFromWishToPlayList);
 
     /**
-     * @api {post} /user/wish_to_play/:source/:id Add to wish to play list from source
+     * @api {post} /user/current/wish_to_play/:source/:id Add to wish to play list from source
      * @apiName AddBoardGameFromSourceToWishToPlayList
      * @apiGroup User wish to play
      * @apiDescription Add a new board game from the given source to the application, then add this game to the current
@@ -468,7 +482,7 @@ module.exports = function(app) {
      * @apiUse TokenHeaderRequired
      * @apiUse WishToPlayBoardGamesListDescriptor
      */
-    app.route("/user/wish_to_play/:source/:id")
+    app.route("/user/current/wish_to_play/:source/:id")
         .post(UserController.addBoardGameAndAddToWishToPlay);
 
     /**

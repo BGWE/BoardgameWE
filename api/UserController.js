@@ -90,6 +90,9 @@ exports.getCurrentUser = function(req, res) {
     return handleUserResponse(res, db.User.findByPk(userId));
 };
 
+exports.getUser = function(req, res) {
+    return handleUserResponse(res, db.User.findByPk(parseInt(req.params.uid)));
+};
 
 exports.updateUser = function(req, res) {
     // TODO security: implement token invalidation check when password changes
