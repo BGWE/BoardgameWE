@@ -22,10 +22,16 @@ module.exports = {
         type: Sequelize.DATE
       }
     }).then(() => {
-      return queryInterface.addConstraint('Friendships', ['id_user1', 'id_user2'], {
-        type: 'primary key',
-        name: 'friendships_primary_key'
-      });
+      return Promise.all([
+        queryInterface.addConstraint('Friendships', ['id_user1', 'id_user2'], {
+          type: 'primary key',
+          name: 'friendships_primary_key'
+        }),
+        queryInterface.addConstraint('Friendships', ['id_user1'], {
+          type: 'check',
+          where: { id_user1: { [Sequelize.Op.ne]: { [Sequelize.Op.col]: 'Friendships.id_user2' } } }
+        })
+      ]);
     });
   },
 
