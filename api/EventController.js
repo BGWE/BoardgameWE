@@ -326,10 +326,6 @@ exports.getEventMatchmaking = function(req, res) {
 };
 
 exports.getEventWishToPlayGames = function(req, res) {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-        return util.detailErrorResponse(res, 400, "cannot fetch wish to play list for event", errors);
-    }
     // secondary query for user filtering: attendees and (if indicated) not current user
     const eid = parseInt(req.params.eid);
     const user_filtering_query = db.selectFieldQuery("EventAttendees", "id_user", {

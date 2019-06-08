@@ -90,10 +90,6 @@ const getGamePlayerData = function(game, validated_players) {
  * @returns {*}
  */
 exports.addGameQuery = function(eid, req, res) {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-        return util.detailErrorResponse(res, 400, "cannot update event", errors);
-    }
     return db.sequelize.transaction(t => {
         return db.Game.create({
             id_event: eid,

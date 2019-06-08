@@ -167,14 +167,15 @@ exports.isFriend = async function(value, { req }) {
 
 /**
  * Return error response if validation didn't go well
- * @param req
- * @param res
+ * @param message Error message to send in case of error
  * @returns {*}
  */
-exports.validateOrBlock = function(req, res) {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-        return util.detailErrorResponse(res, 400, "cannot get user event", errors);
-    }
-    next();
+exports.validateOrBlock = function(message) {
+    return (req, res) => {
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) {
+            return util.detailErrorResponse(res, 400, message, errors);
+        }
+        next();
+    };
 };

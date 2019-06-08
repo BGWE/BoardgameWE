@@ -126,11 +126,6 @@ exports.getTimer = function(req, res) {
 };
 
 exports.createTimer = function(req, res) {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-        return util.detailErrorResponse(res, 400, "cannot create timer", errors);
-    }
-
     return exports.createTimerPromise({
         id_creator: userutil.getCurrUserId(req),
         id_event: req.params.eid || req.body.id_event || null,  // can also be used with event-related endpoints

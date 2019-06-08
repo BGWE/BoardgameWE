@@ -145,7 +145,7 @@ module.exports = function(app) {
      * @apiUse DBDatetimeFields
      */
     app.route("/user/:uid")
-        .get([ param('uid').custom(validation.isFriend) ], validation.validateOrBlock, UserController.getUser)
+        .get([ param('uid').custom(validation.isFriend) ], validation.validateOrBlock('cannot get user'), UserController.getUser)
         .put(UserController.updateUser);
 
     /**
@@ -164,7 +164,7 @@ module.exports = function(app) {
      * @apiSuccess {Number} play_time Total play time of the user (in minutes)
      */
     app.route("/user/:uid/stats")
-        .get([ param('uid').custom(validation.isFriend) ], validation.validateOrBlock, UserController.getUserStats);
+        .get([ param('uid').custom(validation.isFriend) ], validation.validateOrBlock('cannot get user stats'), UserController.getUserStats);
 
     /**
      * @api {get} /user/:id/activities Get user activities
@@ -182,7 +182,7 @@ module.exports = function(app) {
      * @apiSuccess {Event} activities.event (only for `user/join_event` activity) Event data (see "Add event game" for Game structure).
      */
     app.route("/user/:uid/activities")
-        .get([ param('uid').custom(validation.isFriend) ], validation.validateOrBlock, UserController.getUserActivities);
+        .get([ param('uid').custom(validation.isFriend) ], validation.validateOrBlock('cannot get user activities'), UserController.getUserActivities);
 
     // Library
     /**
@@ -242,7 +242,7 @@ module.exports = function(app) {
      * @apiUse LibraryBoardGamesListDescriptor
      */
     app.route("/user/:uid/library_games")
-        .get([ param('uid').custom(validation.isFriend) ], validation.validateOrBlock, UserController.getUserLibraryGames);
+        .get([ param('uid').custom(validation.isFriend) ], validation.validateOrBlock('cannot get user library'), UserController.getUserLibraryGames);
 
     // Wish to play list
     /**
@@ -301,7 +301,7 @@ module.exports = function(app) {
      * @apiUse WishToPlayBoardGamesListDescriptor
      */
     app.route("/user/:uid/wish_to_play")
-        .get([ param('uid').custom(validation.isFriend) ], validation.validateOrBlock, UserController.getUserWishToPlayBoardGames);
+        .get([ param('uid').custom(validation.isFriend) ], validation.validateOrBlock('cannot get user wish to play'), UserController.getUserWishToPlayBoardGames);
 
 
     // Event
@@ -339,7 +339,7 @@ module.exports = function(app) {
      * @apiUse ErrorDescriptor
      */
     app.route("/event")
-        .post(validation.getEventValidators(true), EventController.createEvent);
+        .post(validation.getEventValidators(true), validation.validateOrBlock('cannot create event'), EventController.createEvent);
 
     /**
      * @api {get} /event/:id Get event
@@ -387,7 +387,7 @@ module.exports = function(app) {
     app.route("/event/:eid")
         .get(EventController.getFullEvent)
         .delete(EventController.deleteEvent)
-        .put(validation.getEventValidators(false), EventController.updateEvent);
+        .put(validation.getEventValidators(false), validation.validateOrBlock('cannot update event'), EventController.updateEvent);
 
     /**
      * @api {get} /event/:id Get events
@@ -478,7 +478,6 @@ module.exports = function(app) {
     app.route("/event/:eid/board_game/:source/:id")
         .post(eventAccessMiddleware, EventController.addBoardGameAndAddToEvent);
 
-
     /**
      * @api {get} /event/:id/board_games Get provided board games
      * @apiName GetProvidedBoardGames
@@ -550,6 +549,7 @@ module.exports = function(app) {
             validation.getGameValidators(true).concat([
                 validation.modelExists(check('eid'), db.Event)
             ]),
+            validation.validateOrBlock('cannot add game to the event'),
             GameController.addEventGame
         );
 
@@ -583,7 +583,8 @@ module.exports = function(app) {
             validation.getGameValidators(false).concat([
                 validation.modelExists(check('eid'), db.Event),
                 validation.modelExists(check('gid'), db.Game)
-            ]), GameController.updateEventGame
+            ]), validation.validateOrBlock('cannot update event game'),
+            GameController.updateEventGame
         );
 
     /**
@@ -657,8 +658,18 @@ module.exports = function(app) {
      */
     app.route("/event/:eid/attendees")
         .get(EventController.getEventAttendees)
-        .post(eventAccessMiddleware, [body('users').isArray().not().isEmpty()], EventController.addEventAttendees)
-        .delete(eventAccessMiddleware, [body('users').isArray().not().isEmpty()], EventController.deleteEventAttendees);
+        .post(
+            eventAccessMiddleware,
+            [body('users').isArray().not().isEmpty()],
+            validation.validateOrBlock('cannot add attendees to the event'),
+            EventController.addEventAttendees
+        )
+        .delete(
+            eventAccessMiddleware,
+            [body('users').isArray().not().isEmpty()],
+            validation.validateOrBlock('cannot remove attendees from the event'),
+            EventController.deleteEventAttendees
+        );
 
     /**
      * @api {post} /event/:id/subscribe Subscribe to event
@@ -737,7 +748,7 @@ module.exports = function(app) {
         .get([
             query('exclude_current').optional().isBoolean().toBoolean(),
             query('provided_games_only').optional().isBoolean().toBoolean()
-        ], EventController.getEventWishToPlayGames);
+        ], validation.validateOrBlock('cannot get user wish to play list'), EventController.getEventWishToPlayGames);
 
     /**
      * @api {get} /event/:eid/timers Get current user event timers
@@ -750,6 +761,33 @@ module.exports = function(app) {
      */
     app.route("/event/:eid/timers")
         .get(TimerController.getCurrentUserEventTimers);
+
+    /**
+     * @api {post} /timer Create event timer
+     * @apiName CreateEventTimer
+     * @apiGroup Event
+     * @apiDescription Create a new timer associated to an event. Must be either the creator of the event or an attendee.
+     * @apiParam (param) {Number} id_event Event identifier.
+     * @apiParam (body) {String} timer_type=`COUNT_UP` The type of timer to create. One of: `COUNT_UP`, `COUNT_DOWN `or `RELOAD`.
+     * @apiParam (body) {Number} [id_board_game=null] Board game identifier
+     * @apiParam (body) {Number} [initial_duration=0] Start time of all players' timers in milliseconds.
+     * @apiParam (body) {Number} [current_player=0] Turn order of the current player (an integer in `[0, n_players[`)
+     * @apiParam (body) {Number} [reload_increment=0] If the timer is of type `RELOAD`, the amount of time add every at every `next()` action.
+     * @apiParam (body) {PlayerTimer[]} player_timers Individual player timers information.
+     * @apiParam (body) {Number} player_timers.id_user Player user identifier if registered on the app (mutually exclusive with `name`), or `null`.
+     * @apiParam (body) {String} player_timers.name Player name if the player is not registered on the application (mutually
+     * exclusive with `user`), or `null`.
+     * @apiParam (body) {Number} player_timers.color=#ffffff Player's color (hexcode, e.g.: `#ffffff`).
+     * @apiUse TokenHeaderRequired
+     * @apiUse TimerDescriptor
+     */
+    app.route("/event/:eid/timer")
+        .post(
+            eventAccessMiddleware,
+            validation.getTimerValidators(true),
+            validation.validateOrBlock('cannot create event timer'),
+            TimerController.createTimer
+        );
 
     // Board game
     /**
@@ -875,28 +913,6 @@ module.exports = function(app) {
      */
     app.route("/timer")
         .post(validation.getTimerValidators(true), TimerController.createTimer);
-
-    /**
-     * @api {post} /timer Create event timer
-     * @apiName CreateEventTimer
-     * @apiGroup Event
-     * @apiDescription Create a new timer associated to an event. Must be either the creator of the event or an attendee.
-     * @apiParam (param) {Number} id_event Event identifier.
-     * @apiParam (body) {String} timer_type=`COUNT_UP` The type of timer to create. One of: `COUNT_UP`, `COUNT_DOWN `or `RELOAD`.
-     * @apiParam (body) {Number} [id_board_game=null] Board game identifier
-     * @apiParam (body) {Number} [initial_duration=0] Start time of all players' timers in milliseconds.
-     * @apiParam (body) {Number} [current_player=0] Turn order of the current player (an integer in `[0, n_players[`)
-     * @apiParam (body) {Number} [reload_increment=0] If the timer is of type `RELOAD`, the amount of time add every at every `next()` action.
-     * @apiParam (body) {PlayerTimer[]} player_timers Individual player timers information.
-     * @apiParam (body) {Number} player_timers.id_user Player user identifier if registered on the app (mutually exclusive with `name`), or `null`.
-     * @apiParam (body) {String} player_timers.name Player name if the player is not registered on the application (mutually
-     * exclusive with `user`), or `null`.
-     * @apiParam (body) {Number} player_timers.color=#ffffff Player's color (hexcode, e.g.: `#ffffff`).
-     * @apiUse TokenHeaderRequired
-     * @apiUse TimerDescriptor
-     */
-    app.route("/event/:eid/timer")
-        .post(eventAccessMiddleware, validation.getTimerValidators(true), TimerController.createTimer);
 
     /**
      * @api {post} /timer/:tid Get timer

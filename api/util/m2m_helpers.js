@@ -21,10 +21,6 @@ const util = require('./util');
  * @returns {Promise<T>}
  */
 exports.addAssociations = function(req, res, m2m) {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-        return util.detailErrorResponse(res, 400, m2m.error_message, errors);
-    }
     return m2m.model_class.bulkCreate(
         m2m.other.ids.map(id => { return {
             [m2m.fixed.field]: m2m.fixed.id,
@@ -68,10 +64,6 @@ exports.sendAssociations = function(res, m2m) {
  * @returns {*}
  */
 exports.deleteAssociations = function(req, res, m2m) {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-        return util.detailErrorResponse(res, 400, m2m.error_message, errors);
-    }
     return m2m.model_class.destroy({
         where: {
             [m2m.fixed.field]: m2m.fixed.id,
