@@ -27,5 +27,21 @@ module.exports = (sequelize, DataTypes) => {
             as: "user"
         });
     };
+
+    /**
+     * Check whether users with uid1 and uid2 are friends.
+     * @param uid1 Number First user id
+     * @param uid2 Number Second user id
+     * @returns {Promise<number>} Returns 1 if they are friends, 0 otherwise
+     */
+    Friendship.areFriends = async function(uid1, uid2) {
+        return await Friendship.count({
+            where: { [sequelize.Op.or]: [
+                { [sequelize.Op.and]: [ {id_user1: uid1}, {id_user2: uid2} ]},
+                { [sequelize.Op.and]: [ {id_user1: uid2}, {id_user2: uid1} ]}
+            ]}
+        });
+    };
+
     return Friendship;
 };

@@ -124,7 +124,7 @@ module.exports = function(app) {
      * @api {get} /user/:id Get user
      * @apiName GetUser
      * @apiGroup User
-     * @apiDescription Get the specified user data.
+     * @apiDescription Get the specified user data. Can only be executed against friends of the current user.
      * @apiUse TokenHeaderRequired
      *
      * @apiParam {Number} id The user identifier
@@ -145,14 +145,14 @@ module.exports = function(app) {
      * @apiUse DBDatetimeFields
      */
     app.route("/user/:uid")
-        .get(UserController.getUser)
+        .get([ param('uid').custom(validation.isFriend) ], validation.validateOrBlock, UserController.getUser)
         .put(UserController.updateUser);
 
     /**
      * @api {get} /user/:id/stats Get user stats
      * @apiName GetUserStats
      * @apiGroup User
-     * @apiDescription Get user statistics
+     * @apiDescription Get user statistics. Can only be executed against friends of the current user.
      * @apiUse TokenHeaderRequired
      * @apiParam {Number} id User identifier
      * @apiSuccess {Number} played Number of games played so far.
@@ -164,13 +164,13 @@ module.exports = function(app) {
      * @apiSuccess {Number} play_time Total play time of the user (in minutes)
      */
     app.route("/user/:uid/stats")
-        .get(UserController.getUserStats);
+        .get([ param('uid').custom(validation.isFriend) ], validation.validateOrBlock, UserController.getUserStats);
 
     /**
      * @api {get} /user/:id/activities Get user activities
      * @apiName GetUserActivities
      * @apiGroup User
-     * @apiDescription Get user latest activities on the application
+     * @apiDescription Get user latest activities on the application. Can only be executed against friends of the current user.
      * @apiUse TokenHeaderRequired
      * @apiParam {Number} id User identifier
      *
@@ -182,7 +182,7 @@ module.exports = function(app) {
      * @apiSuccess {Event} activities.event (only for `user/join_event` activity) Event data (see "Add event game" for Game structure).
      */
     app.route("/user/:uid/activities")
-        .get(UserController.getUserActivities);
+        .get([ param('uid').custom(validation.isFriend) ], validation.validateOrBlock, UserController.getUserActivities);
 
     // Library
     /**
@@ -236,13 +236,13 @@ module.exports = function(app) {
      * @api {get} /user/:id/library_games Get user library
      * @apiName GetUserLibrary
      * @apiGroup User library
-     * @apiDescription Get the specified user's board game library.
+     * @apiDescription Get the specified user's board game library. Can only be executed against friends of the current user.
      * @apiParam {Number} id User identifier.
      * @apiUse TokenHeaderRequired
      * @apiUse LibraryBoardGamesListDescriptor
      */
     app.route("/user/:uid/library_games")
-        .get(UserController.getUserLibraryGames);
+        .get([ param('uid').custom(validation.isFriend) ], validation.validateOrBlock, UserController.getUserLibraryGames);
 
     // Wish to play list
     /**
@@ -295,13 +295,13 @@ module.exports = function(app) {
      * @api {get} /user/:id/wish_to_play Get user wish to play list
      * @apiName GetUserWishToPlayList
      * @apiGroup User wish to play
-     * @apiDescription Get the specified user's wish to play board games.
+     * @apiDescription Get the specified user's wish to play board games. Can only be executed against friends of the current user.
      * @apiParam {Number} id User identifier.
      * @apiUse TokenHeaderRequired
      * @apiUse WishToPlayBoardGamesListDescriptor
      */
     app.route("/user/:uid/wish_to_play")
-        .get(UserController.getUserWishToPlayBoardGames);
+        .get([ param('uid').custom(validation.isFriend) ], validation.validateOrBlock, UserController.getUserWishToPlayBoardGames);
 
 
     // Event

@@ -1,8 +1,8 @@
 const moment = require("moment");
 const _ = require("lodash");
-const { body, param } = require('express-validator/check');
+const { body, validationResult } = require('express-validator/check');
 const db = require('../models/index');
-const TimerController = require('../TimerController');
+const userutil = require('user');
 
 /**
  * Extract the value located at the given validation path in obj
@@ -87,7 +87,7 @@ exports.mutuallyExclusive = function(other) {
         if(!!value ^ !!valueByPath(req[location], replacePathLast(path, other))) {
            return true;
         }
-        throw new Error("'id_user' and 'name' fields are mutually exclusive.")
+        throw new Error("'id_user' and 'name' fields are mutually exclusive.");
     };
 };
 
@@ -150,4 +150,31 @@ exports.getTimerValidators = function(is_create) {
 
 exports.modelExists = (builder, model) => {
     return builder.isNumeric().toInt().custom(exports.model(model));
+};
+
+/**
+ * Checks whether the current user if friend with the user whose id is passed as parameters
+ * @param value Number User id
+ * @param req Request
+ * @returns {Promise<boolean>}
+ */
+exports.isFriend = async function(value, { req }) {
+    if ((await db.Friendship.areFriends(userutil.getCurrUserId(req), value)) !== 1) {
+        throw new Error("Cannot execute this request against a non-friend user.");
+    }
+    return true;
+};
+
+/**
+ * Return error response if validation didn't go well
+ * @param req
+ * @param res
+ * @returns {*}
+ */
+exports.validateOrBlock = function(req, res) {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+        return util.detailErrorResponse(res, 400, "cannot get user event", errors);
+    }
+    next();
 };
