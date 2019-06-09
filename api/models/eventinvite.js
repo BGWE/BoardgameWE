@@ -29,5 +29,9 @@ module.exports = (sequelize, DataTypes) => {
         });
     };
 
+    EventInvite.STATUS_ACCEPTED = "ACCEPTED";
+    EventInvite.STATUS_REFUSED = "REFUSED";
+    EventInvite.STATUS_PENDING = "PENDING";
+
     return EventInvite;
 };
