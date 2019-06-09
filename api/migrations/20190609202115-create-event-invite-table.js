@@ -27,10 +27,16 @@ module.exports = {
         type: Sequelize.DATE
       }
     }).then(() => {
-      return queryInterface.addConstraint('EventInvites', ['id_invitee', 'id_inviter'], {
-        type: 'primary key',
-        name: 'event_invites_primary_key'
-      })
+      return Promise.all([
+        queryInterface.addConstraint('EventInvites', ['id_invitee', 'id_inviter'], {
+          type: 'primary key',
+          name: 'event_invites_primary_key'
+        }),
+        queryInterface.addConstraint('EventInvites', ['id_invitee'], {
+          type: 'check',
+          where: {id_invitee: {[Sequelize.Op.ne]: {[Sequelize.Op.col]: 'EventInvites.id_inviter'}}}
+        })
+      ]);
     });
   },
 
