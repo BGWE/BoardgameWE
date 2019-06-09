@@ -30,6 +30,26 @@
  */
 
 /**
+ * @apiDefine UserListDescriptor
+ * @apiSuccess {User[]} users List of users. See "Get current user" request for user object structure. Note: the
+ * returned data is a list (not an actual object).
+ */
+
+/**
+ * @apiDefine FriendRequestDescriptor
+ * @apiSuccess {Number} id_user_from Identifier of the friend request sender
+ * @apiSuccess {Number} id_user_to Identifier of the friend request recipient
+ * @apiSuccess {String} status Frienship request status. One of: `{ACCEPTED, REJECTED, PENDING}`.
+ * @apiSuccess {User} user_to Recipient user data
+ */
+
+/**
+ * @apiDefine FriendRequestListDescriptor
+ * @apiSuccess {FriendshipRequest[]} requests List of friendship requests. See "Send friendship request" request for
+ * friendship request object structure. Note: the returned data is a list (not an actual object).
+ */
+
+/**
  * @apiDefine EventDescriptor
  *
  * @apiSuccess {Number} id Event identifier

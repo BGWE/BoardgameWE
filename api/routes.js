@@ -304,6 +304,74 @@ module.exports = function(app) {
     app.route("/user/:uid/wish_to_play")
         .get([ param('uid').custom(validation.isFriend) ], validation.validateOrBlock('cannot get user wish to play'), UserController.getUserWishToPlayBoardGames);
 
+    /**
+     * @api {get} /user/current/friends Get current user friends
+     * @apiName GetCurrentUserFriends
+     * @apiGroup User friends
+     * @apiDescription Get current user friends
+     * @apiUse TokenHeaderRequired
+     * @apiUse UserListDescriptor
+     */
+    app.route("/user/current/friends")
+        .get(UserController.getCurrentUserFriends);
+
+    // TODO should return shallow user data
+    /**
+     * @api {get} /user/current/friends Get current user friends
+     * @apiName GetUserFriends
+     * @apiGroup User friends
+     * @apiDescription Get user friends
+     * @apiParam {Number} id User identifier.
+     * @apiUse TokenHeaderRequired
+     * @apiUse UserListDescriptor
+     */
+    app.route("/user/:uid/friends")
+        .get(UserController.getUserFriends);
+
+    // Friendships
+    /**
+     * @api {get} /friend_requests Get friend requests
+     * @apiName GetFriendRequests
+     * @apiGroup User friends
+     * @apiDescription Get current user friend requests
+     * @apiUse TokenHeaderRequired
+     * @apiUse FriendRequestListDescriptor
+     */
+    app.route("/friend_requests")
+        .get(UserController.getFriendshipRequests);
+
+    /**
+     * @api {post} /friend_requests Send friend request
+     * @apiName SendFriendRequest
+     * @apiGroup User friends
+     * @apiDescription Send a friend request from the current to the specified user
+     * @apiParam (body) {Number} id_recipient Friend request recipient user identifier.
+     * @apiUse TokenHeaderRequired
+     * @apiUse FriendRequestDescriptor
+     */
+
+    /**
+     * @api {put} /friend_requests Handle friend request
+     * @apiName HandleFriendRequest
+     * @apiGroup User friends
+     * @apiDescription Handler (i.e. accept or reject) a friend request
+     * @apiParam (body) {Number} id_sender User identifier of the sender of the friend.
+     * @apiParam (body) {Boolean} accept True for accepting the request, false for rejecting it.
+     * @apiUse TokenHeaderRequired
+     * @apiUse FriendRequestDescriptor
+     */
+    app.route.post("/friend_request")
+        .post(
+            [body('id_recipient').isInt()],
+            validation.validateOrBlock("cannot add friend request"),
+            UserController.sendFriendshipRequest
+        )
+        .put(
+            [ body('id_sender').isInt(), body('accept').isBoolean().toBoolean() ],
+            validation.validateOrBlock("cannot handle friend request"),
+            UserController.handleFriendshipRequest
+        );
+
 
     // Event
     const event_access = {
@@ -781,6 +849,8 @@ module.exports = function(app) {
             validation.validateOrBlock('cannot create event timer'),
             TimerController.createTimer
         );
+
+
 
     // Board game
     /**
