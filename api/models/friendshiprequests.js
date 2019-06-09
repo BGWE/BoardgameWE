@@ -14,13 +14,13 @@ module.exports = (sequelize, DataTypes) => {
         models.FriendshipRequest.belongsTo(models.User, {
             onDelete: "CASCADE",
             foreignKey: "id_user_from",
-            as: "user"
+            as: "user_from"
         });
 
         models.FriendshipRequest.belongsTo(models.User, {
             onDelete: "CASCADE",
             foreignKey: "id_user_to",
-            as: "user"
+            as: "user_to"
         });
     };
     return FriendshipRequest;

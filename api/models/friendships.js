@@ -18,13 +18,12 @@ module.exports = (sequelize, DataTypes) => {
         models.Friendship.belongsTo(models.User, {
             onDelete: "CASCADE",
             foreignKey: "id_user1",
-            as: "user"
+            as: "user1"
         });
-
         models.Friendship.belongsTo(models.User, {
             onDelete: "CASCADE",
             foreignKey: "id_user2",
-            as: "user"
+            as: "user2"
         });
     };
 

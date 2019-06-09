@@ -14,7 +14,7 @@ module.exports = {
         onDelete: 'cascade'
       },
       status: {
-        type: Sequelize.ENUM("PENDING", "ACCEPTED", "REFUSED"),
+        type: Sequelize.ENUM("PENDING", "ACCEPTED", "REJECTED"),
         allowNull: false,
         defaultValue: "PENDING"
       },
@@ -35,13 +35,15 @@ module.exports = {
         queryInterface.addConstraint('EventInvites', ['id_invitee'], {
           type: 'check',
           where: {id_invitee: {[Sequelize.Op.ne]: {[Sequelize.Op.col]: 'EventInvites.id_inviter'}}}
-        }),
-        queryInterface.query("DROP TYPE IF EXISTS enum_EventInvites_status RESTRICT")
+        })
       ]);
     });
   },
 
   down: (queryInterface, Sequelize) => {
-      return queryInterface.dropTable("EventInvites");
+      return Promise.all([
+          queryInterface.dropTable("EventInvites"),
+          queryInterface.sequelize.query("DROP TYPE IF EXISTS enum_EventInvites_status RESTRICT")
+      ]);
   }
 };
