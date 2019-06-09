@@ -35,7 +35,8 @@ module.exports = {
         queryInterface.addConstraint('EventInvites', ['id_invitee'], {
           type: 'check',
           where: {id_invitee: {[Sequelize.Op.ne]: {[Sequelize.Op.col]: 'EventInvites.id_inviter'}}}
-        })
+        }),
+        queryInterface.query("DROP TYPE IF EXISTS enum_EventInvites_status RESTRICT")
       ]);
     });
   },
