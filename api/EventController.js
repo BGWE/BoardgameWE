@@ -36,10 +36,6 @@ exports.createEvent = function(req, res) {
 };
 
 exports.updateEvent = function(req, res) {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-        return util.detailErrorResponse(res, 400, "cannot update event", errors);
-    }
     return db.Event.findByPk(parseInt(req.params.eid)).then(event => {
         if (event.id_creator !== userutil.getCurrUserId(req)) {
             return util.detailErrorResponse(res, 403, "only the event creator can update the event");

@@ -19,6 +19,7 @@ module.exports = function(app) {
     const AdminController = require("./AdminController");
     const TimerController = require("./TimerController");
     const AppWideController = require("./AppWideController");
+    const access_checks = require('./util/access_checks');
 
     // User routes
     /**
@@ -305,22 +306,10 @@ module.exports = function(app) {
 
 
     // Event
-    /**
-     * Ensures that only the creator and the participating players can update event data.
-     * @param req Request Express request object (there should be an eid parameters)
-     * @param res
-     * @param next
-     */
-    const eventAccessMiddleware = async function(req, res, next) {
-        const eid = parseInt(req.params.eid);
-        const uid = userutil.getCurrUserId(req);
-        const creator = await db.Event.count({ where: { id_creator: uid, id: eid } });
-        const attendee = await db.EventAttendee.count({ where: { id_user: uid, id_event: eid } });
-        if (creator === 1 || attendee === 1) {
-            next();
-        } else {
-            return util.detailErrorResponse(res, 403, "you must be either an attendee or the creator of the event to access this endpoint");
-        }
+    const event_access = {
+        read: access_checks.get_event_access_callback(access_checks.ACCESS_READ),
+        write: access_checks.get_event_access_callback(access_checks.ACCESS_WRITE),
+        list: access_checks.get_event_access_callback(access_checks.ACCESS_LIST)
     };
 
     /**
@@ -339,7 +328,11 @@ module.exports = function(app) {
      * @apiUse ErrorDescriptor
      */
     app.route("/event")
-        .post(validation.getEventValidators(true), validation.validateOrBlock('cannot create event'), EventController.createEvent);
+        .post(
+            validation.getEventValidators(true),
+            validation.validateOrBlock('cannot create event'),
+            EventController.createEvent
+        );
 
     /**
      * @api {get} /event/:id Get event
@@ -385,15 +378,15 @@ module.exports = function(app) {
      * @apiUse ErrorDescriptor
      */
     app.route("/event/:eid")
-        .get(EventController.getFullEvent)
-        .delete(EventController.deleteEvent)
+        .get(event_access.read, EventController.getFullEvent)
+        .delete(EventController.deleteEvent)   // only creator
         .put(validation.getEventValidators(false), validation.validateOrBlock('cannot update event'), EventController.updateEvent);
 
     /**
      * @api {get} /event/:id Get events
      * @apiName GetEvents
      * @apiGroup Event
-     * @apiDescription Get all events.
+     * @apiDescription Get all events that the current user has access to.
      *
      * @apiParam {Number} id The event identifier
      * @apiParam (query) {Boolean} ongoing (Optional) If set, filters the events: true for fetching ongoing events only,
@@ -440,7 +433,7 @@ module.exports = function(app) {
      * @apiSuccess {Number} most_played.count Number of times played
      */
     app.route("/event/:eid/stats")
-        .get(EventController.getEventStats);
+        .get(event_access.read, EventController.getEventStats);
 
     /**
      * @api {get} /event/:eid/activities Get event activities
@@ -461,7 +454,7 @@ module.exports = function(app) {
      * 'Get current user' request for user structure).
      */
     app.route("/event/:eid/activities")
-        .get(EventController.getEventActivities);
+        .get(event_access.read, EventController.getEventActivities);
 
     /**
      * @api {post} /event/:eid/board_game/:source/:id Add to event from source
@@ -476,7 +469,7 @@ module.exports = function(app) {
      * @apiUse ProvidedBoardGamesListDescriptor
      */
     app.route("/event/:eid/board_game/:source/:id")
-        .post(eventAccessMiddleware, EventController.addBoardGameAndAddToEvent);
+        .post(event_access.write, EventController.addBoardGameAndAddToEvent);
 
     /**
      * @api {get} /event/:id/board_games Get provided board games
@@ -516,9 +509,9 @@ module.exports = function(app) {
      * @apiUse SuccessObjDescriptor
      */
     app.route("/event/:eid/board_games")
-        .get(EventController.getProvidedBoardGames)
-        .post(eventAccessMiddleware, EventController.addProvidedBoardGames)
-        .delete(eventAccessMiddleware, EventController.deleteProvidedBoardGames);
+        .get(event_access.read, EventController.getProvidedBoardGames)
+        .post(event_access.write, EventController.addProvidedBoardGames)
+        .delete(event_access.write, EventController.deleteProvidedBoardGames);
 
     /**
      * @api {post} /event/:id/game Add event game
@@ -545,7 +538,7 @@ module.exports = function(app) {
      */
     app.route("/event/:eid/game")
         .post(
-            eventAccessMiddleware,
+            event_access.write,
             validation.getGameValidators(true).concat([
                 validation.modelExists(check('eid'), db.Event)
             ]),
@@ -579,7 +572,7 @@ module.exports = function(app) {
      */
     app.route("/event/:eid/game/:gid")
         .put(
-            eventAccessMiddleware,
+            event_access.write,
             validation.getGameValidators(false).concat([
                 validation.modelExists(check('eid'), db.Event),
                 validation.modelExists(check('gid'), db.Game)
@@ -602,7 +595,7 @@ module.exports = function(app) {
      * returned data is a list (not an actual object).
      */
     app.route("/event/:eid/games")
-        .get(GameController.getEventGames);
+        .get(event_access.read, GameController.getEventGames);
 
     /**
      * @api {get} /event/:id/games/latest Get recent event game
@@ -619,7 +612,7 @@ module.exports = function(app) {
      * returned data is a list (not an actual object).
      */
     app.route("/event/:eid/games/latest")
-        .get(GameController.getRecentEventGames);
+        .get(event_access.read, GameController.getRecentEventGames);
 
     /**
      * @api {get} /event/:id/attendees Get event attendees
@@ -657,15 +650,15 @@ module.exports = function(app) {
      * @apiUse TokenHeaderRequired
      */
     app.route("/event/:eid/attendees")
-        .get(EventController.getEventAttendees)
+        .get(event_access.read, EventController.getEventAttendees)
         .post(
-            eventAccessMiddleware,
+            event_access.write,
             [body('users').isArray().not().isEmpty()],
             validation.validateOrBlock('cannot add attendees to the event'),
             EventController.addEventAttendees
         )
         .delete(
-            eventAccessMiddleware,
+            event_access.write,
             [body('users').isArray().not().isEmpty()],
             validation.validateOrBlock('cannot remove attendees from the event'),
             EventController.deleteEventAttendees
@@ -696,7 +689,7 @@ module.exports = function(app) {
      * @apiUse TokenHeaderRequired
      */
     app.route("/event/:eid/rankings")
-        .get(StatsController.getEventRankings);
+        .get(event_access.read, StatsController.getEventRankings);
 
     /**
      * @api {get} /event/:id/ranking/:type Get event ranking
@@ -711,7 +704,7 @@ module.exports = function(app) {
      * @apiUse TokenHeaderRequired
      */
     app.route("/event/:eid/ranking/:type(" + StatsController.availableRankings.join("|") + ")")
-        .get(StatsController.getEventRanking);
+        .get(event_access.read, StatsController.getEventRanking);
 
 
     /**
@@ -726,7 +719,7 @@ module.exports = function(app) {
      * @apiSuccess {User[]} matchmaking.users List of other users wishing to play the board game
      */
     app.route("/event/:eid/matchmaking")
-        .get(EventController.getEventMatchmaking);
+        .get(event_access.read, EventController.getEventMatchmaking);
 
     /**
      * @api {get} /event/:id/wish_to_play Get event wish to play
@@ -745,7 +738,7 @@ module.exports = function(app) {
      * @apiSuccess {BoardGame} wished.board_game Board game data (see "Add board game" request for structure)
      */
     app.route("/event/:eid/wish_to_play")
-        .get([
+        .get(event_access.read, [
             query('exclude_current').optional().isBoolean().toBoolean(),
             query('provided_games_only').optional().isBoolean().toBoolean()
         ], validation.validateOrBlock('cannot get user wish to play list'), EventController.getEventWishToPlayGames);
@@ -760,7 +753,7 @@ module.exports = function(app) {
      * @apiUse TimerListDescriptor
      */
     app.route("/event/:eid/timers")
-        .get(TimerController.getCurrentUserEventTimers);
+        .get(event_access.read, TimerController.getCurrentUserEventTimers);
 
     /**
      * @api {post} /timer Create event timer
@@ -783,7 +776,7 @@ module.exports = function(app) {
      */
     app.route("/event/:eid/timer")
         .post(
-            eventAccessMiddleware,
+            event_access.write,
             validation.getTimerValidators(true),
             validation.validateOrBlock('cannot create event timer'),
             TimerController.createTimer
