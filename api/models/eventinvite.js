@@ -1,6 +1,10 @@
 'use strict';
 module.exports = (sequelize, DataTypes) => {
     let EventInvite = sequelize.define('EventInvite', {
+        id_event: {
+            type: DataTypes.INTEGER,
+            primaryKey: true
+        },
         id_inviter: {
             type: DataTypes.INTEGER,
             primaryKey: true
@@ -16,6 +20,12 @@ module.exports = (sequelize, DataTypes) => {
         }
     }, {});
     EventInvite.associate = function(models) {
+        models.EventInvite.belongsTo(models.Event, {
+            onDelete: "CASCADE",
+            foreignKey: "id_event",
+            as: "event"
+        });
+
         models.EventInvite.belongsTo(models.User, {
             onDelete: "CASCADE",
             foreignKey: "id_inviter",

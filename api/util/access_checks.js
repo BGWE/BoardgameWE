@@ -18,7 +18,7 @@ exports.get_event_access_callback = (access_type, eid_callback) => {
         const event = await db.Event.findByPk(eid);
         const is_attendee = (await db.EventAttendee.count({ where: { id_user: uid, id_event: eid } })) === 1;
         const is_creator = event.id_creator === uid;
-        const is_invited = (await db.EventInvite.count({ where: { id_invitee: uid, status: db.EventInvite.STATUS_PENDING } })) === 1;
+        const is_invited = (await db.EventInvite.count({ where: { id_event: eid, id_invitee: uid, status: db.EventInvite.STATUS_PENDING } })) === 1;
         const is_in_event = is_attendee || is_creator || is_invited;
 
         // check write access

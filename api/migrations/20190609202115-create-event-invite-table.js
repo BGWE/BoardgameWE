@@ -3,6 +3,11 @@
 module.exports = {
   up: (queryInterface, Sequelize) => {
     return queryInterface.createTable('EventInvites', {
+      id_event: {
+        type: Sequelize.INTEGER,
+        references: {model: 'Events', key: 'id'},
+        onDelete: 'cascade'
+      },
       id_invitee: {
         type: Sequelize.INTEGER,
         references: {model: 'Users', key: 'id'},
@@ -28,7 +33,7 @@ module.exports = {
       }
     }).then(() => {
       return Promise.all([
-        queryInterface.addConstraint('EventInvites', ['id_invitee', 'id_inviter'], {
+        queryInterface.addConstraint('EventInvites', ['id_event', 'id_invitee', 'id_inviter'], {
           type: 'primary key',
           name: 'event_invites_primary_key'
         }),
