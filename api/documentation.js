@@ -59,6 +59,9 @@
  * @apiSuccess {String} description Event description
  * @apiSuccess {Number} id_creator Event creator user identifier
  * @apiSuccess {Boolean} hide_rankings True if rankings should be hidden, false otherwise
+ * @apiSuccess {String} visibility Event visibility. One of: `["PUBLIC", "PRIVATE", "SECRET"]`
+ * @apiSuccess {Boolean} invite_required True if an invite is required to join the event
+ * @apiSuccess {Boolean} attendees_can_edit True if attendees can also edit the event (add game, timer...)
  */
 
 /**
