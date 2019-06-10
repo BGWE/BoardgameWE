@@ -35,9 +35,9 @@ module.exports = (sequelize, DataTypes) => {
      */
     Friendship.areFriends = async function(uid1, uid2) {
         return await Friendship.count({
-            where: { [sequelize.Op.or]: [
-                { [sequelize.Op.and]: [ {id_user1: uid1}, {id_user2: uid2} ]},
-                { [sequelize.Op.and]: [ {id_user1: uid2}, {id_user2: uid1} ]}
+            where: { [sequelize.Sequelize.Op.or]: [
+                { [sequelize.Sequelize.Op.and]: [ {id_user1: uid1}, {id_user2: uid2} ]},
+                { [sequelize.Sequelize.Op.and]: [ {id_user1: uid2}, {id_user2: uid1} ]}
             ]}
         });
     };

@@ -107,7 +107,14 @@ module.exports = function(app) {
         }
     }));
 
+
     // User (protected)
+    const user_access = {
+        read: access_checks.get_user_access_callback(access_checks.ACCESS_READ),
+        write: access_checks.get_user_access_callback(access_checks.ACCESS_WRITE),
+        list: access_checks.get_user_access_callback(access_checks.ACCESS_LIST)
+    };
+
     /**
      * @api {get} /user/current Get current user
      * @apiName GetCurrentUser
@@ -146,8 +153,8 @@ module.exports = function(app) {
      * @apiUse DBDatetimeFields
      */
     app.route("/user/:uid")
-        .get([ param('uid').custom(validation.isFriend) ], validation.validateOrBlock('cannot get user'), UserController.getUser)
-        .put(UserController.updateUser);
+        .get(user_access.read, UserController.getUser)
+        .put(user_access.write, UserController.updateUser);
 
     /**
      * @api {get} /user/:id/stats Get user stats
@@ -165,7 +172,7 @@ module.exports = function(app) {
      * @apiSuccess {Number} play_time Total play time of the user (in minutes)
      */
     app.route("/user/:uid/stats")
-        .get([ param('uid').custom(validation.isFriend) ], validation.validateOrBlock('cannot get user stats'), UserController.getUserStats);
+        .get(user_access.read, UserController.getUserStats);
 
     /**
      * @api {get} /user/:id/activities Get user activities
@@ -183,7 +190,7 @@ module.exports = function(app) {
      * @apiSuccess {Event} activities.event (only for `user/join_event` activity) Event data (see "Add event game" for Game structure).
      */
     app.route("/user/:uid/activities")
-        .get([ param('uid').custom(validation.isFriend) ], validation.validateOrBlock('cannot get user activities'), UserController.getUserActivities);
+        .get(user_access.read, UserController.getUserActivities);
 
     // Library
     /**
@@ -217,8 +224,8 @@ module.exports = function(app) {
      */
     app.route("/user/current/library_games")
         .get(UserController.getCurrentUserLibraryGames)
-        .post([body('board_games').isArray().not().isEmpty()], UserController.addLibraryGames)
-        .delete([body('board_games').isArray().not().isEmpty()], UserController.deleteLibraryGames);
+        .post([body('board_games').isArray().not().isEmpty()], validation.validateOrBlock('cannot update game library'), UserController.addLibraryGames)
+        .delete([body('board_games').isArray().not().isEmpty()], validation.validateOrBlock('cannot update game library'), UserController.deleteLibraryGames);
 
     /**
      * @api {post} /user/current/library_games/:source/:id Add to library from source
@@ -243,7 +250,7 @@ module.exports = function(app) {
      * @apiUse LibraryBoardGamesListDescriptor
      */
     app.route("/user/:uid/library_games")
-        .get([ param('uid').custom(validation.isFriend) ], validation.validateOrBlock('cannot get user library'), UserController.getUserLibraryGames);
+        .get(user_access.read, UserController.getUserLibraryGames);
 
     // Wish to play list
     /**
@@ -276,8 +283,8 @@ module.exports = function(app) {
      */
     app.route("/user/current/wish_to_play")
         .get(UserController.getCurrentUserWishToPlayBoardGames)
-        .post([body('board_games').isArray().not().isEmpty()], UserController.addToWishToPlayBoardGames)
-        .delete([body('board_games').isArray().not().isEmpty()], UserController.deleteFromWishToPlayList);
+        .post([body('board_games').isArray().not().isEmpty()], validation.validateOrBlock('cannot update wish to play list'), UserController.addToWishToPlayBoardGames)
+        .delete([body('board_games').isArray().not().isEmpty()], validation.validateOrBlock('cannot update wish to play list'), UserController.deleteFromWishToPlayList);
 
     /**
      * @api {post} /user/current/wish_to_play/:source/:id Add to wish to play list from source
@@ -302,7 +309,7 @@ module.exports = function(app) {
      * @apiUse WishToPlayBoardGamesListDescriptor
      */
     app.route("/user/:uid/wish_to_play")
-        .get([ param('uid').custom(validation.isFriend) ], validation.validateOrBlock('cannot get user wish to play'), UserController.getUserWishToPlayBoardGames);
+        .get(user_access.read, UserController.getUserWishToPlayBoardGames);
 
     /**
      * @api {get} /user/current/friends Get current user friends
@@ -326,7 +333,7 @@ module.exports = function(app) {
      * @apiUse UserListDescriptor
      */
     app.route("/user/:uid/friends")
-        .get(UserController.getUserFriends);
+        .get(user_access.read, UserController.getUserFriends);
 
     // Friendships
     /**

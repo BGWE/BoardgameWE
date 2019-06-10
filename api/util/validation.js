@@ -3,6 +3,7 @@ const _ = require("lodash");
 const { body, validationResult } = require('express-validator/check');
 const db = require('../models/index');
 const userutil = require('./user');
+const util = require('./util');
 
 /**
  * Extract the value located at the given validation path in obj
@@ -150,19 +151,6 @@ exports.getTimerValidators = function(is_create) {
 
 exports.modelExists = (builder, model) => {
     return builder.isNumeric().toInt().custom(exports.model(model));
-};
-
-/**
- * Checks whether the current user if friend with the user whose id is passed as parameters
- * @param value Number User id
- * @param req Request
- * @returns {Promise<boolean>}
- */
-exports.isFriend = async function(value, { req }) {
-    if ((await db.Friendship.areFriends(userutil.getCurrUserId(req), value)) !== 1) {
-        throw new Error("Cannot execute this request against a non-friend user.");
-    }
-    return true;
 };
 
 /**
