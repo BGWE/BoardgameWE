@@ -360,7 +360,7 @@ module.exports = function(app) {
      * @apiUse TokenHeaderRequired
      * @apiUse FriendRequestDescriptor
      */
-    app.route.post("/friend_request")
+    app.route("/friend_request")
         .post(
             [body('id_recipient').isInt()],
             validation.validateOrBlock("cannot add friend request"),

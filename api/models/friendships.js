@@ -4,7 +4,7 @@ module.exports = (sequelize, DataTypes) => {
      * Friend graph is undirected: u1 and u2 are friends if this table contains either entry
      * (id_user1=u1, id_user2=u2) or (id_user1=u2, id_user2=u1). Table must only contain one of the two possibilities.
      */
-    let Friendship = sequelize.define('Friendships', {
+    let Friendship = sequelize.define('Friendship', {
         id_user1: {
             type: DataTypes.INTEGER,
             primaryKey: true

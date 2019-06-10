@@ -2,7 +2,7 @@ const moment = require("moment");
 const _ = require("lodash");
 const { body, validationResult } = require('express-validator/check');
 const db = require('../models/index');
-const userutil = require('user');
+const userutil = require('./user');
 
 /**
  * Extract the value located at the given validation path in obj

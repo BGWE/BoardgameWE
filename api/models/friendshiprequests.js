@@ -1,6 +1,6 @@
 'use strict';
 module.exports = (sequelize, DataTypes) => {
-    let FriendshipRequest = sequelize.define('FriendshipRequests', {
+    let FriendshipRequest = sequelize.define('FriendshipRequest', {
         id_user_from: {
             type: DataTypes.INTEGER,
             primaryKey: true

@@ -1,6 +1,6 @@
 'use strict';
 module.exports = (sequelize, DataTypes) => {
-    let EventInvite = sequelize.define('EventInvites', {
+    let EventInvite = sequelize.define('EventInvite', {
         id_inviter: {
             type: DataTypes.INTEGER,
             primaryKey: true

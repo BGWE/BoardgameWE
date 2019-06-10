@@ -1,4 +1,4 @@
-const userutil = require("user");
+const userutil = require("./user");
 const db = require("../models/index");
 /**
  * Functions for checking accesses to resources
