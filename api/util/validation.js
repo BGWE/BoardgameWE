@@ -45,6 +45,29 @@ const conditionallyOptional = (builder, isOptional) => {
 /** shortcut for conditionallyOptional */
 const co = (b, opt) => conditionallyOptional(b, opt);
 
+/**
+ * Generate a custom validator that checks whether a
+ * @param accepted_values
+ * @param [caseSensitive=false]
+ * @returns {Function}
+ */
+exports.valuesIn = function(accepted_values, caseSensitive) {
+    caseSensitive = caseSensitive || false;
+    if (!caseSensitive) {
+        accepted_values = accepted_values.map(s => s.toLowerCase())
+    }
+    let accepted_set = new Set(accepted_values);
+    return values => {
+        for (let i = 0; i < values.length; ++i) {
+            const v = values[i];
+            if (!accepted_set.has(caseSensitive ? v : v.toLowerCase())) {
+                throw new Error("Invalid value '" + value + "'. Should be in '" + accepted_values + "'.");
+            }
+        }
+        return true;
+    }
+};
+
 exports.toMoment = value => moment.utc(value, moment.ISO_8061);
 
 exports.checkIso8601 = value => exports.toMoment(value).isValid();
@@ -159,7 +182,7 @@ exports.modelExists = (builder, model) => {
  * @returns {*}
  */
 exports.validateOrBlock = function(message) {
-    return (req, res) => {
+    return (req, res, next) => {
         const errors = validationResult(req);
         if (!errors.isEmpty()) {
             return util.detailErrorResponse(res, 400, message, errors);

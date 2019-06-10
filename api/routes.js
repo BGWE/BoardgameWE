@@ -457,37 +457,30 @@ module.exports = function(app) {
         .delete(EventController.deleteEvent)   // only creator
         .put(validation.getEventValidators(false), validation.validateOrBlock('cannot update event'), EventController.updateEvent);
 
+
     /**
-     * @api {get} /event/:id Get events
+     * @api {get} /events Get events
      * @apiName GetEvents
      * @apiGroup Event
-     * @apiDescription Get all events that the current user has access to.
+     * @apiDescription Get all the events the current user has `list` access to.
      *
-     * @apiParam {Number} id The event identifier
-     * @apiParam (query) {Boolean} ongoing (Optional) If set, filters the events: true for fetching ongoing events only,
-     * false for the others.
-     * @apiParam (query) {Boolean} registered (Optional) If set, filters the events: true for fetching
-     * only the events he has subscribed to, false for the others.
+     * @apiParam (query) {Boolean} [ongoing] If set, filters the events: true for fetching ongoing events only,
+     * false for the other events.
+     * @apiParam (query) {Boolean} [registered] If set, filters the events: true for fetching
+     * only the events he is an attendee of, false for the other events.
+     * @apiParam (query) {String[]} [visibility] If set, filters the events: only event having the given visibilities
      *
      * @apiUse TokenHeaderRequired
      * @apiUse EventListDescriptor
      */
     app.route("/events")
-        .get(EventController.getAllEvents);
-
-    /**
-     * @api {get} /events/current Get user events
-     * @apiName GetCurrentUserEvents
-     * @apiGroup Event
-     * @apiDescription Get all the events created by the current user.
-     *
-     * @apiParam {Number} id Event identifier.
-     *
-     * @apiUse TokenHeaderRequired
-     * @apiUse EventListDescriptor
-     */
-    app.route("/events/current")
-        .get(EventController.getCurrentUserEvents);
+        .get([
+            query('ongoing').optional().isBoolean().toBoolean(),
+            query('registered').optional().isBoolean().toBoolean(),
+            query('visibility').optional().isArray().not().isEmpty().custom(validation.valuesIn([
+                db.Event.VISIBILITY_PUBLIC, db.Event.VISIBILITY_PRIVATE, db.Event.VISIBILITY_SECRET
+            ])),
+        ], validation.validateOrBlock("cannot list events"), EventController.getCurrentUserEvents);
 
     /**
      * @api {get} /event/:eid/stats Get event statistics
@@ -1049,5 +1042,4 @@ module.exports = function(app) {
      */
     app.route("/admin/user")
         .put(AdminController.updateUserStatus);
-
 };

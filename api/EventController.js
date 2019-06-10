@@ -63,30 +63,46 @@ exports.getFullEvent = function(req, res) {
     }));
 };
 
-exports.getAllEvents = function(req, res) {
-    let where = {};
-    let currIncludes = [];
+exports.getCurrentUserEvents = function(req, res) {
+    const current_uid = userutil.getCurrUserId(req);
+    // access right criterion
+    const attendee_request = db.selectFieldQuery("EventAttendees", "id_event", { id_user: current_uid });
+    const invitee_request = db.selectFieldQuery("EventInvites", "id_event", { id_invitee: current_uid, status: db.EventInvite.STATUS_PENDING });
+    let where = { [db.Op.or]: [
+        { visibility: db.Event.VISIBILITY_PUBLIC },
+        { id_creator: current_uid },
+        { id: { [db.Op.in]: db.sequelize.literal('(' + attendee_request + ')') }}, // attendee
+        { id: { [db.Op.in]: db.sequelize.literal('(' + invitee_request + ')') }} // invitee
+    ]};
+    // registered or not ?
+    if (req.query.registered !== undefined) {
+        where = {
+            id: req.query.registered ? { [db.Op.in]: db.sequelize.literal('(' + attendee_request + ')')} :
+                    { [db.Op.notIn]: db.sequelize.literal('(' + attendee_request + ')') },
+            ... where
+        }
+    }
+    // ongoing or not ?
     if (req.query.ongoing !== undefined) {
         let between = {
             start: {[db.Op.lte]: db.Sequelize.fn("date", db.Sequelize.fn("now"))},
             end: {[db.Op.gte]: db.Sequelize.fn("date", db.Sequelize.fn("now"))}
         };
-        if (req.query.ongoing) {
-            where[db.Op.and] = between;
-        } else {
-            where[db.Op.not] = {[db.Op.and] : between};
+        where = {
+            ... db.negateIf(req.query.ongoing, {[db.Op.and] : between}),
+            ... where
         }
     }
-    if (req.query.registered !== undefined) {
-        let attendeeInclude = includes.genericIncludeSQ(
-            db.EventAttendee,
-            "attendees"
-        );
-        attendeeInclude.attributes = [];
-        where["$attendees.id_user$"]= util.parseList(req.query.registered, parseInt, ",");
-        currIncludes = [attendeeInclude];
+    // visibility ?
+    if (req.query.visibility) {
+        where = {
+            visibility: {[db.Op.in]: req.query.visibility.map(s => s.toUpperCase())},
+            ... where,
+        };
     }
-    return util.sendModelOrError(res, db.Event.findAll({ where: where, include: currIncludes }));
+    return util.sendModelOrError(res, db.Event.findAll({ where, include: [
+        includes.getShallowUserIncludeSQ("creator")
+    ]}));
 };
 
 exports.deleteEvent = function(req, res) {
@@ -188,13 +204,6 @@ exports.subscribeToEvent = function(req, res) {
         },
         error_message: 'cannot add current user as attendee'
     });
-};
-
-exports.getCurrentUserEvents = function(req, res) {
-    return util.sendModelOrError(res, db.EventAttendee.findAll({
-        where: {id_user: userutil.getCurrUserId(req)},
-        include: [includes.defaultEventIncludeSQ]
-    }), events => { return events.map(e => e.event); });
 };
 
 exports.addBoardGameAndAddToEvent = function(req, res) {

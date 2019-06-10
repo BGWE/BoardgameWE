@@ -5,6 +5,7 @@ const db = require("../models/index");
  * @type {string[]}
  */
 exports.userExcludedAttributes = ["password", "validated"];
+exports.userShallowExclAttributes = exports.userExcludedAttributes + ["email", "admin"];
 
 /**
  *
@@ -50,6 +51,16 @@ exports.getBoardGameIncludeSQ = function(as, includes) {
 exports.getUserIncludeSQ = function(as, includes) {
     let base_include = exports.genericIncludeSQ(db.User, as, includes);
     return Object.assign({attributes: {exclude: exports.userExcludedAttributes}}, base_include);
+};
+
+/**
+ * Generates an include object for users
+ * @param as Name of the inclusion
+ * @returns {{model: *, as: *, attributes: {exclude: string[]}}}
+ */
+exports.getShallowUserIncludeSQ = function(as) {
+    let base_include = exports.genericIncludeSQ(db.User, as);
+    return Object.assign({attributes: {exclude: exports.userShallowExclAttributes}}, base_include)
 };
 
 /**
