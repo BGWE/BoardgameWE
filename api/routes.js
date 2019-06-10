@@ -102,7 +102,6 @@ module.exports = function(app) {
             req.is_admin = user.admin;
             next();
         } catch (err) {
-            console.log(err);
             return util.detailErrorResponse(res, 401, "Unknown user.");
         }
     }));

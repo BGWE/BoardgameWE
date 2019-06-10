@@ -123,7 +123,6 @@ exports.sendModelOrError = function(res, promise, transform) {
             return exports.successResponse(res, transform(obj));
         })
         .catch(err => {
-            console.log(err);
             return exports.errorResponse(res);
         })
 };

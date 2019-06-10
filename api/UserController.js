@@ -148,7 +148,6 @@ exports.forgotPassword = function(req, res) {
                     return util.successResponse(res);
                 })
                 .catch(err => {
-                    console.log(err);
                     return util.detailErrorResponse(res, 500, "failed to send password recovery email");
                 });
         }
@@ -162,7 +161,6 @@ exports.resetPassword = function(req, res) {
 
     return db.User.findByPk(userId)
         .then(user => {
-            console.log(user);
             try {
                 let payload = userutil.getPayloadFromResetPasswordToken(token, user.password, user.createdAt);
             } catch (error) {

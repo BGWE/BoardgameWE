@@ -31,7 +31,10 @@ exports.createEvent = function(req, res) {
         end: req.body.end.utc(),
         id_creator: userutil.getCurrUserId(req),
         description: req.body.description,
-        hide_rankings: req.body.hide_rankings || false
+        hide_rankings: req.body.hide_rankings || false,
+        attendees_can_edit: req.body.attendees_can_edit || true,
+        visibility: req.body.visibility || db.Event.VISIBILITY_SECRET,
+        invite_required: req.body.invite_required || true
     }));
 };
 
@@ -42,10 +45,13 @@ exports.updateEvent = function(req, res) {
         }
         event.description = req.body.description || event.description;
         event.name = req.body.name || event.name;
-        location = req.body.location || event.location;
-        event.start = req.body.start.utc() || event.start;
-        event.end = req.body.end.utc() || event.end;
+        event.location = req.body.location || event.location;
+        event.start = req.body.start ? req.body.start.utc() : event.start;
+        event.end = req.body.end ? req.body.end.utc() : event.end;
         event.hide_rankings = req.body.hide_rankings === undefined ? event.hide_rankings : req.body.hide_rankings;
+        event.visibility = req.body.visibility || event.visibility;
+        event.attendees_can_edit = req.body.attendees_can_edit === undefined ? event.attendees_can_edit : req.body.attendees_can_edit;
+        event.invite_required = req.body.invite_required === undefined ? event.invite_required : req.body.invite_required;
         return util.sendModelOrError(res, event.save());
     }).catch(err => {
         return util.detailErrorResponse(res, 404, "no such event")
@@ -135,7 +141,6 @@ exports.addProvidedBoardGames = function(req, res) {
     return db.ProvidedBoardGame.bulkCreate(board_games, { ignoreDuplicates: true }).then(() => {
         return exports.sendProvidedBoardGames(eid, res);
     }).catch(err => {
-        console.log(err);
         return util.errorResponse(res);
     });
 };
@@ -325,7 +330,6 @@ exports.getEventMatchmaking = function(req, res) {
             return matchmaking;
         });
     }).catch(err => {
-        console.log(err);
         return res.status(500).json({['err']: 'err'});
     });
 };

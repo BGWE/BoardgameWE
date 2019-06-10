@@ -151,7 +151,10 @@ exports.getEventValidators = function(is_create) {
         co(body('start'), !is_create)
             .custom(exports.checkIso8601)
             .customSanitizer(exports.toMoment),
-        body('hide_rankings').optional().isBoolean()
+        body('hide_rankings').optional().isBoolean(),
+        co(body('visibility'), !is_create).customSanitizer(s => s.toUpperCase()).isIn(db.Event.VISIBILITIES),
+        body('attendees_can_edit').optional().isBoolean().toBoolean(),
+        body('invite_required').optional().isBoolean().toBoolean()
     ];
 };
 

@@ -45,6 +45,7 @@ module.exports = (sequelize, DataTypes) => {
   Event.VISIBILITY_PUBLIC = "PUBLIC";
   Event.VISIBILITY_PRIVATE = "PRIVATE";
   Event.VISIBILITY_SECRET = "SECRET";
+  Event.VISIBILITIES = [Event.VISIBILITY_PUBLIC, Event.VISIBILITY_PRIVATE, Event.VISIBILITY_SECRET];
 
   return Event;
 };

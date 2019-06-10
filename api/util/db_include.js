@@ -5,7 +5,7 @@ const db = require("../models/index");
  * @type {string[]}
  */
 exports.userExcludedAttributes = ["password", "validated"];
-exports.userShallowExclAttributes = exports.userExcludedAttributes + ["email", "admin"];
+exports.userShallowAttributes = ["name", "surname", "username", "id"];
 
 /**
  *
@@ -56,11 +56,11 @@ exports.getUserIncludeSQ = function(as, includes) {
 /**
  * Generates an include object for users
  * @param as Name of the inclusion
- * @returns {{model: *, as: *, attributes: {exclude: string[]}}}
+ * @returns {{model: *, as: *, attributes: string[]}}
  */
 exports.getShallowUserIncludeSQ = function(as) {
     let base_include = exports.genericIncludeSQ(db.User, as);
-    return Object.assign({attributes: {exclude: exports.userShallowExclAttributes}}, base_include)
+    return Object.assign({attributes: exports.userShallowAttributes}, base_include);
 };
 
 /**

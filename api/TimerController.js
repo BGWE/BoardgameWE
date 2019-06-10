@@ -141,7 +141,6 @@ exports.createTimer = function(req, res) {
     }).then(timer => {
         return util.sendModelOrError(res, exports.buildFullTimer(timer.id));
     }).catch(err => {
-        console.log(err);
         return util.detailErrorResponse(res, 400, "cannot create timer");
     });
 };
