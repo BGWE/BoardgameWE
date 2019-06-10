@@ -357,3 +357,15 @@ exports.getEventWishToPlayGames = function(req, res) {
         group: ['WishToPlayBoardGame.id_board_game', 'board_game.id']
     }));
 };
+
+exports.listEventInvites = function(req, res) {
+
+};
+
+exports.sendEventInvite = function(req, res) {
+
+};
+
+exports.handleEventInvite = function(req, res) {
+
+};

@@ -456,7 +456,6 @@ module.exports = function(app) {
         .delete(EventController.deleteEvent)   // only creator
         .put(validation.getEventValidators(false), validation.validateOrBlock('cannot update event'), EventController.updateEvent);
 
-
     /**
      * @api {get} /events Get events
      * @apiName GetEvents
@@ -849,7 +848,58 @@ module.exports = function(app) {
             TimerController.createTimer
         );
 
+    /**
+     * @api {get} /event/:eid/invites List event invites
+     * @apiName ListEventInvites
+     * @apiGroup Event invites
+     * @apiDescription List invites associated with the given event.
+     *
+     * @apiParam (query) {String[]} [status] If set: filter invites based on the given statuses.
+     *
+     * @apiUse TokenHeaderRequired
+     * @apiUse EventInviteListDescriptor
+     */
+    app.route("/event/:eid/invites")
+        .get(
+            event_access.read, [
+                param('eid').custom(validation.model(db.Event))
+            ], validation.validateOrBlock("cannot list event invites"),
+            EventController.listEventInvites
+        );
 
+    /**
+     * @api {post} /event/:eid/invite/:uid Send event invite
+     * @apiName SendEventInvite
+     * @apiGroup Event invites
+     * @apiDescription Send an event invite to a user
+     *
+     * @apiUse TokenHeaderRequired
+     * @apiUse EventInviteDescriptor
+     */
+
+    /**
+     * @api {put} /event/:eid/invite/:uid Handle event invite
+     * @apiName HandleInviteEvent
+     * @apiGroup Event invites
+     * @apiDescription Handle an event invite
+     *
+     * @apiUse TokenHeaderRequired
+     * @apiUse EventInviteDescriptor
+     */
+    app.route("/event/:eid/invite")
+        .post(
+            event_access.write, [
+                body('id_recipient').custom(validation.model(db.User)),
+                param('eid').custom(validation.model(db.Event))
+            ], validation.validateOrBlock("cannot send event invite"),
+            EventController.sendEventInvite
+        ).put(
+            event_access.write, [
+                body('id_sender').custom(validation.model(db.User)),
+                param('eid').custom(validation.model(db.Event))
+            ], validation.validateOrBlock("cannot handle event invite"),
+            EventController.handleEventInvite
+        );
 
     // Board game
     /**

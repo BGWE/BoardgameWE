@@ -7,7 +7,6 @@ module.exports = (sequelize, DataTypes) => {
         },
         id_inviter: {
             type: DataTypes.INTEGER,
-            primaryKey: true
         },
         id_invitee: {
             type: DataTypes.INTEGER,

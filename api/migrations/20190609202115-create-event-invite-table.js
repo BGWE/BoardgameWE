@@ -33,7 +33,7 @@ module.exports = {
       }
     }).then(() => {
       return Promise.all([
-        queryInterface.addConstraint('EventInvites', ['id_event', 'id_invitee', 'id_inviter'], {
+        queryInterface.addConstraint('EventInvites', ['id_event', 'id_invitee'], {
           type: 'primary key',
           name: 'event_invites_primary_key'
         }),
