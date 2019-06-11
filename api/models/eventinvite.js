@@ -41,6 +41,11 @@ module.exports = (sequelize, DataTypes) => {
     EventInvite.STATUS_ACCEPTED = "ACCEPTED";
     EventInvite.STATUS_REJECTED = "REJECTED";
     EventInvite.STATUS_PENDING = "PENDING";
+    EventInvite.STATUSES = [
+        EventInvite.STATUS_ACCEPTED,
+        EventInvite.STATUS_REJECTED,
+        EventInvite.STATUS_PENDING
+    ];
 
     return EventInvite;
 };

@@ -65,6 +65,24 @@
  */
 
 /**
+ * @apiDefine EventInviteDescriptor
+ * @apiSuccess {Number} id_event Event identifier
+ * @apiSuccess {ShallowEvent} event Event data
+ * @apiSuccess {ShallowUser} inviter User data of the inviter
+ * @apiSuccess {Number} id_inviter User identifier of the inviter
+ * @apiSuccess {ShallowUser} invitee User data of the invitee
+ * @apiSuccess {Number} id_invitee User identifier of the invitee
+ * @apiSuccess {String} status Invite status. One of `['PENDING', 'REJECTED', 'ACCEPTED']`
+ */
+
+/**
+ * @apiDefine EventInviteListDescriptor
+ * @apiSuccess {EventInvite[]} requests List of event invites. See "Send event invite" request for
+ * event invite object structure. Note: the returned data is a list (not an actual object).
+ */
+
+
+/**
  * @apiDefine FullGameDescriptor
  *
  * @apiSuccess {Number} id Game identifier

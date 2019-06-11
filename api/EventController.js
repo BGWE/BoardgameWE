@@ -358,14 +358,54 @@ exports.getEventWishToPlayGames = function(req, res) {
     }));
 };
 
-exports.listEventInvites = function(req, res) {
+exports.eventInviteIncludes = [
+    includes.getShallowUserIncludeSQ('inviter'),
+    includes.getShallowUserIncludeSQ('invitee'),
+    includes.getEventIncludeSQ('event')
+];
 
+exports.listEventInvites = function(req, res) {
+    let where = {};
+    if (req.query.status !== undefined) {
+        where = {
+            status: { [db.Op.in]: req.query.status.map(s => s.toUpperCase()) },
+            ... where
+        }
+    }
+    return util.sendModelOrError(res, db.EventInvite.findAll({ where, include: exports.eventInviteIncludes }));
 };
 
 exports.sendEventInvite = function(req, res) {
-
+    return util.sendModelOrError(res, db.EventInvite.create({
+        id_event: parseInt(req.params.eid),
+        id_sender: userutil.getCurrUserId(req),
+        id_recipient: req.body.id_recipient,
+        status: db.EventInvite.STATUS_PENDING
+    }, {
+        include: exports.eventInviteIncludes
+    }));
 };
 
 exports.handleEventInvite = function(req, res) {
-
+    return db.sequelize.transaction(transaction => {
+        return db.EventInvite.findOne({
+            where: {
+                id_event: parseInt(req.params.eid),
+                id_sender: req.body.id_sender,
+                id_recipient: userutil.getCurrUserId(req)
+            },
+            include: exports.eventInviteIncludes,
+            transaction
+        }).then(invite => {
+            if (!invite) {
+                return util.detailErrorResponse(res, 404, "no such event invite");
+            } else if (invite.status !== db.EventInvite.STATUS_PENDING) {
+                return util.detailErrorResponse(res, 403, "request has already been handled");
+            }
+            invite.status = req.body.accept ? db.EventInvite.STATUS_ACCEPTED : db.EventInvite.STATUS_REJECTED;
+            return util.sendModelOrError(res, invite.save({ transaction }));
+        });
+    }).catch(err => {
+        return util.detailErrorResponse(res, 500, "cannot handle event invite");
+    });
 };

@@ -862,26 +862,34 @@ module.exports = function(app) {
     app.route("/event/:eid/invites")
         .get(
             event_access.read, [
-                param('eid').custom(validation.model(db.Event))
+                param('eid').custom(validation.model(db.Event)),
+                query('status').optional().isArray().not().isEmpty().custom(validation.valuesIn(db.EventInvite.STATUSES))
             ], validation.validateOrBlock("cannot list event invites"),
             EventController.listEventInvites
         );
 
     /**
-     * @api {post} /event/:eid/invite/:uid Send event invite
+     * @api {post} /event/:eid/invite/:rid Send event invite
      * @apiName SendEventInvite
      * @apiGroup Event invites
-     * @apiDescription Send an event invite to a user
+     * @apiDescription Send an event invite to a user (from the current user)
+     *
+     * @apiParam (param) {Number} eid Event identifier
+     * @apiParam (body) {Number} id_recipient Invite recipient user identifier
      *
      * @apiUse TokenHeaderRequired
      * @apiUse EventInviteDescriptor
      */
 
     /**
-     * @api {put} /event/:eid/invite/:uid Handle event invite
+     * @api {put} /event/:eid/invite/:rid Handle event invite
      * @apiName HandleInviteEvent
      * @apiGroup Event invites
-     * @apiDescription Handle an event invite
+     * @apiDescription Handle an event invite (sent to the current user)
+     *
+     * @apiParam (param) {Number} eid Event identifier
+     * @apiParam (body) {Number} id_sender Invite sender user identifier
+     * @apiParam (body) {Boolean} accept True for accepting the request, false for rejecting it
      *
      * @apiUse TokenHeaderRequired
      * @apiUse EventInviteDescriptor
@@ -893,9 +901,11 @@ module.exports = function(app) {
                 param('eid').custom(validation.model(db.Event))
             ], validation.validateOrBlock("cannot send event invite"),
             EventController.sendEventInvite
-        ).put(
+        )
+        .put(
             event_access.write, [
                 body('id_sender').custom(validation.model(db.User)),
+                body('accept').isBoolean().toBoolean(),
                 param('eid').custom(validation.model(db.Event))
             ], validation.validateOrBlock("cannot handle event invite"),
             EventController.handleEventInvite
