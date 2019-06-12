@@ -5,7 +5,7 @@ const { validationResult } = require('express-validator/check');
 
 exports.gameFullIncludesSQ = [
     includes.defaultBoardGameIncludeSQ,
-    includes.genericIncludeSQ(db.GamePlayer, "game_players", [includes.defaultUserIncludeSQ])
+    includes.genericIncludeSQ(db.GamePlayer, "game_players", [includes.getShallowUserIncludeSQ("user")])
 ];
 
 /**

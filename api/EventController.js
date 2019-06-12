@@ -9,14 +9,14 @@ const { validationResult } = require('express-validator/check');
 const Activity = require("./util/activities");
 
 const eventFullIncludeSQ = [
-    includes.genericIncludeSQ(db.EventAttendee, "attendees", [includes.defaultUserIncludeSQ]),
+    includes.genericIncludeSQ(db.EventAttendee, "attendees", [includes.getShallowUserIncludeSQ("user")]),
     includes.genericIncludeSQ(db.ProvidedBoardGame, "provided_board_games", [
         includes.getBoardGameIncludeSQ("provided_board_game"),
-        includes.getUserIncludeSQ("provider")
+        includes.getShallowUserIncludeSQ("provider")
     ]),
     // Disabled because makes the request too slow ! Use /event/:eid/games instead.
     // includes.getGameIncludeSQ("games", [includes.defaultBoardGameIncludeSQ]),
-    includes.getUserIncludeSQ("creator")
+    includes.getShallowUserIncludeSQ("creator")
 ];
 
 exports.createEvent = function(req, res) {
@@ -165,7 +165,7 @@ exports.sendEventAttendees = function(eid, res) {
     return m2m.sendAssociations(res, {
         model_class: db.EventAttendee,
         fixed: { id: eid, field: 'id_event' },
-        other: { includes: [includes.defaultUserIncludeSQ] }
+        other: { includes: [includes.getShallowUserIncludeSQ("user")] }
     });
 };
 
@@ -180,7 +180,7 @@ exports.addEventAttendees = function(req, res) {
         other: {
             ids: req.body.users,
             field: 'id_user',
-            includes: [includes.defaultUserIncludeSQ]
+            includes: [includes.getShallowUserIncludeSQ("user")]
         },
         error_message: 'cannot add attendees'
     });
@@ -193,7 +193,7 @@ exports.deleteEventAttendees = function(req, res) {
         other: {
             ids: req.body.users,
             field: 'id_user',
-            includes: [includes.defaultUserIncludeSQ]
+            includes: [includes.getShallowUserIncludeSQ("user")]
         }
     });
 };
@@ -209,7 +209,7 @@ exports.subscribeToEvent = function(req, res) {
             other: {
                 ids: [userutil.getCurrUserId(req)],
                 field: 'id_user',
-                includes: [includes.defaultUserIncludeSQ]
+                includes: [includes.getShallowUserIncludeSQ("user")]
             },
             error_message: 'cannot add current user as attendee'
         });
@@ -316,7 +316,7 @@ exports.getEventMatchmaking = function(req, res) {
                 }
             },
             include: [
-                includes.defaultUserIncludeSQ,
+                includes.getShallowUserIncludeSQ("user"),
                 includes.defaultBoardGameIncludeSQ
             ]
         }), function(data) {
