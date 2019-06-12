@@ -742,7 +742,11 @@ module.exports = function(app) {
      * @apiUse SuccessObjDescriptor
      */
     app.route("/event/:eid/subscribe")
-        .post(EventController.subscribeToEvent);
+        .post(
+            [param('eid').custom(validation.model(db.event))],
+            validation.validateOrBlock("event not found: cannot join"),
+            EventController.subscribeToEvent
+        );
 
     /**
      * @api {get} /event/:id/rankings Get event rankings

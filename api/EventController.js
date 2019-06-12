@@ -199,15 +199,22 @@ exports.deleteEventAttendees = function(req, res) {
 };
 
 exports.subscribeToEvent = function(req, res) {
-    return m2m.addAssociations(req, res, {
-        model_class: db.EventAttendee,
-        fixed: { id: parseInt(req.params.eid), field: 'id_event' },
-        other: {
-            ids: [userutil.getCurrUserId(req)],
-            field: 'id_user',
-            includes: [includes.defaultUserIncludeSQ]
-        },
-        error_message: 'cannot add current user as attendee'
+    return db.Event.findByPk(parseInt(req.params.eid)).then(event => {
+        if (event.invite_required) {
+            return util.detailErrorResponse(res, 403, "cannot join this event, invite required");
+        }
+        return m2m.addAssociations(req, res, {
+            model_class: db.EventAttendee,
+            fixed: { id: parseInt(req.params.eid), field: 'id_event' },
+            other: {
+                ids: [userutil.getCurrUserId(req)],
+                field: 'id_user',
+                includes: [includes.defaultUserIncludeSQ]
+            },
+            error_message: 'cannot add current user as attendee'
+        });
+    }).catch(err => {
+        return util.detailErrorResponse(res, 500, "cannot subscribe");
     });
 };
 
