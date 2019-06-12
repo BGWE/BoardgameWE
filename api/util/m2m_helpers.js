@@ -18,6 +18,7 @@ const util = require('./util');
  * @param m2m.other.includes The includes for generating the response
  * @param m2m.attributes Other attributes values (undefined)
  * @param m2m.error_message str Validation error message
+ * @param m2m.options Object options (transaction,...)
  * @returns {Promise<T>}
  */
 exports.addAssociations = function(req, res, m2m) {
@@ -26,7 +27,7 @@ exports.addAssociations = function(req, res, m2m) {
             [m2m.fixed.field]: m2m.fixed.id,
             [m2m.other.field]: id,
             ... m2m.attributes };
-        }), {ignoreDuplicates: true}
+        }), {ignoreDuplicates: true, ... m2m.options }
     ).then(() => {
         return exports.sendAssociations(res, m2m);
     }).catch(err => {
@@ -42,12 +43,14 @@ exports.addAssociations = function(req, res, m2m) {
  * @param m2m.fixed.id int The fixed id
  * @param m2m.fixed.field str
  * @param m2m.other.includes The includes for generating the response
+ * @param m2m.options Object options (transaction,...)
  * @returns {*}
  */
 exports.sendAssociations = function(res, m2m) {
     return util.sendModelOrError(res, m2m.model_class.findAll({
         where: { [m2m.fixed.field]: m2m.fixed.id },
-        include: m2m.other.includes
+        include: m2m.other.includes,
+        ... m2m.options
     }));
 };
 
