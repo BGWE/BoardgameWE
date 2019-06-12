@@ -383,22 +383,33 @@ exports.listEventInvites = function(req, res) {
 };
 
 exports.sendEventInvite = function(req, res) {
-    return util.sendModelOrError(res, db.EventInvite.create({
-        id_event: parseInt(req.params.eid),
-        id_sender: userutil.getCurrUserId(req),
-        id_recipient: req.body.id_recipient,
-        status: db.EventInvite.STATUS_PENDING
-    }, {
-        include: exports.eventInviteIncludes
-    }));
+    const current_uid = userutil.getCurrUserId(req);
+    const eid = parseInt(req.params.eid);
+    return db.sequelize.transaction(transaction => {
+        return db.EventAttendee.count({ where: { id_user: current_uid, id_event: eid }, transaction }).then(attendee_count => {
+            if (attendee_count > 0) {
+                return util.detailErrorResponse(res, 403, "cannot invite: user is already an attendee of this event");
+            }
+            return util.sendModelOrError(res, db.EventInvite.create({
+                id_event: eid,
+                id_sender: current_uid,
+                id_recipient: req.body.id_recipient,
+                status: db.EventInvite.STATUS_PENDING
+            }, {
+                include: exports.eventInviteIncludes,
+                transaction
+            }));
+        })
+    });
 };
 
 exports.handleEventInvite = function(req, res) {
     const current_uid = userutil.getCurrUserId(req);
+    const eid = parseInt(req.params.eid);
     return db.sequelize.transaction(transaction => {
         return db.EventInvite.findOne({
             where: {
-                id_event: parseInt(req.params.eid),
+                id_event: eid,
                 id_sender: req.body.id_sender,
                 id_recipient: current_uid
             },
@@ -411,13 +422,11 @@ exports.handleEventInvite = function(req, res) {
                 return util.detailErrorResponse(res, 403, "request has already been handled");
             }
             invite.status = req.body.accept ? db.EventInvite.STATUS_ACCEPTED : db.EventInvite.STATUS_REJECTED;
-
             let requests = [invite.save({ transaction })];
-
             if (req.body.accept) {
                 requests.push(m2m.addAssociations(req, res, {
                     model_class: db.EventAttendee,
-                    fixed: { id: parseInt(req.params.eid), field: 'id_event' },
+                    fixed: { id: eid, field: 'id_event' },
                     other: {
                         ids: [current_uid],
                         field: 'id_user'
