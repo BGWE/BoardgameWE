@@ -58,6 +58,11 @@
  * @apiSuccess {String} end End date (ISO8601, UTC)
  * @apiSuccess {String} description Event description
  * @apiSuccess {Number} id_creator Event creator user identifier
+ * @apiSuccess {ShallowUser} user Event creator data
+ * @apiSuccess {Number} user.id Event creator identifier
+ * @apiSuccess {String} user.name Event creator name
+ * @apiSuccess {String} user.surname Event creator surname
+ * @apiSuccess {String} user.username Event creator username
  * @apiSuccess {Boolean} hide_rankings True if rankings should be hidden, false otherwise
  * @apiSuccess {String} visibility Event visibility. One of: `["PUBLIC", "PRIVATE", "SECRET"]`
  * @apiSuccess {Boolean} invite_required True if an invite is required to join the event
@@ -68,9 +73,9 @@
  * @apiDefine EventInviteDescriptor
  * @apiSuccess {Number} id_event Event identifier
  * @apiSuccess {ShallowEvent} event Event data
- * @apiSuccess {ShallowUser} inviter User data of the inviter
+ * @apiSuccess {ShallowUser} inviter User data of the inviter (see 'Get event' description for `ShallowUser` structure)
  * @apiSuccess {Number} id_inviter User identifier of the inviter
- * @apiSuccess {ShallowUser} invitee User data of the invitee
+ * @apiSuccess {ShallowUser} invitee User data of the invitee (see 'Get event' description for `ShallowUser` structure)
  * @apiSuccess {Number} id_invitee User identifier of the invitee
  * @apiSuccess {String} status Invite status. One of `['PENDING', 'REJECTED', 'ACCEPTED']`
  */
@@ -96,7 +101,7 @@
  * @apiSuccess {Number} players.id Game player identifier
  * @apiSuccess {Number} players.score Player score
  * @apiSuccess {Number} players.id_user Player user identifier (mutually exclusive with `name`), or `null`.
- * @apiSuccess {User} players.user If `id_user` is not `null`, user data (see 'Get current user' request for user
+ * @apiSuccess {ShallowUser} players.user If `id_user` is not `null`, user data (see 'Get event' request for `ShallowUser`
  * structure)
  * @apiSuccess {String} players.name Player name if the player is not registered on the application (mutually
  * exclusive with `user`), or `null`.

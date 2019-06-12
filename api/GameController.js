@@ -122,10 +122,6 @@ exports.addEventGame = function(req, res) {
 };
 
 exports.updateEventGame = function(req, res) {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-        return util.detailErrorResponse(res, 400, "cannot update event", errors);
-    }
     return db.sequelize.transaction(t => {
         return db.Game.findByPk(req.params.gid, {transaction: t})
             .then(game => {
