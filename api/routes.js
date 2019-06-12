@@ -879,7 +879,7 @@ module.exports = function(app) {
      * @apiDescription Send an event invite to a user (from the current user)
      *
      * @apiParam (param) {Number} eid Event identifier
-     * @apiParam (body) {Number} id_recipient Invite recipient user identifier
+     * @apiParam (body) {Number} id_invitee Invite recipient user identifier
      *
      * @apiUse TokenHeaderRequired
      * @apiUse EventInviteDescriptor
@@ -892,7 +892,7 @@ module.exports = function(app) {
      * @apiDescription Handle an event invite (sent to the current user)
      *
      * @apiParam (param) {Number} eid Event identifier
-     * @apiParam (body) {Number} id_sender Invite sender user identifier
+     * @apiParam (body) {Number} id_inviter Invite sender user identifier
      * @apiParam (body) {Boolean} accept True for accepting the request, false for rejecting it
      *
      * @apiUse TokenHeaderRequired
@@ -901,14 +901,14 @@ module.exports = function(app) {
     app.route("/event/:eid/invite")
         .post(
             event_access.write, [
-                body('id_recipient').custom(validation.model(db.User)),
+                body('id_invitee').custom(validation.model(db.User)),
                 param('eid').custom(validation.model(db.Event))
             ], validation.validateOrBlock("cannot send event invite"),
             EventController.sendEventInvite
         )
         .put(
-            event_access.write, [
-                body('id_sender').custom(validation.model(db.User)),
+            [
+                body('id_inviter').custom(validation.model(db.User)),
                 body('accept').isBoolean().toBoolean(),
                 param('eid').custom(validation.model(db.Event))
             ], validation.validateOrBlock("cannot handle event invite"),

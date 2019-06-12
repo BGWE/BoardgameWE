@@ -386,20 +386,23 @@ exports.sendEventInvite = function(req, res) {
     const current_uid = userutil.getCurrUserId(req);
     const eid = parseInt(req.params.eid);
     return db.sequelize.transaction(transaction => {
-        return db.EventAttendee.count({ where: { id_user: current_uid, id_event: eid }, transaction }).then(attendee_count => {
+        return db.EventAttendee.count({
+            where: { id_user: req.body.id_invitee, id_event: eid },
+            transaction
+        }).then(async attendee_count => {
             if (attendee_count > 0) {
                 return util.detailErrorResponse(res, 403, "cannot invite: user is already an attendee of this event");
             }
-            return util.sendModelOrError(res, db.EventInvite.create({
+            const pk = {
                 id_event: eid,
-                id_sender: current_uid,
-                id_recipient: req.body.id_recipient,
-                status: db.EventInvite.STATUS_PENDING
-            }, {
-                include: exports.eventInviteIncludes,
-                transaction
-            }));
+                id_inviter: current_uid,
+                id_invitee: req.body.id_invitee,
+            };
+            await db.EventInvite.create({ ... pk, status: db.EventInvite.STATUS_PENDING }, { transaction });
+            return util.sendModelOrError(res, db.EventInvite.findOne({ where: pk, transaction, include: exports.eventInviteIncludes }));
         })
+    }).catch(err => {
+        return util.detailErrorResponse(res, 500, err);
     });
 };
 
@@ -407,12 +410,13 @@ exports.handleEventInvite = function(req, res) {
     const current_uid = userutil.getCurrUserId(req);
     const eid = parseInt(req.params.eid);
     return db.sequelize.transaction(transaction => {
+        const where =  {
+            id_event: eid,
+            id_inviter: req.body.id_inviter,
+            id_invitee: current_uid
+        };
         return db.EventInvite.findOne({
-            where: {
-                id_event: eid,
-                id_sender: req.body.id_sender,
-                id_recipient: current_uid
-            },
+            where,
             include: exports.eventInviteIncludes,
             transaction
         }).then(async invite => {
@@ -422,23 +426,14 @@ exports.handleEventInvite = function(req, res) {
                 return util.detailErrorResponse(res, 403, "request has already been handled");
             }
             invite.status = req.body.accept ? db.EventInvite.STATUS_ACCEPTED : db.EventInvite.STATUS_REJECTED;
-            let requests = [invite.save({ transaction })];
+            await invite.save({ transaction });
             if (req.body.accept) {
-                requests.push(m2m.addAssociations(req, res, {
-                    model_class: db.EventAttendee,
-                    fixed: { id: eid, field: 'id_event' },
-                    other: {
-                        ids: [current_uid],
-                        field: 'id_user'
-                    },
-                    error_message: 'cannot add current user as attendee',
-                    options: { transaction }
-                }));
+                await db.EventAttendee.bulkCreate([{ id_user: current_uid, id_event: eid}], {transaction, ignoreDuplicates: true});
             }
-
-            return util.sendModelOrError(res, Promise.all(requests), results => results[0]);
+            return util.sendModelOrError(res, db.EventInvite.findOne({ where, transaction, include: exports.eventInviteIncludes }));
         });
     }).catch(err => {
+        console.log(err);
         return util.detailErrorResponse(res, 500, "cannot handle event invite");
     });
 };
