@@ -865,7 +865,7 @@ module.exports = function(app) {
      */
     app.route("/event/:eid/invites")
         .get(
-            event_access.read, [
+            event_access.write, [  // write access because only create or attendees can access
                 param('eid').custom(validation.model(db.Event)),
                 query('status').optional().isArray().not().isEmpty().custom(validation.valuesIn(db.EventInvite.STATUSES))
             ], validation.validateOrBlock("cannot list event invites"),
@@ -913,6 +913,14 @@ module.exports = function(app) {
                 param('eid').custom(validation.model(db.Event))
             ], validation.validateOrBlock("cannot handle event invite"),
             EventController.handleEventInvite
+        );
+
+    app.route('/event/:eid/join_requests')
+        .get(
+            event_access.write, [  // write access because only create or attendees can access
+                param('eid').custom(validation.model(db.Event)),
+                query('status').optional().isArray().not().isEmpty().custom(validation.valuesIn(db.EventInvite.STATUSES))
+            ], validation.validateOrBlock("cannot list event join requests")
         );
 
     // Board game
