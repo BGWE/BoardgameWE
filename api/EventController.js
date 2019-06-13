@@ -24,6 +24,7 @@ exports.createEvent = function(req, res) {
     if (!errors.isEmpty()) {
         return util.detailErrorResponse(res, 400, "cannot create event", errors);
     }
+    const visibility = req.body.visibility || db.Event.VISIBILITY_SECRET;
     return util.sendModelOrError(res, db.Event.create({
         name: req.body.name,
         location: req.body.location,
@@ -33,8 +34,9 @@ exports.createEvent = function(req, res) {
         description: req.body.description,
         hide_rankings: req.body.hide_rankings || false,
         attendees_can_edit: req.body.attendees_can_edit || true,
-        visibility: req.body.visibility || db.Event.VISIBILITY_SECRET,
-        invite_required: req.body.invite_required || true
+        visibility,
+        invite_required: visibility === db.Event.VISIBILITY_SECRET ? true : (req.body.invite_required || true),
+        user_can_join: req.body.user_can_join || false
     }));
 };
 
@@ -436,4 +438,16 @@ exports.handleEventInvite = function(req, res) {
         console.log(err);
         return util.detailErrorResponse(res, 500, "cannot handle event invite");
     });
+};
+
+exports.listJoinRequests = function(req, res) {
+
+};
+
+exports.sendJoinRequest = function(req, res) {
+
+};
+
+exports.handleJoinRequest = function(req, res) {
+
 };

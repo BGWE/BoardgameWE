@@ -14,7 +14,8 @@ module.exports = (sequelize, DataTypes) => {
       values: ["PUBLIC", "PRIVATE", "SECRET"],
     },
     attendees_can_edit: DataTypes.BOOLEAN,
-    invite_required: DataTypes.BOOLEAN
+    invite_required: DataTypes.BOOLEAN,
+    user_can_join: DataTypes.BOOLEAN
   }, {});
   Event.associate = function(models) {
       models.Event.belongsTo(models.User, {

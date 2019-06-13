@@ -915,12 +915,65 @@ module.exports = function(app) {
             EventController.handleEventInvite
         );
 
+
+    /**
+     * @api {get} /event/:eid/join_requests List event join requests
+     * @apiName ListEventJoinRequests
+     * @apiGroup Event join request
+     * @apiDescription List join requests associated with the given event.
+     *
+     * @apiParam (query) {String[]} [status] If set: filter join requests based on the given statuses.
+     *
+     * @apiUse TokenHeaderRequired
+     * @apiUse EventJoinRequestsListDescriptor
+     */
     app.route('/event/:eid/join_requests')
         .get(
             event_access.write, [  // write access because only create or attendees can access
                 param('eid').custom(validation.model(db.Event)),
                 query('status').optional().isArray().not().isEmpty().custom(validation.valuesIn(db.EventInvite.STATUSES))
-            ], validation.validateOrBlock("cannot list event join requests")
+            ], validation.validateOrBlock("cannot list event join requests"),
+            EventController.listJoinRequests
+        );
+
+    /**
+     * @api {post} /event/:eid/join_request Send event join request
+     * @apiName SendEventJoinRequest
+     * @apiGroup Event join request
+     * @apiDescription Send a join request for an event.
+     *
+     * @apiParam (param) {Number} eid Event identifier
+     *
+     * @apiUse TokenHeaderRequired
+     * @apiUse EventJoinRequestDescriptor
+     */
+
+    /**
+     * @api {post} /event/:eid/join_request Send event join request
+     * @apiName SendEventJoinRequest
+     * @apiGroup Event join request
+     * @apiDescription Send a join request for an event.
+     *
+     * @apiParam (param) {Number} eid Event identifier
+     * @apiParam (body) {Number} id_requester Invite recipient user identifier
+     * @apiParam (body) {Boolean} accept True for accepting the request, false for refusing it.
+     *
+     * @apiUse TokenHeaderRequired
+     * @apiUse EventJoinRequestDescriptor
+     */
+    app.route('/event/:eid/join_request')
+        .post(
+            [
+                param('eid').custom(validation.model(db.Event))
+            ], validation.validateOrBlock("cannot add join request"),
+            EventController.sendJoinRequest
+        ).put(
+            event_access.write, [
+                body('id_requester').isNumeric().toInt(),
+                body('accept').isBoolean().toBoolean(),
+                param('eid').isNumeric().toInt()
+            ], validation.validateOrBlock("cannot handle join request"),
+            EventController.handleJoinRequest
         );
 
     // Board game
