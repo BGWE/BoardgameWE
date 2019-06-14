@@ -86,6 +86,20 @@
  * event invite object structure. Note: the returned data is a list (not an actual object).
  */
 
+/**
+ * @apiDefine EventJoinRequestsListDescriptor
+ * @apiSuccess {JoinRequest[]} requests List of event invites. See "Send event join request" request for
+ * event join request object structure. Note: the returned data is a list (not an actual object).
+ */
+
+/**
+ * @apiDefine EventJoinRequestDescriptor
+ * @apiSuccess {Number} id_event Event identifier
+ * @apiSuccess {ShallowEvent} event Event data
+ * @apiSuccess {Number} id_requester Requester user identifier
+ * @apiSuccess {ShallowUser} requester Requester user data
+ * @apiSuccess {String} status Join request status
+ */
 
 /**
  * @apiDefine FullGameDescriptor

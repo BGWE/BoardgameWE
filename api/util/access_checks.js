@@ -9,6 +9,7 @@ const util = require("./util");
 exports.ACCESS_WRITE = "write";
 exports.ACCESS_READ = "read";
 exports.ACCESS_LIST = "list";
+exports.ACCESS_ADMIN = "admin";
 
 exports.get_event_access_callback = (access_type, eid_callback) => {
     eid_callback = eid_callback || ((req) => parseInt(req.params.eid));
@@ -25,7 +26,12 @@ exports.get_event_access_callback = (access_type, eid_callback) => {
         const is_in_event = is_attendee || is_creator || is_invited;
 
         // check write access
-        if (access_type === exports.ACCESS_WRITE) {
+        if (access_type === exports.ACCESS_ADMIN) {
+            if (is_creator) {
+                next();
+                return;
+            }
+        } else if (access_type === exports.ACCESS_WRITE) {
             if (is_creator || (event.attendees_can_edit && is_attendee)) {
                 next();
                 return;

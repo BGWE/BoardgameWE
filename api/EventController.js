@@ -1,11 +1,8 @@
 const db = require("./models/index");
 const util = require("./util/util");
 const userutil = require("./util/user");
-const moment = require("moment");
-const m2m = require("./util/m2m_helpers");
 const includes = require("./util/db_include");
 const BoardGameController = require("./BoardGameController");
-const { validationResult } = require('express-validator/check');
 const Activity = require("./util/activities");
 
 const eventFullIncludeSQ = [
@@ -20,10 +17,6 @@ const eventFullIncludeSQ = [
 ];
 
 exports.createEvent = function(req, res) {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-        return util.detailErrorResponse(res, 400, "cannot create event", errors);
-    }
     const visibility = req.body.visibility || db.Event.VISIBILITY_SECRET;
     return util.sendModelOrError(res, db.Event.create({
         name: req.body.name,
@@ -42,9 +35,6 @@ exports.createEvent = function(req, res) {
 
 exports.updateEvent = function(req, res) {
     return db.Event.findByPk(parseInt(req.params.eid)).then(event => {
-        if (event.id_creator !== userutil.getCurrUserId(req)) {
-            return util.detailErrorResponse(res, 403, "only the event creator can update the event");
-        }
         event.description = req.body.description || event.description;
         event.name = req.body.name || event.name;
         event.location = req.body.location || event.location;
@@ -163,61 +153,18 @@ exports.deleteProvidedBoardGames = function(req, res) {
     }));
 };
 
-exports.sendEventAttendees = function(eid, res) {
+exports.sendEventAttendees = function(eid, res, options) {
+    options = options || {};
     return m2m.sendAssociations(res, {
         model_class: db.EventAttendee,
         fixed: { id: eid, field: 'id_event' },
-        other: { includes: [includes.getShallowUserIncludeSQ("user")] }
+        other: { includes: [includes.getShallowUserIncludeSQ("user")] },
+        options: { ... options }
     });
 };
 
 exports.getEventAttendees = function(req, res) {
     return exports.sendEventAttendees(parseInt(req.params.eid), res);
-};
-
-exports.addEventAttendees = function(req, res) {
-    return m2m.addAssociations(req, res, {
-        model_class: db.EventAttendee,
-        fixed: { id: parseInt(req.params.eid), field: 'id_event' },
-        other: {
-            ids: req.body.users,
-            field: 'id_user',
-            includes: [includes.getShallowUserIncludeSQ("user")]
-        },
-        error_message: 'cannot add attendees'
-    });
-};
-
-exports.deleteEventAttendees = function(req, res) {
-    return m2m.deleteAssociations(req, res, {
-        model_class: db.EventAttendee,
-        fixed: { id: parseInt(req.params.eid), field: 'id_event' },
-        other: {
-            ids: req.body.users,
-            field: 'id_user',
-            includes: [includes.getShallowUserIncludeSQ("user")]
-        }
-    });
-};
-
-exports.subscribeToEvent = function(req, res) {
-    return db.Event.findByPk(parseInt(req.params.eid)).then(event => {
-        if (event.invite_required) {
-            return util.detailErrorResponse(res, 403, "cannot join this event, invite required");
-        }
-        return m2m.addAssociations(req, res, {
-            model_class: db.EventAttendee,
-            fixed: { id: parseInt(req.params.eid), field: 'id_event' },
-            other: {
-                ids: [userutil.getCurrUserId(req)],
-                field: 'id_user',
-                includes: [includes.getShallowUserIncludeSQ("user")]
-            },
-            error_message: 'cannot add current user as attendee'
-        });
-    }).catch(err => {
-        return util.detailErrorResponse(res, 500, "cannot subscribe");
-    });
 };
 
 exports.addBoardGameAndAddToEvent = function(req, res) {
@@ -365,89 +312,4 @@ exports.getEventWishToPlayGames = function(req, res) {
         include: [{ attribute: [], ...includes.defaultBoardGameIncludeSQ }],
         group: ['WishToPlayBoardGame.id_board_game', 'board_game.id']
     }));
-};
-
-exports.eventInviteIncludes = [
-    includes.getShallowUserIncludeSQ('inviter'),
-    includes.getShallowUserIncludeSQ('invitee'),
-    includes.getEventIncludeSQ('event')
-];
-
-exports.listEventInvites = function(req, res) {
-    let where = {};
-    if (req.query.status !== undefined) {
-        where = {
-            status: { [db.Op.in]: req.query.status.map(s => s.toUpperCase()) },
-            ... where
-        }
-    }
-    return util.sendModelOrError(res, db.EventInvite.findAll({ where, include: exports.eventInviteIncludes }));
-};
-
-exports.sendEventInvite = function(req, res) {
-    const current_uid = userutil.getCurrUserId(req);
-    const eid = parseInt(req.params.eid);
-    return db.sequelize.transaction(transaction => {
-        return db.EventAttendee.count({
-            where: { id_user: req.body.id_invitee, id_event: eid },
-            transaction
-        }).then(async attendee_count => {
-            if (attendee_count > 0) {
-                return util.detailErrorResponse(res, 403, "cannot invite: user is already an attendee of this event");
-            }
-            const pk = {
-                id_event: eid,
-                id_inviter: current_uid,
-                id_invitee: req.body.id_invitee,
-            };
-            await db.EventInvite.create({ ... pk, status: db.EventInvite.STATUS_PENDING }, { transaction });
-            return util.sendModelOrError(res, db.EventInvite.findOne({ where: pk, transaction, include: exports.eventInviteIncludes }));
-        })
-    }).catch(err => {
-        return util.detailErrorResponse(res, 500, err);
-    });
-};
-
-exports.handleEventInvite = function(req, res) {
-    const current_uid = userutil.getCurrUserId(req);
-    const eid = parseInt(req.params.eid);
-    return db.sequelize.transaction(transaction => {
-        const where =  {
-            id_event: eid,
-            id_inviter: req.body.id_inviter,
-            id_invitee: current_uid
-        };
-        return db.EventInvite.findOne({
-            where,
-            include: exports.eventInviteIncludes,
-            transaction
-        }).then(async invite => {
-            if (!invite) {
-                return util.detailErrorResponse(res, 404, "no such event invite");
-            } else if (invite.status !== db.EventInvite.STATUS_PENDING) {
-                return util.detailErrorResponse(res, 403, "request has already been handled");
-            }
-            invite.status = req.body.accept ? db.EventInvite.STATUS_ACCEPTED : db.EventInvite.STATUS_REJECTED;
-            await invite.save({ transaction });
-            if (req.body.accept) {
-                await db.EventAttendee.bulkCreate([{ id_user: current_uid, id_event: eid}], {transaction, ignoreDuplicates: true});
-            }
-            return util.sendModelOrError(res, db.EventInvite.findOne({ where, transaction, include: exports.eventInviteIncludes }));
-        });
-    }).catch(err => {
-        console.log(err);
-        return util.detailErrorResponse(res, 500, "cannot handle event invite");
-    });
-};
-
-exports.listJoinRequests = function(req, res) {
-
-};
-
-exports.sendJoinRequest = function(req, res) {
-
-};
-
-exports.handleJoinRequest = function(req, res) {
-
 };

@@ -16,6 +16,7 @@ module.exports = function(app) {
     const StatsController = require("./StatsController");
     const UserController = require("./UserController");
     const EventController = require("./EventController");
+    const EventJoinController = require("./EventJoinController");
     const AdminController = require("./AdminController");
     const TimerController = require("./TimerController");
     const AppWideController = require("./AppWideController");
@@ -383,6 +384,7 @@ module.exports = function(app) {
     const event_access = {
         read: access_checks.get_event_access_callback(access_checks.ACCESS_READ),
         write: access_checks.get_event_access_callback(access_checks.ACCESS_WRITE),
+        admin: access_checks.get_event_access_callback(access_checks.ACCESS_ADMIN),
         list: access_checks.get_event_access_callback(access_checks.ACCESS_LIST)
     };
 
@@ -453,8 +455,8 @@ module.exports = function(app) {
      */
     app.route("/event/:eid")
         .get(event_access.read, EventController.getFullEvent)
-        .delete(EventController.deleteEvent)   // only creator
-        .put(validation.getEventValidators(false), validation.validateOrBlock('cannot update event'), EventController.updateEvent);
+        .delete(event_access.admin, EventController.deleteEvent)   // only creator
+        .put(event_access.admin, validation.getEventValidators(false), validation.validateOrBlock('cannot update event'), EventController.updateEvent);
 
     /**
      * @api {get} /events Get events
@@ -690,44 +692,24 @@ module.exports = function(app) {
      *
      * @apiUse TokenHeaderRequired
      */
-
-    /**
-     * @api {post} /event/:id/attendees Add event attendees
-     * @apiName AddEventAttendees
-     * @apiGroup Event attendee
-     * @apiDescription Add attendees to the specified event.
-     * Note: only the creator or an attendee can use this endpoint.
-     *
-     * @apiParam {Number} id Event identifier.
-     * @apiParam (body) {Number[]} users List of ids of user to add to the event
-     * @apiUse TokenHeaderRequired
-     */
-
-    /**
-     * @api {delete} /event/:id/attendees Delete event attendees
-     * @apiName DeleteEventAttendees
-     * @apiGroup Event attendee
-     * @apiDescription Remove attendees from the specified event.
-     * Note: only the creator or an attendee can use this endpoint.
-     *
-     * @apiParam {Number} id Event identifier.
-     * @apiParam (body) {Number[]} users List of ids of user to remove from the event
-     *
-     * @apiUse TokenHeaderRequired
-     */
     app.route("/event/:eid/attendees")
-        .get(event_access.read, EventController.getEventAttendees)
-        .post(
-            event_access.write,
-            [body('users').isArray().not().isEmpty()],
-            validation.validateOrBlock('cannot add attendees to the event'),
-            EventController.addEventAttendees
-        )
+        .get(event_access.read, EventController.getEventAttendees);
+
+    /**
+     * @api {delete} /event/:id/attendee/:uid Delete event attendee
+     * @apiName DeleteEventAttendee
+     * @apiGroup Event attendee
+     * @apiDescription Remove an attendee from the specified event.
+     * Note: only the creator can use this endpoint
+     *
+     * @apiParam {Number} id Event identifier.
+     *
+     * @apiUse TokenHeaderRequired
+     */
+    app.route("/event/:eid/attendee/:uid")
         .delete(
-            event_access.write,
-            [body('users').isArray().not().isEmpty()],
-            validation.validateOrBlock('cannot remove attendees from the event'),
-            EventController.deleteEventAttendees
+            event_access.admin,
+            EventJoinController.deleteEventAttendee
         );
 
     /**
@@ -745,7 +727,7 @@ module.exports = function(app) {
         .post(
             [param('eid').custom(validation.model(db.event))],
             validation.validateOrBlock("event not found: cannot join"),
-            EventController.subscribeToEvent
+            EventJoinController.subscribeToEvent
         );
 
     /**
@@ -869,11 +851,11 @@ module.exports = function(app) {
                 param('eid').custom(validation.model(db.Event)),
                 query('status').optional().isArray().not().isEmpty().custom(validation.valuesIn(db.EventInvite.STATUSES))
             ], validation.validateOrBlock("cannot list event invites"),
-            EventController.listEventInvites
+            EventJoinController.listEventInvites
         );
 
     /**
-     * @api {post} /event/:eid/invite/:rid Send event invite
+     * @api {post} /event/:eid/invite Send event invite
      * @apiName SendEventInvite
      * @apiGroup Event invites
      * @apiDescription Send an event invite to a user (from the current user)
@@ -886,13 +868,12 @@ module.exports = function(app) {
      */
 
     /**
-     * @api {put} /event/:eid/invite/:rid Handle event invite
+     * @api {put} /event/:eid/invite  Handle event invite
      * @apiName HandleInviteEvent
      * @apiGroup Event invites
      * @apiDescription Handle an event invite (sent to the current user)
      *
      * @apiParam (param) {Number} eid Event identifier
-     * @apiParam (body) {Number} id_inviter Invite sender user identifier
      * @apiParam (body) {Boolean} accept True for accepting the request, false for rejecting it
      *
      * @apiUse TokenHeaderRequired
@@ -904,15 +885,14 @@ module.exports = function(app) {
                 body('id_invitee').custom(validation.model(db.User)),
                 param('eid').custom(validation.model(db.Event))
             ], validation.validateOrBlock("cannot send event invite"),
-            EventController.sendEventInvite
+            EventJoinController.sendEventInvite
         )
         .put(
             [
-                body('id_inviter').custom(validation.model(db.User)),
                 body('accept').isBoolean().toBoolean(),
                 param('eid').custom(validation.model(db.Event))
             ], validation.validateOrBlock("cannot handle event invite"),
-            EventController.handleEventInvite
+            EventJoinController.handleEventInvite
         );
 
 
@@ -933,7 +913,7 @@ module.exports = function(app) {
                 param('eid').custom(validation.model(db.Event)),
                 query('status').optional().isArray().not().isEmpty().custom(validation.valuesIn(db.EventInvite.STATUSES))
             ], validation.validateOrBlock("cannot list event join requests"),
-            EventController.listJoinRequests
+            EventJoinController.listJoinRequests
         );
 
     /**
@@ -966,14 +946,14 @@ module.exports = function(app) {
             [
                 param('eid').custom(validation.model(db.Event))
             ], validation.validateOrBlock("cannot add join request"),
-            EventController.sendJoinRequest
+            EventJoinController.sendJoinRequest
         ).put(
             event_access.write, [
                 body('id_requester').isNumeric().toInt(),
                 body('accept').isBoolean().toBoolean(),
                 param('eid').isNumeric().toInt()
             ], validation.validateOrBlock("cannot handle join request"),
-            EventController.handleJoinRequest
+            EventJoinController.handleJoinRequest
         );
 
     // Board game

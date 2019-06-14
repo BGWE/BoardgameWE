@@ -64,6 +64,7 @@ exports.sendAssociations = function(res, m2m) {
  * @param m2m.other.ids Array Array of identifier for the second field
  * @param m2m.other.field str The variable id field
  * @param m2m.other.includes The includes for generating the response
+ * @param m2m.options Object options (transaction,...)
  * @returns {*}
  */
 exports.deleteAssociations = function(req, res, m2m) {
@@ -71,7 +72,8 @@ exports.deleteAssociations = function(req, res, m2m) {
         where: {
             [m2m.fixed.field]: m2m.fixed.id,
             [m2m.other.field]: m2m.other.ids
-        }
+        },
+        ... m2m.options
     }).then(() => {
         return exports.sendAssociations(res, m2m);
     }).catch(err => {

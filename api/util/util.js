@@ -89,6 +89,10 @@ exports.successResponse = function(res, data) {
     return res.status(200).json(data);
 };
 
+exports.sendSuccessObj = function(res) {
+    return exports.successObj(res, {success: true});
+};
+
 /**
  * Error 500 with {error: "err"} JSON body
  * @param res
