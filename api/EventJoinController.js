@@ -46,8 +46,7 @@ exports.eventJoinRequestIncludes = [
     includes.getEventIncludeSQ('event')
 ];
 
-exports.listEventInvites = function(req, res) {
-    let where = {};
+const getInvites = function(where, req, res) {
     if (req.query.status !== undefined) {
         where = {
             status: { [db.Op.in]: req.query.status.map(s => s.toUpperCase()) },
@@ -55,6 +54,16 @@ exports.listEventInvites = function(req, res) {
         }
     }
     return util.sendModelOrError(res, db.EventInvite.findAll({ where, include: exports.eventInviteIncludes }));
+};
+
+exports.listEventInvites = function(req, res) {
+    return getInvites({ id_event: parseInt(req.params.eid) }, req, res);
+};
+
+exports.getCurrentUserEventInvites = function(req, res) {
+    return getInvites({
+        id_invitee: userutil.getCurrUserId(req)
+    }, req, res);
 };
 
 exports.sendEventInvite = function(req, res) {
@@ -184,7 +193,6 @@ exports.sendJoinRequest = function(req, res) {
             })
         });
     }).catch(err => {
-        console.log(err);
         return util.detailErrorResponse(res, 500, err);
     });
 };
@@ -218,7 +226,6 @@ exports.handleJoinRequest = function(req, res) {
             });
         });
     }).catch(err => {
-        console.log(err);
         return util.detailErrorResponse(res, 500, err);
     });
 };

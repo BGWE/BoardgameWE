@@ -335,6 +335,18 @@ module.exports = function(app) {
     app.route("/user/:uid/friends")
         .get(user_access.read, UserController.getUserFriends);
 
+    /**
+     * @api {get} /user/current/event_invites Get current user event invites
+     * @apiName GetCurrentUserEventInvites
+     * @apiGroup Event join request
+     * @apiDescription Get event invites sent to the current user
+     * @apiParam (query) {String[]} [status] If set: filter invites based on the given statuses.
+     * @apiUse TokenHeaderRequired
+     * @apiUse EventInviteListDescriptor
+     */
+    app.route("/user/current/event_invites")
+        .get(EventJoinController.getCurrentUserEventInvites);
+
     // Friendships
     /**
      * @api {get} /friend_requests Get friend requests
