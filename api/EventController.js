@@ -4,6 +4,7 @@ const userutil = require("./util/user");
 const includes = require("./util/db_include");
 const BoardGameController = require("./BoardGameController");
 const Activity = require("./util/activities");
+const m2m = require("./util/m2m_helpers");
 
 const eventFullIncludeSQ = [
     includes.genericIncludeSQ(db.EventAttendee, "attendees", [includes.getShallowUserIncludeSQ("user")]),
@@ -28,7 +29,7 @@ exports.createEvent = function(req, res) {
         hide_rankings: req.body.hide_rankings || false,
         attendees_can_edit: req.body.attendees_can_edit || true,
         visibility,
-        invite_required: visibility === db.Event.VISIBILITY_SECRET ? true : (req.body.invite_required || true),
+        invite_required: visibility === db.Event.VISIBILITY_SECRET ? true : (req.body.invite_required !== undefined ? req.body.invite_required : true),
         user_can_join: req.body.user_can_join || false
     }));
 };

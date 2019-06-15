@@ -90,7 +90,7 @@ exports.successResponse = function(res, data) {
 };
 
 exports.sendSuccessObj = function(res) {
-    return exports.successObj(res, {success: true});
+    return exports.successResponse(res, {success: true});
 };
 
 /**

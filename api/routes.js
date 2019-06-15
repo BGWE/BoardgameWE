@@ -725,7 +725,7 @@ module.exports = function(app) {
      */
     app.route("/event/:eid/subscribe")
         .post(
-            [param('eid').custom(validation.model(db.event))],
+            [param('eid').custom(validation.model(db.Event))],
             validation.validateOrBlock("event not found: cannot join"),
             EventJoinController.subscribeToEvent
         );

@@ -1,4 +1,3 @@
-const m2m = require("./util/m2m_helpers");
 const db = require("./models/index");
 const util = require("./util/util");
 const userutil = require("./util/user");
@@ -7,16 +6,16 @@ const EventController = require('./EventController');
 
 
 const fetch_event_access_state = async (uid, eid, transaction) => {
-    const LOCKS = db.sequelize.transaction.LOCK;
     const results = await Promise.all([
-        db.Event.findByPk({ where: { id: eid }, transaction, lock: LOCKS.SHARE }),
-        db.Attendees.count({ where: { id_event: eid, id: uid }, transaction, lock: LOCKS.UPDATE }),
-        db.EventInvite.findOne({ where: { id_event: eid, id_invitee: uid }, transaction, lock: LOCKS.UPDATE}),
-        db.EventJoinRequest.findOne({ where: {id_event: eid, id_requester: uid }, transaction, lock: LOCKS.UPDATE})
+        db.Event.findByPk(eid, { transaction, lock: transaction.LOCK.SHARE }),
+        db.EventAttendee.findOne({ where: { id_event: eid, id_user: uid }, transaction, lock: transaction.LOCK.UPDATE }),
+        db.EventInvite.findOne({ where: { id_event: eid, id_invitee: uid }, transaction, lock: transaction.LOCK.UPDATE}),
+        db.EventJoinRequest.findOne({ where: {id_event: eid, id_requester: uid }, transaction, lock: transaction.LOCK.UPDATE})
     ]);
     return {
         event: results[0],
-        is_attendee: results[1] > 0,
+        is_attendee: !!results[1],
+        attendee: results[1],
         is_invitee: !!results[2],
         invite: results[2],
         is_requester: !!results[3],
@@ -80,8 +79,8 @@ exports.sendEventInvite = function(req, res) {
             if (access_state.is_requester) { // cannot be a rejected requester at this point, so add to attendees
                 access_state.request.status = db.EventJoinRequest.STATUS_ACCEPTED;
                 queries.push(access_state.request.save({ transaction }));
-                queries.push(create_attendee(current_uid, eid, transaction));
-                queries.push(create_invitee(invite_pk, current_uid, db.EventInvite.STATUS_ACCEPTEB, transaction));
+                queries.push(create_attendee(req.body.id_invitee, eid, transaction));
+                queries.push(create_invitee(invite_pk, current_uid, db.EventInvite.STATUS_ACCEPTED, transaction));
             } else {
                 queries.push(db.EventInvite.upsert({  // upsert to handle rejected invite requests
                     ... invite_pk,
@@ -95,7 +94,7 @@ exports.sendEventInvite = function(req, res) {
                     where: invite_pk, transaction,
                     include: exports.eventInviteIncludes
                 }));
-            })
+            });
         });
     }).catch(err => {
         return util.detailErrorResponse(res, 500, err);
@@ -113,9 +112,20 @@ exports.handleEventInvite = function(req, res) {
                 return util.detailErrorResponse(res, 403, "cannot handle invite: the user is already an attendee");
             }
 
-            access_state.invite.status = req.body.accept ? db.EventInvite.STATUS_ACCEPTED : db.EventInvite.STATUS_REJECTED;
-            return access_state.invite.save({ transaction }).then(invite => {
-                return util.sendModelOrError(res, invite.findOne({ transaction, include: exports.eventInviteIncludes }));
+            let queries = [ ];
+            if (req.body.accept) {
+                queries.push(create_attendee(current_uid, eid, transaction));
+                access_state.invite.status = db.EventInvite.STATUS_ACCEPTED;
+            } else {
+                access_state.invite.status = db.EventInvite.STATUS_REJECTED;
+            }
+            queries.push(access_state.invite.save({ transaction }));
+
+            return Promise.all(queries).then(() => {
+                return util.sendModelOrError(res, db.EventInvite.findOne({ where: {
+                    id_event: eid,
+                    id_invitee: current_uid
+                }, transaction, include: exports.eventInviteIncludes }));
             });
         });
     }).catch(err => {
@@ -139,13 +149,11 @@ exports.sendJoinRequest = function(req, res) {
     const eid = parseInt(req.params.eid);
     return db.sequelize.transaction(transaction => {
         return fetch_event_access_state(current_uid, eid, transaction).then(access_state => {
-            if (event.visibility === db.Event.VISIBILITY_SECRET || event.invite_required) {
-                return util.detailErrorResponse(res, 403, 'cannot send join request');
-            } else if (event.is_attendee) {
+            if (access_state.is_attendee) {
                 return util.detailErrorResponse(res, 403, 'cannot send join request: is already an attendee');
-            } else if (event.is_requester && event.request.status === db.EventJoinRequest.STATUS_PENDING) {
+            } else if (access_state.is_requester && access_state.request.status === db.EventJoinRequest.STATUS_PENDING) {
                 return util.detailErrorResponse(res, 403, 'cannot send join request: a request has already been sent');
-            } else if (event.is_requester && event.request.status === db.EventJoinRequest.STATUS_REJECTED) {
+            } else if (access_state.is_requester && access_state.request.status === db.EventJoinRequest.STATUS_REJECTED) {
                 return util.detailErrorResponse(res, 403, 'cannot send join request: the user has already been rejected from this event');
             }
 
@@ -154,7 +162,7 @@ exports.sendJoinRequest = function(req, res) {
                 id_requester: current_uid,
                 id_event: eid
             };
-            if (event.is_invitee && event.invite.status === db.EventInvite.STATUS_PENDING) {
+            if (access_state.is_invitee && access_state.invite.status === db.EventInvite.STATUS_PENDING) {
                 access_state.invite.status = db.EventInvite.STATUS_ACCEPTED;
                 queries.push(access_state.invite.save({ transaction }));
                 queries.push(create_attendee(current_uid, eid, transaction));
@@ -162,8 +170,10 @@ exports.sendJoinRequest = function(req, res) {
             } else if (access_state.event.user_can_join) {
                 queries.push(create_attendee(current_uid, eid, transaction));
                 queries.push(create_join_request(request_pk, db.EventInvite.STATUS_ACCEPTED, transaction));
-            } else {
+            } else if (!access_state.event.user_can_join) {
                 queries.push(create_join_request(request_pk, db.EventInvite.STATUS_PENDING, transaction));
+            } else if (access_state.event.visibility === db.Event.VISIBILITY_SECRET || access_state.event.invite_required) {
+                return util.detailErrorResponse(res, 403, 'cannot send join request');
             }
 
             return Promise.all(queries).then(() => {
@@ -174,6 +184,7 @@ exports.sendJoinRequest = function(req, res) {
             })
         });
     }).catch(err => {
+        console.log(err);
         return util.detailErrorResponse(res, 500, err);
     });
 };
@@ -190,12 +201,24 @@ exports.handleJoinRequest = function(req, res) {
                 return util.detailErrorResponse(res, 403, 'cannot handle join request: the user has already been rejected from this event');
             }
 
-            access_state.request.status = req.body.accept ? db.EventJoinRequest.STATUS_ACCEPTED : db.EventJoinRequest.STATUS_REJECTED;
-            return access_state.request.save({ transaction }).then(request => {
-                return util.sendModelOrError(res, request.findOne({ transaction, include: exports.eventJoinRequestIncludes }));
+            let queries = [ ];
+            if (req.body.accept) {
+                queries.push(create_attendee(req.body.id_requester, eid, transaction));
+                access_state.request.status = db.EventJoinRequest.STATUS_ACCEPTED;
+            } else {
+                access_state.request.status = db.EventJoinRequest.STATUS_REJECTED;
+            }
+            queries.push(access_state.request.save({ transaction }));
+
+            return Promise.all(queries).then(() => {
+                return util.sendModelOrError(res, db.EventJoinRequest.findOne({ where: {
+                    id_requester: req.body.id_requester,
+                    id_event: eid
+                }, transaction, include: exports.eventJoinRequestIncludes }));
             });
         });
     }).catch(err => {
+        console.log(err);
         return util.detailErrorResponse(res, 500, err);
     });
 };
@@ -204,10 +227,8 @@ exports.subscribeToEvent = function(req, res) {
     const eid = parseInt(req.params.eid);
     const current_uid = userutil.getCurrUserId(req);
     return db.sequelize.transaction(transaction => {
-        return fetch_event_access_state(req.body.id_requester, eid, transaction).then(access_state => {
-            if (event.visibility === db.Event.VISIBILITY_SECRET || event.invite_required || !event.user_can_join) {
-                return util.detailErrorResponse(res, 403, "cannot join this event");
-            } else if (access_state.is_attendee) {
+        return fetch_event_access_state(current_uid, eid, transaction).then(access_state => {
+            if (access_state.is_attendee) {
                 return util.detailErrorResponse(res, 403, "cannot join this event: already an attendee");
             }
 
@@ -215,11 +236,13 @@ exports.subscribeToEvent = function(req, res) {
             if (access_state.is_invitee && access_state.invite.status !== db.EventInvite.STATUS_ACCEPTED) {
                 access_state.invite.status = db.EventInvite.STATUS_ACCEPTED;
                 queries.push(access_state.invite.save({ transaction }));
-            }
-            if (access_state.is_requester && access_state.request.status === db.EventInvite.STATUS_PENDING) {
+            } else if (access_state.is_requester && access_state.request.status === db.EventInvite.STATUS_PENDING) {
                 access_state.request.status = db.EventJoinRequest.STATUS_ACCEPTED;
                 queries.push(access_state.request.save({ transaction }));
+            } else if (access_state.event.visibility === db.Event.VISIBILITY_SECRET || access_state.event.invite_required || !access_state.event.user_can_join) {
+                return util.detailErrorResponse(res, 403, "cannot join this event");
             }
+
             queries.push(create_attendee(current_uid, eid, transaction));
 
             return Promise.all(queries).then(() => {
@@ -242,7 +265,7 @@ exports.deleteEventAttendee = function(req, res) {
             // delete invite and request data
             return Promise.all([
                 db.EventJoinRequest.destroy({ where: {
-                        id_request: uid, id_event: eid,
+                        id_requester: uid, id_event: eid,
                         status: { [db.Op.ne]: db.EventJoinRequest.STATUS_REJECTED }
                     }, transaction }),
                 db.EventInvite.destroy({ where: { id_invitee: uid,  id_event: eid } , transaction })
