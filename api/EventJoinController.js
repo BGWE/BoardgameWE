@@ -265,9 +265,9 @@ exports.deleteEventAttendee = function(req, res) {
             // delete invite and request data
             return Promise.all([
                 db.EventJoinRequest.destroy({ where: {
-                        id_requester: uid, id_event: eid,
-                        status: { [db.Op.ne]: db.EventJoinRequest.STATUS_REJECTED }
-                    }, transaction }),
+                    id_requester: uid, id_event: eid,
+                    status: { [db.Op.ne]: db.EventJoinRequest.STATUS_REJECTED }
+                }, transaction }),
                 db.EventInvite.destroy({ where: { id_invitee: uid,  id_event: eid } , transaction })
             ]).then(() => {
                 return EventController.sendEventAttendees(eid, res, { transaction });
