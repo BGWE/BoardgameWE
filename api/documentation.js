@@ -67,6 +67,11 @@
  * @apiSuccess {String} visibility Event visibility. One of: `["PUBLIC", "PRIVATE", "SECRET"]`
  * @apiSuccess {Boolean} invite_required True if an invite is required to join the event
  * @apiSuccess {Boolean} attendees_can_edit True if attendees can also edit the event (add game, timer...)
+ * @apiSuccess {Object} current Current user status regarding the event
+ * @apiSuccess {Boolean} current.is_attendee True if the user is an attendee of the event
+ * @apiSuccess {Boolean} current.is_invitee True if the user is an invitee of the event (invite request is pending)
+ * @apiSuccess {Boolean} current.is_requester True if the user has send a (still pending) join request for this event
+ * @apiSuccess {Boolean} current.is_rejected True if a user join request for this event was rejected
  */
 
 /**
