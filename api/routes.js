@@ -713,8 +713,8 @@ module.exports = function(app) {
         );
 
     /**
-     * @api {post} /event/:id/subscribe Subscribe to event
-     * @apiName SubscribeToEvent
+     * @api {post} /event/:id/join Join event
+     * @apiName JoinEvent
      * @apiGroup Event
      * @apiDescription Subscribe the current user to the event.
      *
@@ -723,7 +723,7 @@ module.exports = function(app) {
      * @apiUse TokenHeaderRequired
      * @apiUse SuccessObjDescriptor
      */
-    app.route("/event/:eid/subscribe")
+    app.route("/event/:eid/join")
         .post(
             [param('eid').custom(validation.model(db.Event))],
             validation.validateOrBlock("event not found: cannot join"),
@@ -869,7 +869,7 @@ module.exports = function(app) {
 
     /**
      * @api {put} /event/:eid/invite  Handle event invite
-     * @apiName HandleInviteEvent
+     * @apiName HandleEventInvite
      * @apiGroup Event invites
      * @apiDescription Handle an event invite (sent to the current user)
      *
@@ -929,10 +929,10 @@ module.exports = function(app) {
      */
 
     /**
-     * @api {post} /event/:eid/join_request Send event join request
-     * @apiName SendEventJoinRequest
+     * @api {post} /event/:eid/join_request Handle event join request
+     * @apiName HandleEventJoinRequest
      * @apiGroup Event join request
-     * @apiDescription Send a join request for an event.
+     * @apiDescription Handle a join request for the given event.
      *
      * @apiParam (param) {Number} eid Event identifier
      * @apiParam (body) {Number} id_requester Invite recipient user identifier
