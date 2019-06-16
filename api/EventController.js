@@ -19,6 +19,7 @@ const eventFullIncludeSQ = [
 
 exports.createEvent = function(req, res) {
     const visibility = req.body.visibility || db.Event.VISIBILITY_SECRET;
+    const is_secret = visibility === db.Event.VISIBILITY_SECRET;
     return util.sendModelOrError(res, db.Event.create({
         name: req.body.name,
         location: req.body.location,
@@ -26,25 +27,28 @@ exports.createEvent = function(req, res) {
         end: req.body.end.utc(),
         id_creator: userutil.getCurrUserId(req),
         description: req.body.description,
-        hide_rankings: req.body.hide_rankings || false,
-        attendees_can_edit: req.body.attendees_can_edit || true,
+        hide_rankings: util.boolOrDefault(req.body.hide_rankings, false),
         visibility,
-        invite_required: visibility === db.Event.VISIBILITY_SECRET ? true : (req.body.invite_required !== undefined ? req.body.invite_required : true),
-        user_can_join: req.body.user_can_join || false
+        attendees_can_edit: util.boolOrDefault(req.body.attendees_can_edit, true),
+        invite_required: is_secret ? true : util.boolOrDefault(req.body.invite_required, true),
+        user_can_join: util.boolOrDefault(req.body.user_can_join, false)
     }));
 };
 
 exports.updateEvent = function(req, res) {
+    const visibility = req.body.visibility || event.visibility;
+    const is_secret = visibility === db.Event.VISIBILITY_SECRET;
     return db.Event.findByPk(parseInt(req.params.eid)).then(event => {
         event.description = req.body.description || event.description;
         event.name = req.body.name || event.name;
         event.location = req.body.location || event.location;
         event.start = req.body.start ? req.body.start.utc() : event.start;
         event.end = req.body.end ? req.body.end.utc() : event.end;
-        event.hide_rankings = req.body.hide_rankings === undefined ? event.hide_rankings : req.body.hide_rankings;
-        event.visibility = req.body.visibility || event.visibility;
-        event.attendees_can_edit = req.body.attendees_can_edit === undefined ? event.attendees_can_edit : req.body.attendees_can_edit;
-        event.invite_required = req.body.invite_required === undefined ? event.invite_required : req.body.invite_required;
+        event.hide_rankings = util.boolOrDefault(req.body.hide_rankings, event.hide_rankings);
+        event.visibility = visibility;
+        event.attendees_can_edit = util.boolOrDefault(req.body.attendees_can_edit, event.attendees_can_edit);
+        event.invite_required = is_secret ? true : util.boolOrDefault(req.body.invite_required, event.invite_required);
+        event.user_can_join = util.boolOrDefault(req.body.user_can_join, event.user_can_join);
         return util.sendModelOrError(res, event.save());
     }).catch(err => {
         return util.detailErrorResponse(res, 404, "no such event")
@@ -60,6 +64,53 @@ exports.getFullEvent = function(req, res) {
         where: {id: parseInt(req.params.eid)},
         include: eventFullIncludeSQ
     }));
+};
+
+exports.getEventUserAccessIncludes = function(id_user) {
+    return [{
+        attributes: ["id_event"], where: {id_user},
+        ... includes.genericIncludeSQ(db.EventAttendee, 'attendees')
+    }, {
+        attributes: ["id_event", ["status", "request_status"]], where: {id_requester: id_user},
+        ... includes.genericIncludeSQ(db.EventJoinRequest, 'requesters'),
+    }, {
+        attributes: ["id_event", ["status", "invite_status"]], where: {id_invitee: id_user},
+        ... includes.genericIncludeSQ(db.EventInvite, 'invitees'),
+    }]
+};
+
+exports.formatRawEventWithUserAccess = function(id_user, event) {
+    let current = {};
+    current.is_attendee = event.attendees.length > 0;
+    current.is_invitee = event.invitees.length > 0 && event.invitees[0].invite_status === db.EventInvite.STATUS_PENDING;
+    current.is_requester = event.requesters > 0 && event.requesters[0].request_status === db.EventJoinRequest.STATUS_PENDING;
+    current.is_rejected = event.requesters > 0 && event.requesters[0].request_status === db.EventJoinRequest.STATUS_REJECTED;
+    current.is_creator = event.id_creator === id_user;
+    current.can_join = !current.is_attendee && (
+        current.is_creator
+        || current.is_invitee
+        || (
+            event.visibility !== db.Event.VISIBILITY_SECRET
+            && !event.invite_required
+            && event.user_can_join
+            && !current.is_rejected
+        )
+    );
+
+    event.dataValues.current = current;
+    event.dataValues.attendees = undefined;
+    event.dataValues.invitees = undefined;
+    event.dataValues.requesters = undefined;
+    return event;
+};
+
+exports.fetchEventsWithUserAccess = function(id_user, where) {
+    return db.Event.findAll({
+        where,
+        include: [ includes.getShallowUserIncludeSQ("creator") ].concat(exports.getEventUserAccessIncludes(id_user))
+    }).then(events => {
+        return events.map(e => exports.formatRawEventWithUserAccess(id_user, e));
+    });
 };
 
 exports.getCurrentUserEvents = function(req, res) {
@@ -99,9 +150,7 @@ exports.getCurrentUserEvents = function(req, res) {
             ... where,
         };
     }
-    return util.sendModelOrError(res, db.Event.findAll({ where, include: [
-        includes.getShallowUserIncludeSQ("creator")
-    ]}));
+    return util.sendModelOrError(res, exports.fetchEventsWithUserAccess(current_uid, where));
 };
 
 exports.deleteEvent = function(req, res) {

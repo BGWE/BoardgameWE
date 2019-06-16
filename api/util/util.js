@@ -15,6 +15,10 @@ exports.parseList = function(s, fn, sep) {
     return s.split(sep).map(v => fn(v));
 };
 
+exports.boolOrDefault = function(b, deflt) {
+    return b !== undefined ? b : deflt;
+};
+
 exports.toDictMapping = (arr, field) => {
     let object = {};
     for (let i in arr) {
@@ -127,6 +131,7 @@ exports.sendModelOrError = function(res, promise, transform) {
             return exports.successResponse(res, transform(obj));
         })
         .catch(err => {
+            console.log(err);
             return exports.errorResponse(res);
         })
 };

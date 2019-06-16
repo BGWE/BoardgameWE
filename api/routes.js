@@ -739,7 +739,7 @@ module.exports = function(app) {
         .post(
             [param('eid').custom(validation.model(db.Event))],
             validation.validateOrBlock("event not found: cannot join"),
-            EventJoinController.subscribeToEvent
+            EventJoinController.joinEvent
         );
 
     /**

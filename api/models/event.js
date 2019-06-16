@@ -41,6 +41,18 @@ module.exports = (sequelize, DataTypes) => {
           sourceKey: 'id',
           as: 'attendees'
       });
+      models.Event.hasMany(models.EventInvite, {
+          onDelete: "CASCADE",
+          foreignKey: 'id_event',
+          sourceKey: 'id',
+          as: 'invitees'
+      });
+      models.Event.hasMany(models.EventJoinRequest, {
+          onDelete: "CASCADE",
+          foreignKey: 'id_event',
+          sourceKey: 'id',
+          as: 'requesters'
+      });
   };
 
   Event.VISIBILITY_PUBLIC = "PUBLIC";
