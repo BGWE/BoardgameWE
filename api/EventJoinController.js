@@ -19,7 +19,8 @@ const fetch_event_access_state = async (uid, eid, transaction) => {
         is_invitee: !!results[2],
         invite: results[2],
         is_requester: !!results[3],
-        request: results[3]
+        request: results[3],
+        is_creator: results[0].id_creator === uid
     }
 };
 
@@ -166,22 +167,31 @@ exports.sendJoinRequest = function(req, res) {
                 return util.detailErrorResponse(res, 403, 'cannot send join request: the user has already been rejected from this event');
             }
 
+            const is_secret = access_state.event.visibility === db.Event.VISIBILITY_SECRET;
             let queries = [];
             const request_pk = {
                 id_requester: current_uid,
                 id_event: eid
             };
-            if (access_state.is_invitee && access_state.invite.status === db.EventInvite.STATUS_PENDING) {
+            if (access_state.is_invitee
+                && access_state.invite.status === db.EventInvite.STATUS_PENDING
+                && (access_state.is_creator
+                    || (!is_secret && !access_state.event.invite_required))) {
                 access_state.invite.status = db.EventInvite.STATUS_ACCEPTED;
                 queries.push(access_state.invite.save({ transaction }));
                 queries.push(create_attendee(current_uid, eid, transaction));
                 queries.push(create_join_request(request_pk, db.EventInvite.STATUS_ACCEPTED, transaction));
-            } else if (access_state.event.user_can_join) {
+            } else if (access_state.is_creator
+                       || (!is_secret
+                           && !access_state.event.invite_required
+                           && access_state.event.user_can_join)) {
                 queries.push(create_attendee(current_uid, eid, transaction));
                 queries.push(create_join_request(request_pk, db.EventInvite.STATUS_ACCEPTED, transaction));
-            } else if (!access_state.event.user_can_join) {
+            } else if (!is_secret
+                        && !access_state.event.invite_required
+                        && !access_state.event.user_can_join) {
                 queries.push(create_join_request(request_pk, db.EventInvite.STATUS_PENDING, transaction));
-            } else if (access_state.event.visibility === db.Event.VISIBILITY_SECRET || access_state.event.invite_required) {
+            } else {
                 return util.detailErrorResponse(res, 403, 'cannot send join request');
             }
 
@@ -230,7 +240,7 @@ exports.handleJoinRequest = function(req, res) {
     });
 };
 
-exports.subscribeToEvent = function(req, res) {
+exports.joinEvent = function(req, res) {
     const eid = parseInt(req.params.eid);
     const current_uid = userutil.getCurrUserId(req);
     return db.sequelize.transaction(transaction => {
@@ -240,13 +250,16 @@ exports.subscribeToEvent = function(req, res) {
             }
 
             let queries = [];
-            if (access_state.is_invitee && access_state.invite.status !== db.EventInvite.STATUS_ACCEPTED) {
+            if (access_state.is_invitee && access_state.invite.status === db.EventInvite.STATUS_PENDING) {
                 access_state.invite.status = db.EventInvite.STATUS_ACCEPTED;
                 queries.push(access_state.invite.save({ transaction }));
-            } else if (access_state.is_requester && access_state.request.status === db.EventInvite.STATUS_PENDING) {
+            } else if (access_state.event.user_can_join && access_state.is_requester && access_state.request.status === db.EventInvite.STATUS_PENDING) {
                 access_state.request.status = db.EventJoinRequest.STATUS_ACCEPTED;
                 queries.push(access_state.request.save({ transaction }));
-            } else if (access_state.event.visibility === db.Event.VISIBILITY_SECRET || access_state.event.invite_required || !access_state.event.user_can_join) {
+            } else if (access_state.event.id_creator !== current_uid
+                        || access_state.event.visibility === db.Event.VISIBILITY_SECRET
+                        || access_state.event.invite_required
+                        || !access_state.event.user_can_join) {
                 return util.detailErrorResponse(res, 403, "cannot join this event");
             }
 
