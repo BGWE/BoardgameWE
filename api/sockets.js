@@ -28,10 +28,9 @@ const getCurrentUser = function(socket) {
 const genericHandleChangePlayer = function(timer_room, next) {
     const which = next ? "next" : "prev";
     return async (values) => {
-        // if timer was running, need to check result of next/prev player's timer start promise
-        const start_ok = values.length < 2 || values[1].success;
         await timer_room.emitWithState("timer_" + which);
-        if (!start_ok && values.length === 2) {
+        // if timer was running, need to check result of next/prev player's timer start promise
+        if (values.length === 2 && !values[1].success) {
             sendErrorEvent(socket, 'cannot start ' + which + ' player\'s timer: ' + values[1].error);
         }
     }
@@ -141,56 +140,52 @@ module.exports = function(io) {
 
         /**
          * Start the given player timer (based on player turn). If the timer is already started nothing is changed.
-         * @param player_turn int
-         * @param options
+         * @param player_turn int|null Null for starting current player timer, a turn order for starting the timer of the player at this turn order
+         * @param transaction Transaction Transaction the start operation is executed in (mandatory)
          * @returns {Promise<*>} {success: true|false, [error: str]}  (true if timer started, error message only if
          * success is false)
          */
-        async startTimer(player_turn, options) {
-            await this.checkTimerIsSet(options);
-            const player = await this.getPlayerPerTurn(player_turn, options);
-            const is_started = player.start !== null;
-
-            if (is_started) {
+        async startTimer(player_turn, transaction) {
+            await this.setTimer({ transaction, lock: transaction.LOCK.SHARE });
+            player_turn = player_turn != null ? player_turn : this.timer.current_player;
+            const player = await this.getPlayerPerTurn(player_turn, { transaction, lock: transaction.LOCK.UPDATE });
+            if (player.start !== null) {
                 return {success: false, error: this.errors.TIMER_ALREADY_STARTED};
             } else if (this.timer.timer_type !== db.GameTimer.COUNT_UP && this.timer.initial_duration - player.elapsed <= 0) {
                 return {success: false, error: this.errors.TIMER_HAS_RAN_OUT};
             }
-            await player.update({start: moment().utc() }, options);
+            await player.update({start: moment().utc() }, {transaction});
             return {success: true, error:""};
         }
 
         /**
-         * Stop the given player timer (based on player turn). If the timer is already stopped nothing is changed.
-         * @param player_turn int
-         * @param options
+         * Stop the current player timer (based on player turn). If the timer is already stopped nothing is changed.
+         * @param transaction Transaction Transaction the stop operation is executed in (mandatory)
          * @returns {Promise<*>} {success: true|false, [error: str]}  (true if timer stopped, error message only if
          * success is false)
          */
-        async stopTimer(player_turn, options) {
-            await this.checkTimerIsSet(options);
-            const player = await this.getPlayerPerTurn(player_turn, options);
-            const is_started = player.start !== null;
-            if (!is_started) {
+        async stopTimer(transaction) {
+            await this.setTimer({ transaction, lock: transaction.LOCK.SHARE });
+            const player = await this.getPlayerPerTurn(this.timer.current_player, { transaction, lock: transaction.LOCK.UPDATE });
+            if (player.start == null) {
                 return {success: false, error: this.errors.TIMER_ALREADY_STOPPED};
             }
             let data = { elapsed: player.elapsed + moment().diff(player.start), start: null };
             if (this.timer.timer_type === db.GameTimer.RELOAD) { // subtract duration increment
                 data.elapsed = Math.max(0, data.elapsed - this.reload.duration_increment);
             }
-            await player.update(data, options);
+            await player.update(data, {transaction});
             return {success: true}
         }
 
         /**
          * Change the current player
          * @param new_player int
-         * @param options
+         * @param transaction Transaction
          * @returns {Promise<void>}
          */
-        async updateCurrentPlayer(new_player, options) {
-            const timer = await this.getTimer(options);
-            await timer.update({ current_player: new_player }, options);
+        async updateCurrentPlayer(new_player, transaction) {
+            return await db.GameTimer.update({ current_player: new_player }, { where: {id: this.id_timer}, transaction });
         }
 
         /**
@@ -201,21 +196,15 @@ module.exports = function(io) {
         async changePlayer(take_next) {
             let self = this;
             return db.sequelize.transaction(async function(transaction) {
-                const t = {transaction};
-                return Promise.all([
-                    self.getPlayerCount(t),
-                    self.getTimer(t)
-                ]).then(values => {
-                    const count = values[0], timer = values[1];
-                    const next_player = (timer.current_player + (take_next ? 1 : count - 1)) % count;
-                    return self.stopTimer(timer.current_player, t).then(action => {
-                        let promises = [self.updateCurrentPlayer(next_player, t)];
-                        if (action.success) {
-                            promises.push(self.startTimer(next_player, t));
-                        }
-                        return Promise.all(promises);
-                    });
-                });
+                await self.setTimer({ transaction, lock: transaction.LOCK.UPDATE });
+                const count = await self.getPlayerCount({transaction});
+                const stop_action = await self.stopTimer(transaction);
+                const next_player = (self.timer.current_player + (take_next ? 1 : count - 1)) % count;
+                let results = [await self.updateCurrentPlayer(next_player, transaction)];
+                if (stop_action.success) {
+                    results.push(await self.startTimer(transaction));
+                }
+                return results;
             });
         }
 
@@ -227,12 +216,12 @@ module.exports = function(io) {
             return this.changePlayer(false);
         }
 
-        async changePlayerTurnOrder(player_id, turn_order, options) {
+        async changePlayerTurnOrder(player_id, turn_order, transaction) {
             return db.PlayerGameTimer.update({
                 turn_order: turn_order,
                 start: null
             }, {
-                ...options,
+                transaction,
                 where: { id_timer: this.id_timer, id: player_id }
             });
         }
@@ -282,8 +271,9 @@ module.exports = function(io) {
             }
             console.debug('timer_start - ' + timer_room.getRoomName());
             try {
-                await timer_room.setTimer(); // refresh internal timer object
-                const action = await timer_room.startTimer(timer_room.timer.current_player);
+                const action = await db.sequelize.transaction(async (transaction) => {
+                    return await timer_room.startTimer(null, transaction);
+                });
                 if (action.success) {
                     await timer_room.emitWithState("timer_start");
                 } else {
@@ -339,10 +329,10 @@ module.exports = function(io) {
 
         socket.on('timer_delete', function(id_timer) {
             db.sequelize.transaction(async function (transaction) {
-                const t = {transaction};
                 const timer = await db.GameTimer.findByPk(id_timer, {
-                    ...t,
-                    include: [includes.defaultEventIncludeSQ]
+                    include: [includes.defaultEventIncludeSQ],
+                    lock: transaction.LOCK.UPDATE,
+                    transaction
                 });
                 const id_user = getCurrentUser(socket).id;
                 if (timer === null) {
@@ -350,7 +340,7 @@ module.exports = function(io) {
                 } else if (timer.id_creator !== id_user && (timer.id_event === null || timer.event.id_creator !== id_user)) {
                     throw new Error("cannot delete timer: only the creator can delete a timer.");
                 }
-                return timer.destroy(t);
+                return timer.destroy({transaction});
             }).then(() => {
                 // emit also to sender if he's not in the deleted timer's room
                 if (timer_room === null || timer_room.id_timer !== id_timer) {
@@ -362,26 +352,25 @@ module.exports = function(io) {
             });
         });
 
-        socket.on('change_player_turn_order', function(new_player_turn_order) {
+        socket.on('timer_change_player_turn_order', function(new_player_turn_order) {
             if (!timer_room) {
                 sendErrorEvent(socket, "not following any timer: cannot change player turn order");
                 return;
             }
 
-            console.debug('change_player_turn_order - ' + timer_room.getRoomName());
+            console.debug('timer_change_player_turn_order - ' + timer_room.getRoomName());
             console.debug(new_player_turn_order);
 
             db.sequelize.transaction(function(transaction) {
-                const t = {transaction};
                 return Promise.all([
-                    timer_room.updateCurrentPlayer(0, t), 
-                    ...new_player_turn_order.map(player => timer_room.changePlayerTurnOrder(player.id, player.turn_order, t))
+                    timer_room.updateCurrentPlayer(0, transaction),
+                    ...new_player_turn_order.map(player => timer_room.changePlayerTurnOrder(player.id, player.turn_order, transaction))
                 ])
             }).then(async values => {
-                console.debug('change_player_turn_order - Transaction completed with values: ', values);
-                await timer_room.emitWithState('change_player_turn_order');
+                console.debug('timer_change_player_turn_order - Transaction completed with values: ', values);
+                await timer_room.emitWithState('timer_change_player_turn_order');
             }).catch(error => {
-                console.debug('change_player_turn_order - Transaction error: ', error);
+                console.debug('timer_change_player_turn_order - Transaction error: ', error);
                 sendErrorEvent(socket, "failed to update player order");
             });            
         });
