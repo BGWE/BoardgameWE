@@ -58,6 +58,19 @@ module.exports = (sequelize, DataTypes) => {
             sourceKey: 'id',
             as: 'library_games'
         });
+
+        models.BoardGame.hasMany(models.BoardGame, {
+            onDelete: "CASCADE",
+            foreignKey: 'id_expansion_of',
+            sourceKey: 'id',
+            as: 'expansions'
+        });
+
+        models.BoardGame.belongsTo(models.BoardGame,  {
+            targetKey: 'id_expansion_of',
+            foreignKey: 'id',
+            as: 'expansion'
+        });
     };
     return BoardGame;
 };
