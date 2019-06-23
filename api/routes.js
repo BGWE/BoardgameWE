@@ -338,7 +338,7 @@ module.exports = function(app) {
     /**
      * @api {get} /user/current/event_invites Get current user event invites
      * @apiName GetCurrentUserEventInvites
-     * @apiGroup Event join request
+     * @apiGroup Event invites
      * @apiDescription Get event invites sent to the current user
      * @apiParam (query) {String[]} [status] If set: filter invites based on the given statuses.
      * @apiUse TokenHeaderRequired
@@ -714,7 +714,8 @@ module.exports = function(app) {
      * @apiDescription Remove an attendee from the specified event.
      * Note: only the creator can use this endpoint
      *
-     * @apiParam {Number} id Event identifier.
+     * @apiParam {Number} eid Event identifier.
+     * @apiParam {Number} uid Attendee user identifier.
      *
      * @apiUse TokenHeaderRequired
      */
@@ -941,7 +942,7 @@ module.exports = function(app) {
      */
 
     /**
-     * @api {post} /event/:eid/join_request Handle event join request
+     * @api {put} /event/:eid/join_request Handle event join request
      * @apiName HandleEventJoinRequest
      * @apiGroup Event join request
      * @apiDescription Handle a join request for the given event.
