@@ -58,13 +58,17 @@ exports.get_event_access_callback = (access_type, eid_callback, uid_callback) =>
         eid_callback = eid_callback || (() => parseInt(req.params.eid));
         uid_callback = uid_callback || (() => userutil.getCurrUserId(req));
         try {
-            if (await can_access_event(access_type, eid_callback)) {
+            if (await exports.can_access_event(access_type, eid_callback, uid_callback)) {
                 next();
             } else {
                 return util.detailErrorResponse(res, 403, "you don't have the rights for executing this operation against this event ('" + access_type + "').");
             }
-        } catch (e if e instanceof NotFoundError) {
-            return util.detailErrorResponse(res, 404, "event not found");
+        } catch (e) {
+            if (e instanceof NotFoundError) {
+                return util.detailErrorResponse(res, 404, "event not found");
+            } else {
+                throw e;
+            }
         }
     });
 };
