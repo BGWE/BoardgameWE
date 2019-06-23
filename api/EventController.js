@@ -68,13 +68,15 @@ exports.getFullEvent = function(req, res) {
 
 exports.getEventUserAccessIncludes = function(id_user) {
     return [{
-        attributes: ["id_event"], where: {id_user},
+        attributes: ["id_event"], where: {id_user}, required: false,
         ... includes.genericIncludeSQ(db.EventAttendee, 'attendees')
     }, {
-        attributes: ["id_event", ["status", "request_status"]], where: {id_requester: id_user},
+        attributes: ["id_event", ["status", "request_status"]], required: false,
+        where: {id_requester: id_user},
         ... includes.genericIncludeSQ(db.EventJoinRequest, 'requesters'),
     }, {
-        attributes: ["id_event", ["status", "invite_status"]], where: {id_invitee: id_user},
+        attributes: ["id_event", ["status", "invite_status"]], required: false,
+        where: {id_invitee: id_user},
         ... includes.genericIncludeSQ(db.EventInvite, 'invitees'),
     }]
 };
@@ -96,6 +98,18 @@ exports.formatRawEventWithUserAccess = function(id_user, event) {
             && !current.is_rejected
         )
     );
+    current.can_request = !current.is_attendee && (
+        current.is_creator
+        || current.is_invitee
+        || (
+            event.visibility !== db.Event.VISIBILITY_SECRET
+            && !event.invite_required
+            && !event.user_can_join
+            && !current.is_rejected
+        )
+    );
+    current.can_write = current.is_creator || (current.attendees_can_edit && current.is_attendee);
+    current.can_read = current.is_creator || current.is_attendee || current.is_invitee || event.visibility === db.Event.VISIBILITY_PUBLIC;
 
     event.dataValues.current = current;
     event.dataValues.attendees = undefined;

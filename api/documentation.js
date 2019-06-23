@@ -76,6 +76,9 @@
  * @apiSuccess {Boolean} current.is_rejected True if a user join request for this event was rejected
  * @apiSuccess {Boolean} current.is_creator True if the user is the creator of the event
  * @apiSuccess {Boolean} current.can_join True if the user can directly join the event (false if user is already an attendee)
+ * @apiSuccess {Boolean} current.can_request True if the user can send an join request to the event (false if user is already an attendee, `can_join` should have precedence on this one, as it indicates direct access is possible)
+ * @apiSuccess {Boolean} current.can_read True if the user can issue event-related api requests that are not state-changing
+ * @apiSuccess {Boolean} current.can_write True if the user can issue event-related api requests that are state-changing
  */
 
 /**
