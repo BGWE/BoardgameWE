@@ -60,10 +60,24 @@ exports.getEvent = function(req, res) {
 };
 
 exports.getFullEvent = function(req, res) {
-    return util.sendModelOrError(res, db.Event.findOne({
-        where: {id: parseInt(req.params.eid)},
-        include: eventFullIncludeSQ
-    }));
+    const current_uid = userutil.getCurrUserId(req);
+    return Promise.all([
+        db.Event.findOne({
+            where: {id: parseInt(req.params.eid)},
+            include: eventFullIncludeSQ
+        }),
+        db.Event.findOne({
+            where: {id: parseInt(req.params.eid)},
+            include: exports.getEventUserAccessIncludes(current_uid)
+        })
+    ]).then(values => {
+        let event = values[0];
+        let eventWithAccess = values[1];
+        event.dataValues.current = exports.formatRawEventWithUserAccess(current_uid, eventWithAccess).dataValues.current;
+        console.log(event);
+        return util.successResponse(res, event)
+    });
+
 };
 
 exports.getEventUserAccessIncludes = function(id_user) {

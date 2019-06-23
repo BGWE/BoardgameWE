@@ -151,6 +151,16 @@
  * @apiSuccess {User} creator Creator user data (see 'Get current user' request for user structure)
  * @apiSuccess {Attendee[]} attendees List of event attendees
  * @apiSuccess {ProvidedBoardGame[]} provided_board_games List of board games provided by attendees to the event.
+ * @apiSuccess {Object} current Current user status regarding the event access
+ * @apiSuccess {Boolean} current.is_attendee True if the user is an attendee of the event
+ * @apiSuccess {Boolean} current.is_invitee True if the user is an invitee of the event (invite request is pending)
+ * @apiSuccess {Boolean} current.is_requester True if the user has send a (still pending) join request for this event
+ * @apiSuccess {Boolean} current.is_rejected True if a user join request for this event was rejected
+ * @apiSuccess {Boolean} current.is_creator True if the user is the creator of the event
+ * @apiSuccess {Boolean} current.can_join True if the user can directly join the event (false if user is already an attendee)
+ * @apiSuccess {Boolean} current.can_request True if the user can send an join request to the event (false if user is already an attendee, `can_join` should have precedence on this one, as it indicates direct access is possible)
+ * @apiSuccess {Boolean} current.can_read True if the user can issue event-related api requests that are not state-changing
+ * @apiSuccess {Boolean} current.can_write True if the user can issue event-related api requests that are state-changing
  */
 
 /**
