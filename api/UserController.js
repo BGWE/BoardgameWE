@@ -372,10 +372,6 @@ exports.addBoardGameAndAddToWishToPlay = function(req, res) {
 };
 
 // Friends
-const friendshipToUser = (field_friend) => {
-    return u => u[field_friend];
-};
-
 const formatUserFriends = async function(id_user) {
     let users1 = await db.Friendship.findAll({
         where: { id_user1: id_user },
@@ -385,10 +381,7 @@ const formatUserFriends = async function(id_user) {
         where: { id_user2: id_user },
         include: [ includes.getUserIncludeSQ('user1') ]
     });
-    return Array.concat(
-        users1.map(u => friendshipToUser("user2")(u)),
-        users2.map(u => friendshipToUser("user1")(u))
-    );
+    return users1.map(f => f.user2).concat(users2.map(f => f.user1));
 };
 
 exports.getCurrentUserFriends = function(req, res) {
@@ -397,7 +390,7 @@ exports.getCurrentUserFriends = function(req, res) {
 };
 
 exports.getUserFriends = function(req, res) {
-    return util.sendModelOrError(res, parseInt(req.params.uid));
+    return util.sendModelOrError(res, formatUserFriends(parseInt(req.params.uid)));
 };
 
 exports.getFriendshipRequests = function(req, res) {
