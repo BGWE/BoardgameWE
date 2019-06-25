@@ -324,10 +324,10 @@ module.exports = function(app) {
 
     // TODO should return shallow user data
     /**
-     * @api {get} /user/current/friends Get current user friends
+     * @api {get} /user/:id/friends Get user friends
      * @apiName GetUserFriends
      * @apiGroup User friends
-     * @apiDescription Get user friends
+     * @apiDescription Get user friends. Can only be executed against friends of the current user.
      * @apiParam {Number} id User identifier.
      * @apiUse TokenHeaderRequired
      * @apiUse UserListDescriptor
