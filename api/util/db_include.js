@@ -60,7 +60,41 @@ exports.getUserIncludeSQ = function(as, includes) {
  */
 exports.getShallowUserIncludeSQ = function(as) {
     let base_include = exports.genericIncludeSQ(db.User, as);
-    return Object.assign({attributes: exports.userShallowAttributes}, base_include);
+    return { attributes: exports.userShallowAttributes, ...base_include };
+};
+
+/**
+ * Return a shallow user include with current user friendship status
+ * @param as
+ * @param current_uid
+ * @returns {{model: *, as: *, attributes: string[], include: []}}
+ */
+exports.getShallowUserIncludeSQWithFriendInfo = function(as, current_uid) {
+    let shallow = exports.getShallowUserIncludeSQ(as);
+    shallow.include = [
+        { ... exports.genericIncludeSQ(db.Friendship, "friend1"), where: {id_user2: current_uid}, required: false },
+        { ... exports.genericIncludeSQ(db.Friendship, "friend2"), where: {id_user1: current_uid}, required: false },
+        { ... exports.genericIncludeSQ(db.FriendshipRequest, "request_user_from"), where: {id_user_to: current_uid}, required: false },
+        { ... exports.genericIncludeSQ(db.FriendshipRequest, "request_user_to"), where: {id_user_from: current_uid}, required: false },
+    ];
+    return shallow;
+};
+
+exports.formatShallowUserWithCurrent = function(u, current_uid) {
+    let current = {};
+    current.is_friend = u.friend1.length > 0 || u.friend2.length > 0;
+    current.has_sent_friendship_request = u.request_user_to.length > 0;
+    current.has_received_friendship_request = u.request_user_from.length > 0;
+    if (current_uid) {
+        current.is_current = current_uid === u.id;
+    }
+    // clean old fields
+    u.dataValues.friend1 = undefined;
+    u.dataValues.friend2 = undefined;
+    u.dataValues.request_user_from = undefined;
+    u.dataValues.request_user_to = undefined;
+    u.dataValues.current = current;
+    return u;
 };
 
 /**

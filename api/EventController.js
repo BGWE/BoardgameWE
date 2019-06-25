@@ -231,18 +231,24 @@ exports.deleteProvidedBoardGames = function(req, res) {
     }));
 };
 
-exports.sendEventAttendees = function(eid, res, options) {
+exports.sendEventAttendees = function(req, eid, res, options) {
+    const current_uid = userutil.getCurrUserId(req);
     options = options || {};
     return m2m.sendAssociations(res, {
         model_class: db.EventAttendee,
         fixed: { id: eid, field: 'id_event' },
-        other: { includes: [includes.getShallowUserIncludeSQ("user")] },
+        other: { includes: [includes.getShallowUserIncludeSQWithFriendInfo("user", current_uid)] },
         options: { ... options }
+    }, data => {
+        return data.map(attendee => {
+            attendee.user = includes.formatShallowUserWithCurrent(attendee.user, current_uid);
+            return attendee;
+        });
     });
 };
 
 exports.getEventAttendees = function(req, res) {
-    return exports.sendEventAttendees(parseInt(req.params.eid), res);
+    return exports.sendEventAttendees(req, parseInt(req.params.eid), res);
 };
 
 exports.addBoardGameAndAddToEvent = function(req, res) {
