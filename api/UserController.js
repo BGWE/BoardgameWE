@@ -91,7 +91,12 @@ exports.getCurrentUser = function(req, res) {
 };
 
 exports.getUser = function(req, res) {
-    return handleUserResponse(res, db.User.findByPk(parseInt(req.params.uid)));
+    const current_uid = userutil.getCurrUserId(req);
+    const uid = parseInt(req.params.uid);
+    return util.sendModelOrError(res, db.User.findByPk(uid, {
+        attributes: includes.userShallowAttributes,
+        include: includes.getFriendshipIncludesSQ(current_uid)
+    }), (u) => includes.formatShallowUserWithCurrent(u, current_uid));
 };
 
 exports.updateUser = function(req, res) {

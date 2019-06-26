@@ -232,18 +232,12 @@ exports.deleteProvidedBoardGames = function(req, res) {
 };
 
 exports.sendEventAttendees = function(req, eid, res, options) {
-    const current_uid = userutil.getCurrUserId(req);
     options = options || {};
     return m2m.sendAssociations(res, {
         model_class: db.EventAttendee,
         fixed: { id: eid, field: 'id_event' },
-        other: { includes: [includes.getShallowUserIncludeSQWithFriendInfo("user", current_uid)] },
+        other: { includes: [includes.getShallowUserIncludeSQ("user")] },
         options: { ... options }
-    }, data => {
-        return data.map(attendee => {
-            attendee.user = includes.formatShallowUserWithCurrent(attendee.user, current_uid);
-            return attendee;
-        });
     });
 };
 

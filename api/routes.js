@@ -132,13 +132,13 @@ module.exports = function(app) {
      * @api {get} /user/:id Get user
      * @apiName GetUser
      * @apiGroup User
-     * @apiDescription Get the specified user data. Can only be executed against friends of the current user.
+     * @apiDescription Get the specified user data.
      * @apiUse TokenHeaderRequired
      *
      * @apiParam {Number} id The user identifier
      *
-     * @apiUse UserDescriptor
-     * @apiUse DBDatetimeFields
+     * @apiUse ShallowUserDescriptor
+     * @apiUse UserCurrentFriendshipDescriptor
      */
 
     /**
@@ -153,7 +153,7 @@ module.exports = function(app) {
      * @apiUse DBDatetimeFields
      */
     app.route("/user/:uid")
-        .get(user_access.read, UserController.getUser)
+        .get(UserController.getUser)
         .put(user_access.write, UserController.updateUser);
 
     /**

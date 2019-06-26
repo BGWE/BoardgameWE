@@ -64,6 +64,20 @@ exports.getShallowUserIncludeSQ = function(as) {
 };
 
 /**
+ * Returns includes necessary for friendship request
+ * @param current_uid
+ * @returns {*[]}
+ */
+exports.getFriendshipIncludesSQ = function(current_uid) {
+    return [
+        { ... exports.genericIncludeSQ(db.Friendship, "friend1"), where: {id_user2: current_uid}, required: false },
+        { ... exports.genericIncludeSQ(db.Friendship, "friend2"), where: {id_user1: current_uid}, required: false },
+        { ... exports.genericIncludeSQ(db.FriendshipRequest, "request_user_from"), where: {id_user_to: current_uid}, required: false },
+        { ... exports.genericIncludeSQ(db.FriendshipRequest, "request_user_to"), where: {id_user_from: current_uid}, required: false }
+    ];
+};
+
+/**
  * Return a shallow user include with current user friendship status
  * @param as
  * @param current_uid
@@ -71,15 +85,16 @@ exports.getShallowUserIncludeSQ = function(as) {
  */
 exports.getShallowUserIncludeSQWithFriendInfo = function(as, current_uid) {
     let shallow = exports.getShallowUserIncludeSQ(as);
-    shallow.include = [
-        { ... exports.genericIncludeSQ(db.Friendship, "friend1"), where: {id_user2: current_uid}, required: false },
-        { ... exports.genericIncludeSQ(db.Friendship, "friend2"), where: {id_user1: current_uid}, required: false },
-        { ... exports.genericIncludeSQ(db.FriendshipRequest, "request_user_from"), where: {id_user_to: current_uid}, required: false },
-        { ... exports.genericIncludeSQ(db.FriendshipRequest, "request_user_to"), where: {id_user_from: current_uid}, required: false },
-    ];
+    shallow.include = exports.getFriendshipIncludesSQ(current_uid);
     return shallow;
 };
 
+/**
+ * Reformat a user descriptor obtained with friendship includes
+ * @param u
+ * @param current_uid
+ * @returns {*}
+ */
 exports.formatShallowUserWithCurrent = function(u, current_uid) {
     let current = {};
     current.is_friend = u.friend1.length > 0 || u.friend2.length > 0;
