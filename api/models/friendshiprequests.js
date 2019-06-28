@@ -8,6 +8,11 @@ module.exports = (sequelize, DataTypes) => {
         id_user_to: {
             type: DataTypes.INTEGER,
             primaryKey: true
+        },
+        status: {
+            type: DataTypes.ENUM,
+            allowNull: false,
+            values: ["ACCEPTED", "REJECTED", "PENDING"],
         }
     }, {});
     FriendshipRequest.associate = function(models) {
@@ -23,5 +28,15 @@ module.exports = (sequelize, DataTypes) => {
             as: "user_to"
         });
     };
+
+    FriendshipRequest.STATUS_ACCEPTED = "ACCEPTED";
+    FriendshipRequest.STATUS_REJECTED = "REJECTED";
+    FriendshipRequest.STATUS_PENDING = "PENDING";
+    FriendshipRequest.STATUSES = [
+        FriendshipRequest.STATUS_ACCEPTED,
+        FriendshipRequest.STATUS_REJECTED,
+        FriendshipRequest.STATUS_PENDING
+    ];
+
     return FriendshipRequest;
 };
