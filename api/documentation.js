@@ -43,9 +43,9 @@
  *
  * @apiSuccess {Object} current Information about relation between the specified and current users
  * @apiSuccess {Boolean} current.is_current True if the user is the current user
- * @apiSuccess {Boolean} current.is_friend True if the user is a frienf of the current user
- * @apiSuccess {Boolean} current.has_sent_friendship_request True if the current user has sent a friendship request to the specified user
- * @apiSuccess {Boolean} current.has_received_friendship_request True if the current user has received a friendship request from the specified user
+ * @apiSuccess {Boolean} current.is_friend True if the user is a friend of the current user
+ * @apiSuccess {Boolean} current.has_sent_friendship_request True if the current user has sent a pending friendship request to the specified user
+ * @apiSuccess {Boolean} current.has_received_friendship_request True if the current user has received a pending friendship request from the specified user
  */
 
 

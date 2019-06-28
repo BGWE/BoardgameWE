@@ -72,8 +72,14 @@ exports.getFriendshipIncludesSQ = function(current_uid) {
     return [
         { ... exports.genericIncludeSQ(db.Friendship, "friend1"), where: {id_user2: current_uid}, required: false },
         { ... exports.genericIncludeSQ(db.Friendship, "friend2"), where: {id_user1: current_uid}, required: false },
-        { ... exports.genericIncludeSQ(db.FriendshipRequest, "request_user_from"), where: {id_user_to: current_uid}, required: false },
-        { ... exports.genericIncludeSQ(db.FriendshipRequest, "request_user_to"), where: {id_user_from: current_uid}, required: false }
+        { ... exports.genericIncludeSQ(db.FriendshipRequest, "request_user_from"), where: {
+            id_user_to: current_uid,
+            status: db.FriendshipRequest.STATUS_PENDING
+        }, required: false },
+        { ... exports.genericIncludeSQ(db.FriendshipRequest, "request_user_to"), where: {
+            id_user_from: current_uid,
+            status: db.FriendshipRequest.STATUS_PENDING
+        }, required: false }
     ];
 };
 
