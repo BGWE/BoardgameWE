@@ -360,7 +360,7 @@ module.exports = function(app) {
         .get(UserController.getFriendshipRequests);
 
     /**
-     * @api {post} /friend_requests Send friend request
+     * @api {post} /friend_request Send friend request
      * @apiName SendFriendRequest
      * @apiGroup User friends
      * @apiDescription Send a friend request from the current to the specified user
@@ -370,7 +370,7 @@ module.exports = function(app) {
      */
 
     /**
-     * @api {put} /friend_requests Handle friend request
+     * @api {put} /friend_request Handle friend request
      * @apiName HandleFriendRequest
      * @apiGroup User friends
      * @apiDescription Handler (i.e. accept or reject) a friend request
