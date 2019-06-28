@@ -406,6 +406,18 @@ module.exports = function(app) {
             UserController.deleteFriendshipRequest
         );
 
+    /**
+     * @api {delete} /friend/:id Remove user from friends
+     * @apiName DeleteFriend
+     * @apiGroup User friends
+     * @apiDescription Remove a user from friends
+     * @apiParam {Number} id The user identifier of the friend to remove.
+     * @apiUse TokenHeaderRequired
+     * @apiUse SuccessObjDescriptor
+     */
+    app.route("/friend/:uid")
+        .delete(UserController.deleteFriend);
+
 
     // Event
     const event_access = {

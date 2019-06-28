@@ -455,3 +455,16 @@ exports.deleteFriendshipRequest = function (req, res) {
         }
     }));
 };
+
+exports.deleteFriend = function (req, res) {
+    const current_user_id =  userutil.getCurrUserId(req);
+    const friend_id = parseInt(req.params.uid);
+    return util.handleDeletion(res, db.Friendship.destroy({
+        where: {
+            [db.Op.or]: [
+                {id_user1: current_user_id, id_user2: friend_id},
+                {id_user1: friend_id, id_user2: current_user_id}
+            ]
+        }
+    }));
+};
