@@ -373,11 +373,21 @@ module.exports = function(app) {
      * @api {put} /friend_request Handle friend request
      * @apiName HandleFriendRequest
      * @apiGroup User friends
-     * @apiDescription Handler (i.e. accept or reject) a friend request
+     * @apiDescription Handle (i.e. accept or reject) a friend request
      * @apiParam (body) {Number} id_sender User identifier of the sender of the friend.
      * @apiParam (body) {Boolean} accept True for accepting the request, false for rejecting it.
      * @apiUse TokenHeaderRequired
      * @apiUse FriendRequestDescriptor
+     */
+
+    /**
+     * @api {delete} /friend_request Cancel friend request
+     * @apiName CancelFriendRequest
+     * @apiGroup User friends
+     * @apiDescription Cancel a friend request
+     * @apiParam (body) {Number} id_recipient Friend request recipient user identifier.
+     * @apiUse TokenHeaderRequired
+     * @apiUse SuccessObjDescriptor
      */
     app.route("/friend_request")
         .post(
@@ -389,6 +399,11 @@ module.exports = function(app) {
             [ body('id_sender').isInt(), body('accept').isBoolean().toBoolean() ],
             validation.validateOrBlock("cannot handle friend request"),
             UserController.handleFriendshipRequest
+        )
+        .delete(
+            [ body('id_recipient').isInt() ],
+            validation.validateOrBlock("cannot delete friend request"),
+            UserController.deleteFriendshipRequest
         );
 
 

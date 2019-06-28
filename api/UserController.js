@@ -422,16 +422,11 @@ exports.handleFriendshipRequest = function(req, res) {
         return db.FriendshipRequest.findOne({
             where: {
                 id_user_from: id_sender,
-                id_user_to: current_user_id
+                id_user_to: current_user_id,
+                status: db.FriendshipRequest.STATUS_PENDING
             },
             transaction: t
         }).then(async request => {
-            if(request.status === db.FriendshipRequest.STATUS_ACCEPTED) {
-                return util.detailErrorResponse(res, 403, "cannot handle an accepted friendship request");
-            } else if (request.status === db.FriendshipRequest.STATUS_REJECTED) {
-                return util.detailErrorResponse(res, 403, "cannot handle a rejected friendship request");
-            }
-
             const accept = req.body.accept;
             request.status = accept ? db.FriendshipRequest.STATUS_ACCEPTED : db.FriendshipRequest.STATUS_REJECTED;
             if (accept) {
@@ -448,4 +443,15 @@ exports.handleFriendshipRequest = function(req, res) {
     }).catch(err => {
         return util.detailErrorResponse(res, 404, "request not found");
     });
+};
+
+exports.deleteFriendshipRequest = function (req, res) {
+    const current_user_id =  userutil.getCurrUserId(req);
+    return util.handleDeletion(res, db.FriendshipRequest.destroy({
+        where: {
+            id_user_from: current_user_id,
+            id_user_to: req.body.id_recipient,
+            status: db.FriendshipRequest.STATUS_PENDING
+        }
+    }));
 };
