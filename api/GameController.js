@@ -162,7 +162,11 @@ exports.updateEventGame = function(req, res) {
 };
 
 exports.rankForGame = function(game) {
-    return util.rank(game.game_players, (player) => player.score, game.ranking_method === "POINTS_LOWER_BETTER");
+    return util.rank(
+        game.game_players,
+        (player) => player.score, game.ranking_method === "POINTS_LOWER_BETTER",
+        (o, f, v) => { o.dataValues[f] = v; }  // write in dataValues not to lose values on the way
+    );
 };
 
 exports.sendAllGamesFiltered = function (filtering, res, options) {
