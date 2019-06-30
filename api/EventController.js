@@ -85,11 +85,11 @@ exports.getEventUserAccessIncludes = function(id_user) {
         attributes: ["id_event"], where: {id_user}, required: false,
         ... includes.genericIncludeSQ(db.EventAttendee, 'attendees')
     }, {
-        attributes: ["id_event", ["status", "request_status"]], required: false,
+        attributes: ["id_event", "status"], required: false,
         where: {id_requester: id_user},
         ... includes.genericIncludeSQ(db.EventJoinRequest, 'requesters'),
     }, {
-        attributes: ["id_event", ["status", "invite_status"]], required: false,
+        attributes: ["id_event", "status"], required: false,
         where: {id_invitee: id_user},
         ... includes.genericIncludeSQ(db.EventInvite, 'invitees'),
     }]
@@ -98,9 +98,9 @@ exports.getEventUserAccessIncludes = function(id_user) {
 exports.formatRawEventWithUserAccess = function(id_user, event) {
     let current = {};
     current.is_attendee = event.attendees.length > 0;
-    current.is_invitee = event.invitees.length > 0 && event.invitees[0].invite_status === db.EventInvite.STATUS_PENDING;
-    current.is_requester = event.requesters > 0 && event.requesters[0].request_status === db.EventJoinRequest.STATUS_PENDING;
-    current.is_rejected = event.requesters > 0 && event.requesters[0].request_status === db.EventJoinRequest.STATUS_REJECTED;
+    current.is_invitee = event.invitees.length > 0 && event.invitees[0].status === db.EventInvite.STATUS_PENDING;
+    current.is_requester = event.requesters.length > 0 && event.requesters[0].status === db.EventJoinRequest.STATUS_PENDING;
+    current.is_rejected = event.requesters.length > 0 && event.requesters[0].status === db.EventJoinRequest.STATUS_REJECTED;
     current.is_creator = event.id_creator === id_user;
     current.can_join = !current.is_attendee && (
         current.is_creator
@@ -112,7 +112,7 @@ exports.formatRawEventWithUserAccess = function(id_user, event) {
             && !current.is_rejected
         )
     );
-    current.can_request = !current.is_attendee && (
+    current.can_request = !current.is_attendee && !current.is_requester && (
         current.is_creator
         || current.is_invitee
         || (

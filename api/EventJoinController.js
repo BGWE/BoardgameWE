@@ -248,7 +248,6 @@ exports.joinEvent = function(req, res) {
             if (access_state.is_attendee) {
                 return util.detailErrorResponse(res, 403, "cannot join this event: already an attendee");
             }
-
             let queries = [];
             if (access_state.is_invitee && access_state.invite.status === db.EventInvite.STATUS_PENDING) {
                 access_state.invite.status = db.EventInvite.STATUS_ACCEPTED;
@@ -257,9 +256,9 @@ exports.joinEvent = function(req, res) {
                 access_state.request.status = db.EventJoinRequest.STATUS_ACCEPTED;
                 queries.push(access_state.request.save({ transaction }));
             } else if (access_state.event.id_creator !== current_uid
-                        || access_state.event.visibility === db.Event.VISIBILITY_SECRET
-                        || access_state.event.invite_required
-                        || !access_state.event.user_can_join) {
+                        && (access_state.event.visibility === db.Event.VISIBILITY_SECRET
+                             || access_state.event.invite_required
+                             || !access_state.event.user_can_join)) {
                 return util.detailErrorResponse(res, 403, "cannot join this event");
             }
 
