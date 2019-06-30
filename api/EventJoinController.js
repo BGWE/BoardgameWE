@@ -144,7 +144,7 @@ exports.handleEventInvite = function(req, res) {
 };
 
 exports.listJoinRequests = function(req, res) {
-    let where = {};
+    let where = { id_event: parseInt(req.params.eid) };
     if (req.query.status !== undefined) {
         where = {
             status: { [db.Op.in]: req.query.status.map(s => s.toUpperCase()) },
