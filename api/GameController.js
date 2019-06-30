@@ -1,6 +1,7 @@
 const db = require("./models/index");
 const util = require("./util/util");
 const includes = require("./util/db_include");
+const userutil = require("./util/user");
 const { validationResult } = require('express-validator/check');
 
 exports.gameFullIncludesSQ = [
@@ -179,6 +180,15 @@ exports.sendAllGamesFiltered = function (filtering, res, options) {
 exports.getGames = function (req, res) {
     // no filtering
     return exports.sendAllGamesFiltered(undefined, res);
+};
+
+exports.getUserGames = function(req, res) {
+    const current_uid = userutil.getCurrUserId(req);
+    const player_query = db.selectFieldQuery("GamePlayers", "id_game", {id_user: current_uid});
+    return exports.sendAllGamesFiltered({
+        where: { id: { [db.Op.in]: db.sequelize.literal('(' + player_query + ')') } },
+        include: exports.gameFullIncludesSQ
+    });
 };
 
 exports.getGame = function (req, res) {

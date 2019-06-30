@@ -157,6 +157,20 @@ module.exports = function(app) {
         .put(user_access.write, UserController.updateUser);
 
     /**
+     * @api {put} /user/:id/games Get user games
+     * @apiName GetUserGames
+     * @apiGroup User
+     * @apiDescription Get list of games played by the current user.
+     * @apiUse TokenHeaderRequired
+     *
+     * @apiParam {Number} id User identifier
+     * @apiSuccess {Game[]} games List of the games played by the specified user (see "Add event game" for Game
+     * structure). Note: the returned data is a list (not an actual object).
+     */
+    app.route("/user/:uid/games")
+        .get(user_access.read, GameController.getUserGames);
+
+    /**
      * @api {get} /user/:id/stats Get user stats
      * @apiName GetUserStats
      * @apiGroup User
