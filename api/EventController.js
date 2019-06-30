@@ -7,11 +7,12 @@ const Activity = require("./util/activities");
 const m2m = require("./util/m2m_helpers");
 
 const eventFullIncludeSQ = [
-    includes.genericIncludeSQ(db.EventAttendee, "attendees", [includes.getShallowUserIncludeSQ("user")]),
     includes.genericIncludeSQ(db.ProvidedBoardGame, "provided_board_games", [
         includes.getBoardGameIncludeSQ("provided_board_game"),
         includes.getShallowUserIncludeSQ("provider")
     ]),
+    // Disabled because should use fetch attendees
+    // includes.genericIncludeSQ(db.EventAttendee, "attendees", [includes.getShallowUserIncludeSQ("user")]),
     // Disabled because makes the request too slow ! Use /event/:eid/games instead.
     // includes.getGameIncludeSQ("games", [includes.defaultBoardGameIncludeSQ]),
     includes.getShallowUserIncludeSQ("creator")
@@ -74,7 +75,6 @@ exports.getFullEvent = function(req, res) {
         let event = values[0];
         let eventWithAccess = values[1];
         event.dataValues.current = exports.formatRawEventWithUserAccess(current_uid, eventWithAccess).dataValues.current;
-        console.log(event);
         return util.successResponse(res, event)
     });
 
@@ -122,7 +122,7 @@ exports.formatRawEventWithUserAccess = function(id_user, event) {
             && !current.is_rejected
         )
     );
-    current.can_write = current.is_creator || (current.attendees_can_edit && current.is_attendee);
+    current.can_write = current.is_creator || (event.attendees_can_edit && current.is_attendee);
     current.can_read = current.is_creator || current.is_attendee || current.is_invitee || event.visibility === db.Event.VISIBILITY_PUBLIC;
 
     event.dataValues.current = current;
