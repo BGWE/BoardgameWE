@@ -380,11 +380,11 @@ exports.addBoardGameAndAddToWishToPlay = function(req, res) {
 const formatUserFriends = async function(id_user) {
     let users1 = await db.Friendship.findAll({
         where: { id_user1: id_user },
-        include: [ includes.getUserIncludeSQ('user2') ]
+        include: [ includes.getShallowUserIncludeSQ('user2') ]
     });
     let users2 = await db.Friendship.findAll({
         where: { id_user2: id_user },
-        include: [ includes.getUserIncludeSQ('user1') ]
+        include: [ includes.getShallowUserIncludeSQ('user1') ]
     });
     return users1.map(f => f.user2).concat(users2.map(f => f.user1));
 };
@@ -401,7 +401,7 @@ exports.getUserFriends = function(req, res) {
 exports.getFriendshipRequests = function(req, res) {
     return util.sendModelOrError(res, db.FriendshipRequest.findAll({
         where: {id_user_from: userutil.getCurrUserId(req)},
-        include: [includes.getUserIncludeSQ('user_to')]
+        include: [includes.getShallowUserIncludeSQ('user_to')]
     }));
 };
 
@@ -411,7 +411,7 @@ exports.sendFriendshipRequest = function(req, res) {
         id_user_to: req.body.id_recipient,
         status: db.FriendshipRequest.STATUS_PENDING
     }, {
-        include: [includes.getUserIncludeSQ('user_to')]
+        include: [includes.getShallowUserIncludeSQ('user_to')]
     }));
 };
 
@@ -437,7 +437,7 @@ exports.handleFriendshipRequest = function(req, res) {
             }
             return util.sendModelOrError(res, request.save({
                 transaction: t,
-                include: [includes.getUserIncludeSQ('user_to')]
+                include: [includes.getShallowUserIncludeSQ('user_to')]
             }));
         })
     }).catch(err => {
