@@ -34,7 +34,16 @@ module.exports = function(app) {
      * @apiUse DBDatetimeFields
      */
     app.route("/user")
-        .post(UserController.register);
+        .post([
+                body('password').isString().not().isEmpty().isLength({min: 8}),
+                body('name').isString().not().isEmpty(),
+                body('surname').isString().not().isEmpty(),
+                body('email').isString().not().isEmpty().isEmail(),
+                body('username').isString().not().isEmpty(),
+            ],
+            validation.validateOrBlock("cannot register user"),
+            UserController.register
+        );
 
     /**
      * @api {post} /user/login Authenticate user
