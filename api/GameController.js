@@ -185,10 +185,7 @@ exports.getGames = function (req, res) {
 exports.getUserGames = function(req, res) {
     const current_uid = userutil.getCurrUserId(req);
     const player_query = db.selectFieldQuery("GamePlayers", "id_game", {id_user: current_uid});
-    return exports.sendAllGamesFiltered({
-        where: { id: { [db.Op.in]: db.sequelize.literal('(' + player_query + ')') } },
-        include: exports.gameFullIncludesSQ
-    });
+    return exports.sendAllGamesFiltered({id: {[db.Op.in]: db.sequelize.literal('(' + player_query + ')')}}, res);
 };
 
 exports.getGame = function (req, res) {
