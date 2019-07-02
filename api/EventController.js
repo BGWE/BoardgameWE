@@ -102,7 +102,7 @@ exports.getCurrentUserEvents = function(req, res) {
     const attendee_request = db.selectFieldQuery("EventAttendees", "id_event", { id_user: current_uid });
     const invitee_request = db.selectFieldQuery("EventInvites", "id_event", { id_invitee: current_uid, status: db.EventInvite.STATUS_PENDING });
     let where = { [db.Op.or]: [
-        { visibility: db.Event.VISIBILITY_PUBLIC },
+        { visibility: { [db.Op.ne]: db.Event.VISIBILITY_SECRET } },
         { id_creator: current_uid },
         { id: { [db.Op.in]: db.sequelize.literal('(' + attendee_request + ')') }}, // attendee
         { id: { [db.Op.in]: db.sequelize.literal('(' + invitee_request + ')') }} // invitee
