@@ -31,18 +31,12 @@ exports.can_access_event = async function(access_type, eid_callback, uid_callbac
     const is_in_event = current.is_attendee || current.is_creator || current.is_invitee;
 
     // check write access
-    if (access_type === exports.ACCESS_ADMIN) {
-        if (current.is_creator) {
-            return true;
-        }
-    } else if (access_type === exports.ACCESS_WRITE) {
-        if (event.is_creator || (event.attendees_can_edit && current.is_attendee)) {
-            return true;
-        }
-    } else if (access_type === exports.ACCESS_READ) {
-        if (event.visibility === db.Event.VISIBILITY_PUBLIC || is_in_event) {
-            return true;
-        }
+    if (access_type === exports.ACCESS_ADMIN && current.is_creator) {
+        return true;
+    } else if (access_type === exports.ACCESS_WRITE && current.can_write) {
+        return true;
+    } else if (access_type === exports.ACCESS_READ && current.can_read) {
+        return true;
     } else if (access_type === exports.ACCESS_LIST) {
         if (event.visibility === db.Event.VISIBILITY_PRIVATE && !is_in_event) {
             return true;
