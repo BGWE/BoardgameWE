@@ -54,6 +54,69 @@ exports.getUserIncludeSQ = function(as, includes) {
 };
 
 /**
+ * Return includes coming with event for getting access information
+ * @param id_user
+ * @returns {*[]}
+ */
+exports.getEventUserAccessIncludes = function(id_user) {
+    return [{
+        attributes: ["id_event"], where: {id_user}, required: false,
+        ... exports.genericIncludeSQ(db.EventAttendee, 'attendees')
+    }, {
+        attributes: ["id_event", "status"], required: false,
+        where: {id_requester: id_user},
+        ... exports.genericIncludeSQ(db.EventJoinRequest, 'requesters'),
+    }, {
+        attributes: ["id_event", "status"], required: false,
+        where: {id_invitee: id_user},
+        ... exports.genericIncludeSQ(db.EventInvite, 'invitees'),
+    }]
+};
+
+/**
+ * Format current object of an event that was fetched with event user access includes.
+ * @param id_user
+ * @param event
+ * @returns {*}
+ */
+exports.formatRawEventWithUserAccess = function(id_user, event) {
+    let current = {};
+    current.is_attendee = event.attendees.length > 0;
+    current.is_invitee = event.invitees.length > 0 && event.invitees[0].status === db.EventInvite.STATUS_PENDING;
+    current.is_requester = event.requesters.length > 0 && event.requesters[0].status === db.EventJoinRequest.STATUS_PENDING;
+    current.is_rejected = event.requesters.length > 0 && event.requesters[0].status === db.EventJoinRequest.STATUS_REJECTED;
+    current.is_creator = event.id_creator === id_user;
+    current.can_join = !current.is_attendee && (
+        current.is_creator
+        || current.is_invitee
+        || (
+            event.visibility !== db.Event.VISIBILITY_SECRET
+            && !event.invite_required
+            && event.user_can_join
+            && !current.is_rejected
+        )
+    );
+    current.can_request = !current.is_attendee && !current.is_requester && (
+        current.is_creator
+        || current.is_invitee
+        || (
+            event.visibility !== db.Event.VISIBILITY_SECRET
+            && !event.invite_required
+            && !event.user_can_join
+            && !current.is_rejected
+        )
+    );
+    current.can_write = current.is_creator || (event.attendees_can_edit && current.is_attendee);
+    current.can_read = current.is_creator || current.is_attendee || current.is_invitee || event.visibility === db.Event.VISIBILITY_PUBLIC;
+
+    event.dataValues.current = current;
+    event.dataValues.attendees = undefined;
+    event.dataValues.invitees = undefined;
+    event.dataValues.requesters = undefined;
+    return event;
+};
+
+/**
  * Generates an include object for users
  * @param as Name of the inclusion
  * @returns {{model: *, as: *, attributes: string[]}}

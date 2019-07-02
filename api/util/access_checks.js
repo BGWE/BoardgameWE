@@ -1,6 +1,7 @@
 const userutil = require("./user");
 const db = require("../models/index");
 const util = require("./util");
+const includes = require("./db_include");
 
 /**
  * Functions for checking accesses to resources
@@ -22,22 +23,20 @@ class NotFoundError extends Error {
 exports.can_access_event = async function(access_type, eid_callback, uid_callback) {
     const eid = eid_callback();
     const uid = uid_callback();
-    const event = await db.Event.findByPk(eid);
+    let event = await db.Event.findByPk(eid, { include: includes.getEventUserAccessIncludes(uid) });
     if (!event) {
         throw new NotFoundError("event not found");
     }
-    const is_attendee = (await db.EventAttendee.count({ where: { id_user: uid, id_event: eid } })) === 1;
-    const is_creator = event.id_creator === uid;
-    const is_invited = (await db.EventInvite.count({ where: { id_event: eid, id_invitee: uid, status: db.EventInvite.STATUS_PENDING } })) === 1;
-    const is_in_event = is_attendee || is_creator || is_invited;
+    const current = includes.formatRawEventWithUserAccess(uid, event).dataValues.current;
+    const is_in_event = current.is_attendee || current.is_creator || current.is_invitee;
 
     // check write access
     if (access_type === exports.ACCESS_ADMIN) {
-        if (is_creator) {
+        if (current.is_creator) {
             return true;
         }
     } else if (access_type === exports.ACCESS_WRITE) {
-        if (is_creator || (event.attendees_can_edit && is_attendee)) {
+        if (event.is_creator || (event.attendees_can_edit && current.is_attendee)) {
             return true;
         }
     } else if (access_type === exports.ACCESS_READ) {
@@ -53,10 +52,10 @@ exports.can_access_event = async function(access_type, eid_callback, uid_callbac
     return false;
 };
 
-exports.get_event_access_callback = (access_type, eid_callback, uid_callback) => {
+exports.get_event_access_callback = (access_type) => {
     return util.asyncMiddleware(async (req, res, next) => {
-        eid_callback = eid_callback || (() => parseInt(req.params.eid));
-        uid_callback = uid_callback || (() => userutil.getCurrUserId(req));
+        const eid_callback = () => parseInt(req.params.eid);
+        const uid_callback = () => userutil.getCurrUserId(req);
         try {
             if (await exports.can_access_event(access_type, eid_callback, uid_callback)) {
                 next();
@@ -73,10 +72,9 @@ exports.get_event_access_callback = (access_type, eid_callback, uid_callback) =>
     });
 };
 
-exports.get_user_access_callback = (access_type, uid_callback) => {
-    uid_callback = uid_callback || ((req) => parseInt(req.params.uid));
+exports.get_user_access_callback = (access_type) => {
     return util.asyncMiddleware(async (req, res, next) => {
-        const uid = uid_callback(req);
+        const uid = parseInt(req.params.uid);
         const current_uid = userutil.getCurrUserId(req);
 
         // check write access

@@ -76,75 +76,23 @@ exports.getFullEvent = function(req, res) {
         }),
         db.Event.findOne({
             where: {id: parseInt(req.params.eid)},
-            include: exports.getEventUserAccessIncludes(current_uid)
+            include: includes.getEventUserAccessIncludes(current_uid)
         })
     ]).then(values => {
         let event = values[0];
         let eventWithAccess = values[1];
-        event.dataValues.current = exports.formatRawEventWithUserAccess(current_uid, eventWithAccess).dataValues.current;
+        event.dataValues.current = includes.formatRawEventWithUserAccess(current_uid, eventWithAccess).dataValues.current;
         return util.successResponse(res, event)
     });
 
 };
 
-exports.getEventUserAccessIncludes = function(id_user) {
-    return [{
-        attributes: ["id_event"], where: {id_user}, required: false,
-        ... includes.genericIncludeSQ(db.EventAttendee, 'attendees')
-    }, {
-        attributes: ["id_event", "status"], required: false,
-        where: {id_requester: id_user},
-        ... includes.genericIncludeSQ(db.EventJoinRequest, 'requesters'),
-    }, {
-        attributes: ["id_event", "status"], required: false,
-        where: {id_invitee: id_user},
-        ... includes.genericIncludeSQ(db.EventInvite, 'invitees'),
-    }]
-};
-
-exports.formatRawEventWithUserAccess = function(id_user, event) {
-    let current = {};
-    current.is_attendee = event.attendees.length > 0;
-    current.is_invitee = event.invitees.length > 0 && event.invitees[0].status === db.EventInvite.STATUS_PENDING;
-    current.is_requester = event.requesters.length > 0 && event.requesters[0].status === db.EventJoinRequest.STATUS_PENDING;
-    current.is_rejected = event.requesters.length > 0 && event.requesters[0].status === db.EventJoinRequest.STATUS_REJECTED;
-    current.is_creator = event.id_creator === id_user;
-    current.can_join = !current.is_attendee && (
-        current.is_creator
-        || current.is_invitee
-        || (
-            event.visibility !== db.Event.VISIBILITY_SECRET
-            && !event.invite_required
-            && event.user_can_join
-            && !current.is_rejected
-        )
-    );
-    current.can_request = !current.is_attendee && !current.is_requester && (
-        current.is_creator
-        || current.is_invitee
-        || (
-            event.visibility !== db.Event.VISIBILITY_SECRET
-            && !event.invite_required
-            && !event.user_can_join
-            && !current.is_rejected
-        )
-    );
-    current.can_write = current.is_creator || (event.attendees_can_edit && current.is_attendee);
-    current.can_read = current.is_creator || current.is_attendee || current.is_invitee || event.visibility === db.Event.VISIBILITY_PUBLIC;
-
-    event.dataValues.current = current;
-    event.dataValues.attendees = undefined;
-    event.dataValues.invitees = undefined;
-    event.dataValues.requesters = undefined;
-    return event;
-};
-
 exports.fetchEventsWithUserAccess = function(id_user, where) {
     return db.Event.findAll({
         where,
-        include: [ includes.getShallowUserIncludeSQ("creator") ].concat(exports.getEventUserAccessIncludes(id_user))
+        include: [ includes.getShallowUserIncludeSQ("creator") ].concat(includes.getEventUserAccessIncludes(id_user))
     }).then(events => {
-        return events.map(e => exports.formatRawEventWithUserAccess(id_user, e));
+        return events.map(e => includes.formatRawEventWithUserAccess(id_user, e));
     });
 };
 
