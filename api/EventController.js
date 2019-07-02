@@ -32,6 +32,14 @@ exports.createEvent = function(req, res) {
         attendees_can_edit: util.boolOrDefault(req.body.attendees_can_edit, true),
         invite_required: is_secret ? true : util.boolOrDefault(req.body.invite_required, true),
         user_can_join: util.boolOrDefault(req.body.user_can_join, false)
+    }).then(async event => {
+        if (util.boolOrDefault(req.query.auto_join, false)) {
+            await db.EventAttendee.create({
+                id_user: userutil.getCurrUserId(req),
+                id_event: event.id
+            });
+        }
+        return event;
     }));
 };
 

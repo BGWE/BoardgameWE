@@ -455,6 +455,7 @@ module.exports = function(app) {
      * @apiName CreateEvent
      * @apiGroup Event
      * @apiDescription Create an event.
+     * @apiParam (query) {Boolean} auto_join True for joining the event after creation
      * @apiParam (body) {String} name Event name
      * @apiParam (body) {String} start Start datetime (ISO8601)
      * @apiParam (body) {String} end End datetime (ISO8601)
@@ -467,7 +468,7 @@ module.exports = function(app) {
      */
     app.route("/event")
         .post(
-            validation.getEventValidators(true),
+            validation.getEventValidators(true).concat([ query('auto_join').optional().isBoolean().toBoolean() ]),
             validation.validateOrBlock('cannot create event'),
             EventController.createEvent
         );
