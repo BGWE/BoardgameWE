@@ -11,8 +11,7 @@ const eventFullIncludeSQ = [
         includes.getBoardGameIncludeSQ("provided_board_game"),
         includes.getShallowUserIncludeSQ("provider")
     ]),
-    // Disabled because should use fetch attendees
-    // includes.genericIncludeSQ(db.EventAttendee, "attendees", [includes.getShallowUserIncludeSQ("user")]),
+    includes.genericIncludeSQ(db.EventAttendee, "attendees", [includes.getShallowUserIncludeSQ("user")]),
     // Disabled because makes the request too slow ! Use /event/:eid/games instead.
     // includes.getGameIncludeSQ("games", [includes.defaultBoardGameIncludeSQ]),
     includes.getShallowUserIncludeSQ("creator")
