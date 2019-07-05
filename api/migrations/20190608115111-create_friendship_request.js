@@ -3,6 +3,10 @@
 module.exports = {
   up: (queryInterface, Sequelize) => {
     return queryInterface.createTable('FriendshipRequests', {
+      id: {
+        type: Sequelize.INTEGER,
+        primaryKey: true
+      },
       id_user_from: {
         type: Sequelize.INTEGER,
         references: {model: 'Users', key: 'id'},
@@ -13,6 +17,11 @@ module.exports = {
         references: {model: 'Users', key: 'id'},
         onDelete: 'cascade'
       },
+      status: {
+        type: Sequelize.ENUM("PENDING", "ACCEPTED", "REJECTED"),
+        allowNull: false,
+        defaultValue: "PENDING"
+      },
       createdAt: {
         allowNull: false,
         type: Sequelize.DATE
@@ -22,20 +31,17 @@ module.exports = {
         type: Sequelize.DATE
       }
     }).then(() => {
-      return Promise.all([
-        queryInterface.addConstraint('FriendshipRequests', ['id_user_from', 'id_user_to'], {
-          type: 'primary key',
-          name: 'friendship_requests_primary_key'
-        }),
-        queryInterface.addConstraint('FriendshipRequests', ['id_user_from'], {
-          type: 'check',
-          where: { id_user_from: { [Sequelize.Op.ne]: { [Sequelize.Op.col]: 'FriendshipRequests.id_user_to' } } }
-        })
-      ]);
+      return queryInterface.addConstraint('FriendshipRequests', ['id_user_from'], {
+        type: 'check',
+        where: { id_user_from: { [Sequelize.Op.ne]: { [Sequelize.Op.col]: 'FriendshipRequests.id_user_to' } } }
+      });
     });
   },
 
   down: (queryInterface, Sequelize) => {
-    return queryInterface.dropTable("FriendshipRequests");
+    return Promise.all([
+        queryInterface.dropTable("FriendshipRequests"),
+        queryInterface.sequelize.query("DROP TYPE IF EXISTS enum_FriendshipRequests_status RESTRICT")
+    ]);
   }
 };

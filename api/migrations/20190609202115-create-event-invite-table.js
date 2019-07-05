@@ -19,7 +19,7 @@ module.exports = {
         onDelete: 'cascade'
       },
       status: {
-        type: Sequelize.ENUM("PENDING", "ACCEPTED", "REJECTED"),
+        type: '"enum_FriendshipRequests_status"',
         allowNull: false,
         defaultValue: "PENDING"
       },
@@ -46,9 +46,6 @@ module.exports = {
   },
 
   down: (queryInterface, Sequelize) => {
-      return Promise.all([
-          queryInterface.dropTable("EventInvites"),
-          queryInterface.sequelize.query("DROP TYPE IF EXISTS enum_EventInvites_status RESTRICT")
-      ]);
+    return queryInterface.dropTable("EventInvites");
   }
 };

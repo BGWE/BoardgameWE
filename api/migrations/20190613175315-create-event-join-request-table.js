@@ -14,7 +14,7 @@ module.exports = {
         onDelete: 'cascade'
       },
       status: {
-        type: '"enum_EventInvites_status"',
+        type: '"enum_FriendshipRequests_status"',
         allowNull: false,
         defaultValue: "PENDING"
       },
