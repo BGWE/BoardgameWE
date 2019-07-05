@@ -1,14 +1,8 @@
 'use strict';
 module.exports = (sequelize, DataTypes) => {
     let FriendshipRequest = sequelize.define('FriendshipRequest', {
-        id_user_from: {
-            type: DataTypes.INTEGER,
-            primaryKey: true
-        },
-        id_user_to: {
-            type: DataTypes.INTEGER,
-            primaryKey: true
-        },
+        id_user_from: { type: DataTypes.INTEGER },
+        id_user_to: { type: DataTypes.INTEGER },
         status: {
             type: DataTypes.ENUM,
             allowNull: false,
