@@ -400,10 +400,11 @@ exports.getUserFriends = function(req, res) {
 
 exports.getFriendshipRequests = function(req, res) {
     return util.sendModelOrError(res, db.FriendshipRequest.findAll({
-        attributes: { include: [db.sequelize.fn('MAX', db.sequelize.col('FriendshipRequest.createdAt'))] },
-        where: {id_user_from: userutil.getCurrUserId(req)},
-        include: [includes.getShallowUserIncludeSQ('user_to')],
-        group: ['id_user_from', 'id_user_to']
+        where: {
+            status: db.FriendshipRequest.STATUS_PENDING,
+            id_user_to: userutil.getCurrUserId(req)
+        },
+        include: [includes.getShallowUserIncludeSQ('user_from')]
     }));
 };
 
