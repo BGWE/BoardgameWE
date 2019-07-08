@@ -4,8 +4,10 @@ module.exports = {
   up: (queryInterface, Sequelize) => {
     return queryInterface.createTable('FriendshipRequests', {
       id: {
-        type: Sequelize.INTEGER,
-        primaryKey: true
+        allowNull: false,
+        autoIncrement: true,
+        primaryKey: true,
+        type: Sequelize.INTEGER
       },
       id_user_from: {
         type: Sequelize.INTEGER,
