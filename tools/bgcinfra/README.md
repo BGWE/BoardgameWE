@@ -23,6 +23,12 @@ Stopping and removing the containers can be done using the following command:
 make stop_testing_env
 ```
 
+### Run unit testing
+To run the testing in place, use the following command:
+```
+make run_test
+```
+
 ### Clean
 Build artifacts can be cleaned using the following command:
 ```
