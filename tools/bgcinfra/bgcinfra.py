@@ -4,7 +4,7 @@ import argparse
 import sys
 import os
 import jinja2
-import yaml
+from ruamel import yaml
 
 class CliAPI(object):
     def __init__(self):
@@ -34,11 +34,12 @@ class CliAPI(object):
     def deploy(self):
         parser = argparse.ArgumentParser(
             description='Build BGC infra')
-        # prefixing the argument with -- means it's optional
+
         parser.add_argument('environment')
         args = parser.parse_args(sys.argv[2:])
         print('Deploying environment: {0}'.format(args.environment)) 
 
+        # Generate docker-compose
         deployer = Deployer()
         deployer.build_docker_compose(args.environment)
 
@@ -49,7 +50,8 @@ class Deployer(object):
     BGCCONFIG_FOLDER_PATH           = os.path.join(BGCINFRA_FOLDER_PATH, 'configs')
     PROJECT_ROOT_FOLDER_PATH        = os.path.dirname(os.path.dirname(BGCINFRA_FOLDER_PATH))
     DOCKER_FOLDER_PATH              = os.path.join(PROJECT_ROOT_FOLDER_PATH, 'docker')
-    OUTPUT_DOCKERCOMPOSE_FILE_PATH  = os.path.join(DOCKER_FOLDER_PATH, 'docker-compose.yml')
+    # OUTPUT_DOCKERCOMPOSE_FILE_PATH  = os.path.join(DOCKER_FOLDER_PATH, 'docker-compose.yml')
+    OUTPUT_DOCKERCOMPOSE_FILE_PATH  = os.path.join(BGCINFRA_FOLDER_PATH, 'docker-compose.yml')
 
 
     def __init__(self):
@@ -67,7 +69,7 @@ class Deployer(object):
         template = env.get_template('docker-compose.template.yml')
         
         print('Generating docker-compose.yml...')
-        generated_config = template.render(config_data)
+        generated_config = yaml.load(template.render(config_data))
         try:
             self.save_yaml_to_file(self.OUTPUT_DOCKERCOMPOSE_FILE_PATH, generated_config)
         except Exception as e:

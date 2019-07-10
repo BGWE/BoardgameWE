@@ -43,7 +43,7 @@ then
         exit 0
     fi
 
-    virtualenv "$output_dir/$ENV_NAME" --python=python3
+    virtualenv --python=python3 "$output_dir/$ENV_NAME"
 
 
     echo "Activating environment..."
