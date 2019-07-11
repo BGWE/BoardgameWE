@@ -1,8 +1,6 @@
 /**
  *  Many2Many helpers
  */
-
-const { validationResult } = require('express-validator/check');
 const util = require('./util');
 
 /**

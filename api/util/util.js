@@ -1,5 +1,3 @@
-
-
 exports.listToString = (list) => {
     if (list.length === 0) {
         return "";

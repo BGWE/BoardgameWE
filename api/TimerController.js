@@ -4,7 +4,6 @@ const util = require("./util/util");
 const game = require("./GameController");
 const includes = require("./util/db_include");
 const _ = require("lodash");
-const { validationResult } = require('express-validator/check');
 
 exports.getFullTimerIncludes = function() {
     return [

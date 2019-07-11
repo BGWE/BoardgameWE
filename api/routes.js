@@ -5,7 +5,6 @@ const jwt = require("jsonwebtoken");
 const userutil = require("./util/user");
 const util = require("./util/util");
 const db = require("./models/index");
-const _ = require("lodash");
 
 module.exports = function(app) {
     const { body, param, check, query } = require('express-validator/check');

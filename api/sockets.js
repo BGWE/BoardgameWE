@@ -1,5 +1,3 @@
-
-
 const access = require("./util/access_checks");
 
 const socketioJwt = require("socketio-jwt");

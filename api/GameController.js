@@ -2,7 +2,6 @@ const db = require("./models/index");
 const util = require("./util/util");
 const includes = require("./util/db_include");
 const userutil = require("./util/user");
-const { validationResult } = require('express-validator/check');
 
 exports.gameFullIncludesSQ = [
     includes.defaultBoardGameIncludeSQ,
