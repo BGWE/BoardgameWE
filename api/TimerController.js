@@ -4,7 +4,6 @@ const util = require("./util/util");
 const game = require("./GameController");
 const includes = require("./util/db_include");
 const _ = require("lodash");
-const { validationResult } = require('express-validator/check');
 
 exports.getFullTimerIncludes = function() {
     return [
@@ -126,11 +125,6 @@ exports.getTimer = function(req, res) {
 };
 
 exports.createTimer = function(req, res) {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-        return util.detailErrorResponse(res, 400, "cannot create timer", errors);
-    }
-
     return exports.createTimerPromise({
         id_creator: userutil.getCurrUserId(req),
         id_event: req.params.eid || req.body.id_event || null,  // can also be used with event-related endpoints
@@ -146,7 +140,6 @@ exports.createTimer = function(req, res) {
     }).then(timer => {
         return util.sendModelOrError(res, exports.buildFullTimer(timer.id));
     }).catch(err => {
-        console.log(err);
         return util.detailErrorResponse(res, 400, "cannot create timer");
     });
 };

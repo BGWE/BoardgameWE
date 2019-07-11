@@ -54,7 +54,7 @@ exports.getEventActivitiesRequestPromise = (type, id_event, max) => {
             attributes: { include: [["createdAt", "datetime"]] },
             include: GameController.gameFullIncludesSQ,
             order: [[db.sequelize.col("datetime"), "DESC"]], limit: max
-        }).catch(err => console.log(err));
+        });
     } else if (type === exports.ACTIVITY_EVENT_GAME_PROVIDED) {
         return db.ProvidedBoardGame.findAll({
             where: {id_event: id_event},

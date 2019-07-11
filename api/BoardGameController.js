@@ -1,4 +1,3 @@
-
 const db = require("./models/index");
 const bgg = require("./util/bgg");
 const util = require("./util/util");
