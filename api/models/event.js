@@ -7,7 +7,15 @@ module.exports = (sequelize, DataTypes) => {
     description: DataTypes.TEXT,
     location: DataTypes.STRING,
     id_creator: DataTypes.INTEGER,
-    hide_rankings: DataTypes.BOOLEAN
+    hide_rankings: DataTypes.BOOLEAN,
+    visibility: {
+      type: DataTypes.ENUM,
+      allowNull: false,
+      values: ["PUBLIC", "PRIVATE", "SECRET"],
+    },
+    attendees_can_edit: DataTypes.BOOLEAN,
+    invite_required: DataTypes.BOOLEAN,
+    user_can_join: DataTypes.BOOLEAN
   }, {});
   Event.associate = function(models) {
       models.Event.belongsTo(models.User, {
@@ -33,6 +41,24 @@ module.exports = (sequelize, DataTypes) => {
           sourceKey: 'id',
           as: 'attendees'
       });
+      models.Event.hasMany(models.EventInvite, {
+          onDelete: "CASCADE",
+          foreignKey: 'id_event',
+          sourceKey: 'id',
+          as: 'invitees'
+      });
+      models.Event.hasMany(models.EventJoinRequest, {
+          onDelete: "CASCADE",
+          foreignKey: 'id_event',
+          sourceKey: 'id',
+          as: 'requesters'
+      });
   };
+
+  Event.VISIBILITY_PUBLIC = "PUBLIC";
+  Event.VISIBILITY_PRIVATE = "PRIVATE";
+  Event.VISIBILITY_SECRET = "SECRET";
+  Event.VISIBILITIES = [Event.VISIBILITY_PUBLIC, Event.VISIBILITY_PRIVATE, Event.VISIBILITY_SECRET];
+
   return Event;
 };

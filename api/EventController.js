@@ -1,29 +1,25 @@
 const db = require("./models/index");
 const util = require("./util/util");
 const userutil = require("./util/user");
-const moment = require("moment");
-const m2m = require("./util/m2m_helpers");
 const includes = require("./util/db_include");
 const BoardGameController = require("./BoardGameController");
-const { validationResult } = require('express-validator/check');
 const Activity = require("./util/activities");
+const m2m = require("./util/m2m_helpers");
 
 const eventFullIncludeSQ = [
-    includes.genericIncludeSQ(db.EventAttendee, "attendees", [includes.defaultUserIncludeSQ]),
     includes.genericIncludeSQ(db.ProvidedBoardGame, "provided_board_games", [
         includes.getBoardGameIncludeSQ("provided_board_game"),
-        includes.getUserIncludeSQ("provider")
+        includes.getShallowUserIncludeSQ("provider")
     ]),
+    includes.genericIncludeSQ(db.EventAttendee, "attendees", [includes.getShallowUserIncludeSQ("user")]),
     // Disabled because makes the request too slow ! Use /event/:eid/games instead.
     // includes.getGameIncludeSQ("games", [includes.defaultBoardGameIncludeSQ]),
-    includes.getUserIncludeSQ("creator")
+    includes.getShallowUserIncludeSQ("creator")
 ];
 
 exports.createEvent = function(req, res) {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-        return util.detailErrorResponse(res, 400, "cannot create event", errors);
-    }
+    const visibility = req.body.visibility || db.Event.VISIBILITY_SECRET;
+    const is_secret = visibility === db.Event.VISIBILITY_SECRET;
     return util.sendModelOrError(res, db.Event.create({
         name: req.body.name,
         location: req.body.location,
@@ -31,25 +27,36 @@ exports.createEvent = function(req, res) {
         end: req.body.end.utc(),
         id_creator: userutil.getCurrUserId(req),
         description: req.body.description,
-        hide_rankings: req.body.hide_rankings || false
+        hide_rankings: util.boolOrDefault(req.body.hide_rankings, false),
+        visibility,
+        attendees_can_edit: util.boolOrDefault(req.body.attendees_can_edit, true),
+        invite_required: is_secret ? true : util.boolOrDefault(req.body.invite_required, true),
+        user_can_join: util.boolOrDefault(req.body.user_can_join, false)
+    }).then(async event => {
+        if (util.boolOrDefault(req.query.auto_join, false)) {
+            await db.EventAttendee.create({
+                id_user: userutil.getCurrUserId(req),
+                id_event: event.id
+            });
+        }
+        return event;
     }));
 };
 
 exports.updateEvent = function(req, res) {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-        return util.detailErrorResponse(res, 400, "cannot update event", errors);
-    }
+    const visibility = req.body.visibility || event.visibility;
+    const is_secret = visibility === db.Event.VISIBILITY_SECRET;
     return db.Event.findByPk(parseInt(req.params.eid)).then(event => {
-        if (event.id_creator !== userutil.getCurrUserId(req)) {
-            return util.detailErrorResponse(res, 403, "only the event creator can update the event");
-        }
         event.description = req.body.description || event.description;
         event.name = req.body.name || event.name;
-        location = req.body.location || event.location;
-        event.start = req.body.start.utc() || event.start;
-        event.end = req.body.end.utc() || event.end;
-        event.hide_rankings = req.body.hide_rankings === undefined ? event.hide_rankings : req.body.hide_rankings;
+        event.location = req.body.location || event.location;
+        event.start = req.body.start ? req.body.start.utc() : event.start;
+        event.end = req.body.end ? req.body.end.utc() : event.end;
+        event.hide_rankings = util.boolOrDefault(req.body.hide_rankings, event.hide_rankings);
+        event.visibility = visibility;
+        event.attendees_can_edit = util.boolOrDefault(req.body.attendees_can_edit, event.attendees_can_edit);
+        event.invite_required = is_secret ? true : util.boolOrDefault(req.body.invite_required, event.invite_required);
+        event.user_can_join = util.boolOrDefault(req.body.user_can_join, event.user_can_join);
         return util.sendModelOrError(res, event.save());
     }).catch(err => {
         return util.detailErrorResponse(res, 404, "no such event")
@@ -61,36 +68,72 @@ exports.getEvent = function(req, res) {
 };
 
 exports.getFullEvent = function(req, res) {
-    return util.sendModelOrError(res, db.Event.findOne({
-        where: {id: parseInt(req.params.eid)},
-        include: eventFullIncludeSQ
-    }));
+    const current_uid = userutil.getCurrUserId(req);
+    return Promise.all([
+        db.Event.findOne({
+            where: {id: parseInt(req.params.eid)},
+            include: eventFullIncludeSQ
+        }),
+        db.Event.findOne({
+            where: {id: parseInt(req.params.eid)},
+            include: includes.getEventUserAccessIncludes(current_uid)
+        })
+    ]).then(values => {
+        let event = values[0];
+        let eventWithAccess = values[1];
+        event.dataValues.current = includes.formatRawEventWithUserAccess(current_uid, eventWithAccess).dataValues.current;
+        return util.successResponse(res, event)
+    });
+
 };
 
-exports.getAllEvents = function(req, res) {
-    let where = {};
-    let currIncludes = [];
+exports.fetchEventsWithUserAccess = function(id_user, where) {
+    return db.Event.findAll({
+        where,
+        include: [ includes.getShallowUserIncludeSQ("creator") ].concat(includes.getEventUserAccessIncludes(id_user))
+    }).then(events => {
+        return events.map(e => includes.formatRawEventWithUserAccess(id_user, e));
+    });
+};
+
+exports.getCurrentUserEvents = function(req, res) {
+    const current_uid = userutil.getCurrUserId(req);
+    // access right criterion
+    const attendee_request = db.selectFieldQuery("EventAttendees", "id_event", { id_user: current_uid });
+    const invitee_request = db.selectFieldQuery("EventInvites", "id_event", { id_invitee: current_uid, status: db.EventInvite.STATUS_PENDING });
+    let where = { [db.Op.or]: [
+        { visibility: { [db.Op.ne]: db.Event.VISIBILITY_SECRET } },
+        { id_creator: current_uid },
+        { id: { [db.Op.in]: db.sequelize.literal('(' + attendee_request + ')') }}, // attendee
+        { id: { [db.Op.in]: db.sequelize.literal('(' + invitee_request + ')') }} // invitee
+    ]};
+    // registered or not ?
+    if (req.query.registered !== undefined) {
+        where = {
+            id: req.query.registered ? { [db.Op.in]: db.sequelize.literal('(' + attendee_request + ')')} :
+                    { [db.Op.notIn]: db.sequelize.literal('(' + attendee_request + ')') },
+            ... where
+        }
+    }
+    // ongoing or not ?
     if (req.query.ongoing !== undefined) {
         let between = {
             start: {[db.Op.lte]: db.Sequelize.fn("date", db.Sequelize.fn("now"))},
             end: {[db.Op.gte]: db.Sequelize.fn("date", db.Sequelize.fn("now"))}
         };
-        if (req.query.ongoing) {
-            where[db.Op.and] = between;
-        } else {
-            where[db.Op.not] = {[db.Op.and] : between};
+        where = {
+            ... db.negateIf(req.query.ongoing, {[db.Op.and] : between}),
+            ... where
         }
     }
-    if (req.query.registered !== undefined) {
-        let attendeeInclude = includes.genericIncludeSQ(
-            db.EventAttendee,
-            "attendees"
-        );
-        attendeeInclude.attributes = [];
-        where["$attendees.id_user$"]= util.parseList(req.query.registered, parseInt, ",");
-        currIncludes = [attendeeInclude];
+    // visibility ?
+    if (req.query.visibility) {
+        where = {
+            visibility: {[db.Op.in]: req.query.visibility.map(s => s.toUpperCase())},
+            ... where,
+        };
     }
-    return util.sendModelOrError(res, db.Event.findAll({ where: where, include: currIncludes }));
+    return util.sendModelOrError(res, exports.fetchEventsWithUserAccess(current_uid, where));
 };
 
 exports.deleteEvent = function(req, res) {
@@ -123,7 +166,6 @@ exports.addProvidedBoardGames = function(req, res) {
     return db.ProvidedBoardGame.bulkCreate(board_games, { ignoreDuplicates: true }).then(() => {
         return exports.sendProvidedBoardGames(eid, res);
     }).catch(err => {
-        console.log(err);
         return util.errorResponse(res);
     });
 };
@@ -144,61 +186,18 @@ exports.deleteProvidedBoardGames = function(req, res) {
     }));
 };
 
-exports.sendEventAttendees = function(eid, res) {
+exports.sendEventAttendees = function(req, eid, res, options) {
+    options = options || {};
     return m2m.sendAssociations(res, {
         model_class: db.EventAttendee,
         fixed: { id: eid, field: 'id_event' },
-        other: { includes: [includes.defaultUserIncludeSQ] }
+        other: { includes: [includes.getShallowUserIncludeSQ("user")] },
+        options: { ... options }
     });
 };
 
 exports.getEventAttendees = function(req, res) {
-    return exports.sendEventAttendees(parseInt(req.params.eid), res);
-};
-
-exports.addEventAttendees = function(req, res) {
-    return m2m.addAssociations(req, res, {
-        model_class: db.EventAttendee,
-        fixed: { id: parseInt(req.params.eid), field: 'id_event' },
-        other: {
-            ids: req.body.users,
-            field: 'id_user',
-            includes: [includes.defaultUserIncludeSQ]
-        },
-        error_message: 'cannot add attendees'
-    });
-};
-
-exports.deleteEventAttendees = function(req, res) {
-    return m2m.deleteAssociations(req, res, {
-        model_class: db.EventAttendee,
-        fixed: { id: parseInt(req.params.eid), field: 'id_event' },
-        other: {
-            ids: req.body.users,
-            field: 'id_user',
-            includes: [includes.defaultUserIncludeSQ]
-        }
-    });
-};
-
-exports.subscribeToEvent = function(req, res) {
-    return m2m.addAssociations(req, res, {
-        model_class: db.EventAttendee,
-        fixed: { id: parseInt(req.params.eid), field: 'id_event' },
-        other: {
-            ids: [userutil.getCurrUserId(req)],
-            field: 'id_user',
-            includes: [includes.defaultUserIncludeSQ]
-        },
-        error_message: 'cannot add current user as attendee'
-    });
-};
-
-exports.getCurrentUserEvents = function(req, res) {
-    return util.sendModelOrError(res, db.EventAttendee.findAll({
-        where: {id_user: userutil.getCurrUserId(req)},
-        include: [includes.defaultEventIncludeSQ]
-    }), events => { return events.map(e => e.event); });
+    return exports.sendEventAttendees(req, parseInt(req.params.eid), res);
 };
 
 exports.addBoardGameAndAddToEvent = function(req, res) {
@@ -299,7 +298,7 @@ exports.getEventMatchmaking = function(req, res) {
                 }
             },
             include: [
-                includes.defaultUserIncludeSQ,
+                includes.getShallowUserIncludeSQ("user"),
                 includes.defaultBoardGameIncludeSQ
             ]
         }), function(data) {
@@ -320,16 +319,11 @@ exports.getEventMatchmaking = function(req, res) {
             return matchmaking;
         });
     }).catch(err => {
-        console.log(err);
         return res.status(500).json({['err']: 'err'});
     });
 };
 
 exports.getEventWishToPlayGames = function(req, res) {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-        return util.detailErrorResponse(res, 400, "cannot fetch wish to play list for event", errors);
-    }
     // secondary query for user filtering: attendees and (if indicated) not current user
     const eid = parseInt(req.params.eid);
     const user_filtering_query = db.selectFieldQuery("EventAttendees", "id_user", {

@@ -41,4 +41,13 @@ db.selectFieldQuery = function(table, attribute, where) {
   return db.sequelize.dialect.QueryGenerator.selectQuery(table, { attributes: [attribute], where }).slice(0, -1);
 };
 
+/**
+ * Negate a sequelize where clause if the condition is false
+ * @param condition Boolean False if must be negated, true otherwise
+ * @param clause Object Sequelize clause
+ */
+db.negateIf = function(condition, clause) {
+  return condition ? clause : {[db.Op.not]: clause};
+};
+
 module.exports = db;

@@ -16,203 +16,11 @@ module.exports = function(app) {
     const StatsController = require("./StatsController");
     const UserController = require("./UserController");
     const EventController = require("./EventController");
+    const EventJoinController = require("./EventJoinController");
     const AdminController = require("./AdminController");
     const TimerController = require("./TimerController");
     const AppWideController = require("./AppWideController");
-
-    /**
-     * @apiDefine TokenHeaderRequired
-     *
-     * @apiHeader {String} Authentication User authentication token `JWT {token}`
-     */
-
-    /**
-     * @apiDefine SourceParameter
-     *
-     * @apiParam {String} source The source identifier. Currently, only supports 'bgg'.
-     * @apiParam {Number} id Board game identifier on the source platform.
-     */
-
-    /**
-     * @apiDefine DBDatetimeFields
-     * @apiSuccess {String} createdAt Creation datetime of the resource (ISO8601, UTC)
-     * @apiSuccess {String} updatedAt Latest update datetime of the resource (ISO8061, UTC)
-     */
-
-    /**
-     * @apiDefine UserDescriptor
-     *
-     * @apiSuccess {Number} id User id
-     * @apiSuccess {String} name User name
-     * @apiSuccess {String} surname User surname
-     * @apiSuccess {String} username User username
-     * @apiSuccess {Boolean} admin True if the user is an admin, false otherwise
-     * @apiSuccess {String} email User email
-     */
-
-    /**
-     * @apiDefine EventDescriptor
-     *
-     * @apiSuccess {Number} id Event identifier
-     * @apiSuccess {String} name Event name
-     * @apiSuccess {String} start Start date (ISO8601, UTC)
-     * @apiSuccess {String} end End date (ISO8601, UTC)
-     * @apiSuccess {String} description Event description
-     * @apiSuccess {Number} id_creator Event creator user identifier
-     * @apiSuccess {Boolean} hide_rankings True if rankings should be hidden, false otherwise
-     */
-
-    /**
-     * @apiDefine FullGameDescriptor
-     *
-     * @apiSuccess {Number} id Game identifier
-     * @apiSuccess {String} duration Game duration, or `null`.
-     * @apiSuccess {String} id_board_game Played board game identifier
-     * @apiSuccess {String} id_event Event identifier, or `null`.
-     * @apiSuccess {String} ranking_method The ranking method for the game. One of: `{WIN_LOSE, POINTS_LOWER_BETTER, POINTS_HIGHER_BETTER}`.
-     * @apiSuccess {Number} id_timer Timer identifier, or `null`.
-     * @apiSuccess {BoardGame} board_game Board game data (see "Add board game" request for structure).
-     * @apiSuccess {Player[]} players List of players involved in the game.
-     * @apiSuccess {Number} players.id Game player identifier
-     * @apiSuccess {Number} players.score Player score
-     * @apiSuccess {Number} players.id_user Player user identifier (mutually exclusive with `name`), or `null`.
-     * @apiSuccess {User} players.user If `id_user` is not `null`, user data (see 'Get current user' request for user
-     * structure)
-     * @apiSuccess {String} players.name Player name if the player is not registered on the application (mutually
-     * exclusive with `user`), or `null`.
-     */
-
-    /**
-     * @apiDefine FullEventDescriptor
-     *
-     * @apiSuccess {Number} id Event id
-     * @apiSuccess {String} name Event name
-     * @apiSuccess {String} start Start datetime (ISO8601, UTC)
-     * @apiSuccess {String} end End datetime(ISO8601, UTC)
-     * @apiSuccess {String} description Event description
-     * @apiSuccess {Boolean} hide_rankings True if rankings should be hidden, false otherwise
-     * @apiSuccess {Number} id_creator Event creator user identifier
-     * @apiSuccess {User} creator Creator user data (see 'Get current user' request for user structure)
-     * @apiSuccess {Attendee[]} attendees List of event attendees
-     * @apiSuccess {ProvidedBoardGame[]} provided_board_games List of board games provided by attendees to the event.
-     */
-
-    /**
-     * @apiDefine BoardGameDescriptor
-
-     * @apiSuccess {Number} id Board game identifier
-     * @apiSuccess {String} name Board game name
-     * @apiSuccess {Number} bgg_id BGG identifier of the board game
-     * @apiSuccess {Number} bgg_score Score of the game on BGG
-     * @apiSuccess {String} gameplay_video_url URL of a gameplay/rule video (can be `null`)
-     * @apiSuccess {Number} min_players Minimum number of players
-     * @apiSuccess {Number} max_players Maximum number of players
-     * @apiSuccess {Number} min_playing_time Minimum playing time
-     * @apiSuccess {Number} max_playing_time Maximum playing time
-     * @apiSuccess {Number} playing_time Board game official playing time
-     * @apiSuccess {String} thumbnail URL of the board game thumbnail image
-     * @apiSuccess {String} image URL of the board game image
-     * @apiSuccess {String} description Description of the board game
-     * @apiSuccess {Number} year_published Board game publication year
-     * @apiSuccess {String} category Comma-separated list of categories the game belongs to.
-     * @apiSuccess {String} mechanic Comma-separated list of mechanics the game belongs to.
-     * @apiSuccess {String} family  Comma-separated list of families the game belongs to.
-     *
-     */
-
-    /**
-     * @apiDefine EventListDescriptor
-     * @apiSuccess {Event[]} events List of events. See "Create event" request for event object structure. Note: the
-     * returned data is a list (not an actual object).
-     */
-
-    /**
-     * @apiDefine TimerListDescriptor
-     * @apiSuccess {Timer[]} timers List of timers. See "Create timer" request for timer object structure. Note: the
-     * returned data is a list (not an actual object).
-     */
-
-    /**
-     * @apiDefine LibraryBoardGamesListDescriptor
-     * @apiSuccess {LibraryBoardGame[]} library_board_games List of library board games. Note: the
-     * returned data is a list (not an actual object).
-     * @apiSuccess {Number} library_board_games.id_user User (the library belongs to) identifier
-     * @apiSuccess {Number} library_board_games.id_board_game Library board game identifier.
-     * @apiSuccess {BoardGame} library_board_games.board_game Board game data (see "Add board game" request for structure)
-     * @apiSuccess {String} library_board_games.createdAt Creation datetime of the resource (ISO8601, UTC)
-     * @apiSuccess {String} library_board_games.updatedAt Latest update datetime of the resource (ISO8061, UTC)
-     */
-
-    /**
-     * @apiDefine ProvidedBoardGamesListDescriptor
-     * @apiSuccess {ProvidedBoardGame[]} provided_board_games List of provided board games. Note: the
-     * returned data is a list (not an actual object).
-     * @apiSuccess {Number} provided_board_games.id_user User (who provided the board game at the event) identifier
-     * @apiSuccess {Number} provided_board_games.id_event Event (the board game is provided at) identifier.
-     * @apiSuccess {Number} provided_board_games.id_board_game Provided board game identifier.
-     * @apiSuccess {User} provided_board_games.provider Provider user data (see 'Get current user' request for user structure)
-     * @apiSuccess {BoardGame} provided_board_games.board_game Board game data (see "Add board game" request for structure)
-     * @apiSuccess {String} provided_board_games.createdAt Creation datetime of the resource (ISO8601, UTC)
-     * @apiSuccess {String} provided_board_games.updatedAt Latest update datetime of the resource (ISO8061, UTC)
-     */
-
-    /**
-     * @apiDefine TimerDescriptor
-     *
-     * @apiSuccess {Number} id Timer identifier
-     * @apiSuccess {Number} id_board_game Board game identifier (or null if not linked to a board game)
-     * @apiSuccess {BoardGame} board_game Board game data (see 'Get board game' request for board game structure).
-     * @apiSuccess {Game} game Associated game (or null if no game was created from the timer)
-     * @apiSuccess {Number} id_event Event identifier (or null if not linked to an event)
-     * @apiSuccess {Event} event Event data (see 'Get events' request for event structure).
-     * @apiSuccess {String} timer_type Type of timer. One of: 'COUNT_UP', 'COUNT_DOWN' or 'RELOAD'
-     * @apiSuccess {Number} id_creator Identifier of the user who has created the timer.
-     * @apiSuccess {User} creator User data (see 'Get current user' request for user structure)
-     * @apiSuccess {Number} initial_duration Number of millisecond that each player's timer should start from.
-     * @apiSuccess {PlayerTimer[]} player_timers The individual player timers
-     * @apiSuccess {Number} player_timers.id_timer Timer identifier.
-     * @apiSuccess {Number} player_timers.id_user Player user identifier (mutually exclusive with `name`), or `null`.
-     * @apiSuccess {User} player_timers.user If `id_user` is not `null`, user data (see 'Get current user' request for user
-     * structure)
-     * @apiSuccess {String} player_timers.name Player name if the player is not registered on the application (mutually
-     * exclusive with `user`), or `null`.
-     * @apiSuccess {Number} player_timers.color Player's color (hexcode, e.g.: `#ffffff`).
-     * @apiSuccess {Number} player_timers.elapsed Number of millisecond elapsed since the beginning of the player's timer.
-     * @apiSuccess {Number} player_timers.start Start datetime of the player's timer (iso8601, UTC), or `null` if this timer is not running.
-     * @apiSuccess {Boolean} player_timers.running `true` if the player's timer is running, `false` otherwise.
-     */
-
-    /**
-     * @apiDefine WishToPlayBoardGamesListDescriptor
-     * @apiSuccess {WishToPlayBoardGame[]} wish_to_play List of wish-to-play board games. Note: the
-     * returned data is a list (not an actual object).
-     * @apiSuccess {Number} wish_to_play.id_user User (the wish-to-play list belongs to) identifier
-     * @apiSuccess {Number} wish_to_play.id_board_game Wish-to-play board game identifier.
-     * @apiSuccess {BoardGame} wish_to_play.board_game Board game data (see "Add board game" request for structure)
-     * @apiSuccess {String} wish_to_play.createdAt Creation datetime of the resource (ISO8601, UTC)
-     * @apiSuccess {String} wish_to_play.updatedAt Latest update datetime of the resource (ISO8061, UTC)
-     */
-
-    /**
-     * @apiDefine SuccessObjDescriptor
-     * @apiSuccess {Boolean} success True if success
-     */
-
-    /**
-     * @apiDefine ErrorDescriptor
-     * @apiError {String} message General error message
-     * @apiError {Boolean} success `false`, indicate that the request has failed
-     * @apiError {Error[]} [errors] List of errors
-     * @apiError {String} errors.location Location of the parameter (e.g. `body`)
-     * @apiError {String} errors.msg Description for this error
-     * @apiError {String} errors.param Name of the erroneous parameter
-     */
-
-    /**
-     * @apiDefine PaginationParameters
-     * @apiParam (query) { Number} [max_items] Maximum number of items to return
-     * @apiParam (query) {Number} [start] Pagination offset (resources are sorted by decreasing creation time)
-     */
+    const access_checks = require('./util/access_checks');
 
     // User routes
     /**
@@ -304,12 +112,18 @@ module.exports = function(app) {
             req.is_admin = user.admin;
             next();
         } catch (err) {
-            console.log(err);
             return util.detailErrorResponse(res, 401, "Unknown user.");
         }
     }));
 
+
     // User (protected)
+    const user_access = {
+        read: access_checks.get_user_access_callback(access_checks.ACCESS_READ),
+        write: access_checks.get_user_access_callback(access_checks.ACCESS_WRITE),
+        list: access_checks.get_user_access_callback(access_checks.ACCESS_LIST)
+    };
+
     /**
      * @api {get} /user/current Get current user
      * @apiName GetCurrentUser
@@ -332,8 +146,8 @@ module.exports = function(app) {
      *
      * @apiParam {Number} id The user identifier
      *
-     * @apiUse UserDescriptor
-     * @apiUse DBDatetimeFields
+     * @apiUse ShallowUserDescriptor
+     * @apiUse UserCurrentFriendshipDescriptor
      */
 
     /**
@@ -349,13 +163,27 @@ module.exports = function(app) {
      */
     app.route("/user/:uid")
         .get(UserController.getUser)
-        .put(UserController.updateUser);
+        .put(user_access.write, UserController.updateUser);
+
+    /**
+     * @api {put} /user/:id/games Get user games
+     * @apiName GetUserGames
+     * @apiGroup User
+     * @apiDescription Get list of games played by the current user.
+     * @apiUse TokenHeaderRequired
+     *
+     * @apiParam {Number} id User identifier
+     * @apiSuccess {Game[]} games List of the games played by the specified user (see "Add event game" for Game
+     * structure). Note: the returned data is a list (not an actual object).
+     */
+    app.route("/user/:uid/games")
+        .get(user_access.read, GameController.getUserGames);
 
     /**
      * @api {get} /user/:id/stats Get user stats
      * @apiName GetUserStats
      * @apiGroup User
-     * @apiDescription Get user statistics
+     * @apiDescription Get user statistics. Can only be executed against friends of the current user.
      * @apiUse TokenHeaderRequired
      * @apiParam {Number} id User identifier
      * @apiSuccess {Number} played Number of games played so far.
@@ -367,13 +195,13 @@ module.exports = function(app) {
      * @apiSuccess {Number} play_time Total play time of the user (in minutes)
      */
     app.route("/user/:uid/stats")
-        .get(UserController.getUserStats);
+        .get(user_access.read, UserController.getUserStats);
 
     /**
      * @api {get} /user/:id/activities Get user activities
      * @apiName GetUserActivities
      * @apiGroup User
-     * @apiDescription Get user latest activities on the application
+     * @apiDescription Get user latest activities on the application. Can only be executed against friends of the current user.
      * @apiUse TokenHeaderRequired
      * @apiParam {Number} id User identifier
      *
@@ -385,7 +213,7 @@ module.exports = function(app) {
      * @apiSuccess {Event} activities.event (only for `user/join_event` activity) Event data (see "Add event game" for Game structure).
      */
     app.route("/user/:uid/activities")
-        .get(UserController.getUserActivities);
+        .get(user_access.read, UserController.getUserActivities);
 
     // Library
     /**
@@ -419,8 +247,8 @@ module.exports = function(app) {
      */
     app.route("/user/current/library_games")
         .get(UserController.getCurrentUserLibraryGames)
-        .post([body('board_games').isArray().not().isEmpty()], UserController.addLibraryGames)
-        .delete([body('board_games').isArray().not().isEmpty()], UserController.deleteLibraryGames);
+        .post([body('board_games').isArray().not().isEmpty()], validation.validateOrBlock('cannot update game library'), UserController.addLibraryGames)
+        .delete([body('board_games').isArray().not().isEmpty()], validation.validateOrBlock('cannot update game library'), UserController.deleteLibraryGames);
 
     /**
      * @api {post} /user/current/library_games/:source/:id Add to library from source
@@ -439,13 +267,13 @@ module.exports = function(app) {
      * @api {get} /user/:id/library_games Get user library
      * @apiName GetUserLibrary
      * @apiGroup User library
-     * @apiDescription Get the specified user's board game library.
+     * @apiDescription Get the specified user's board game library. Can only be executed against friends of the current user.
      * @apiParam {Number} id User identifier.
      * @apiUse TokenHeaderRequired
      * @apiUse LibraryBoardGamesListDescriptor
      */
     app.route("/user/:uid/library_games")
-        .get(UserController.getUserLibraryGames);
+        .get(user_access.read, UserController.getUserLibraryGames);
 
     // Wish to play list
     /**
@@ -478,8 +306,8 @@ module.exports = function(app) {
      */
     app.route("/user/current/wish_to_play")
         .get(UserController.getCurrentUserWishToPlayBoardGames)
-        .post([body('board_games').isArray().not().isEmpty()], UserController.addToWishToPlayBoardGames)
-        .delete([body('board_games').isArray().not().isEmpty()], UserController.deleteFromWishToPlayList);
+        .post([body('board_games').isArray().not().isEmpty()], validation.validateOrBlock('cannot update wish to play list'), UserController.addToWishToPlayBoardGames)
+        .delete([body('board_games').isArray().not().isEmpty()], validation.validateOrBlock('cannot update wish to play list'), UserController.deleteFromWishToPlayList);
 
     /**
      * @api {post} /user/current/wish_to_play/:source/:id Add to wish to play list from source
@@ -498,32 +326,128 @@ module.exports = function(app) {
      * @api {get} /user/:id/wish_to_play Get user wish to play list
      * @apiName GetUserWishToPlayList
      * @apiGroup User wish to play
-     * @apiDescription Get the specified user's wish to play board games.
+     * @apiDescription Get the specified user's wish to play board games. Can only be executed against friends of the current user.
      * @apiParam {Number} id User identifier.
      * @apiUse TokenHeaderRequired
      * @apiUse WishToPlayBoardGamesListDescriptor
      */
     app.route("/user/:uid/wish_to_play")
-        .get(UserController.getUserWishToPlayBoardGames);
+        .get(user_access.read, UserController.getUserWishToPlayBoardGames);
+
+    /**
+     * @api {get} /user/current/friends Get current user friends
+     * @apiName GetCurrentUserFriends
+     * @apiGroup User friends
+     * @apiDescription Get current user friends
+     * @apiUse TokenHeaderRequired
+     * @apiUse UserListDescriptor
+     */
+    app.route("/user/current/friends")
+        .get(UserController.getCurrentUserFriends);
+
+    // TODO should return shallow user data
+    /**
+     * @api {get} /user/:id/friends Get user friends
+     * @apiName GetUserFriends
+     * @apiGroup User friends
+     * @apiDescription Get user friends. Can only be executed against friends of the current user.
+     * @apiParam {Number} id User identifier.
+     * @apiUse TokenHeaderRequired
+     * @apiUse UserListDescriptor
+     */
+    app.route("/user/:uid/friends")
+        .get(user_access.read, UserController.getUserFriends);
+
+    /**
+     * @api {get} /user/current/event_invites Get current user event invites
+     * @apiName GetCurrentUserEventInvites
+     * @apiGroup Event invites
+     * @apiDescription Get event invites sent to the current user
+     * @apiParam (query) {String[]} [status] If set: filter invites based on the given statuses.
+     * @apiUse TokenHeaderRequired
+     * @apiUse EventInviteListDescriptor
+     */
+    app.route("/user/current/event_invites")
+        .get(EventJoinController.getCurrentUserEventInvites);
+
+    // Friendships
+    /**
+     * @api {get} /friend_requests Get friend requests
+     * @apiName GetFriendRequests
+     * @apiGroup User friends
+     * @apiDescription Get current user friend requests
+     * @apiUse TokenHeaderRequired
+     * @apiUse FriendRequestListDescriptor
+     */
+    app.route("/friend_requests")
+        .get(UserController.getFriendshipRequests);
+
+    /**
+     * @api {post} /friend_request Send friend request
+     * @apiName SendFriendRequest
+     * @apiGroup User friends
+     * @apiDescription Send a friend request from the current to the specified user
+     * @apiParam (body) {Number} id_recipient Friend request recipient user identifier.
+     * @apiUse TokenHeaderRequired
+     * @apiUse FriendRequestDescriptor
+     */
+
+    /**
+     * @api {put} /friend_request Handle friend request
+     * @apiName HandleFriendRequest
+     * @apiGroup User friends
+     * @apiDescription Handle (i.e. accept or reject) a friend request
+     * @apiParam (body) {Number} id_sender User identifier of the sender of the friend.
+     * @apiParam (body) {Boolean} accept True for accepting the request, false for rejecting it.
+     * @apiUse TokenHeaderRequired
+     * @apiUse FriendRequestDescriptor
+     */
+
+    /**
+     * @api {delete} /friend_request Cancel friend request
+     * @apiName CancelFriendRequest
+     * @apiGroup User friends
+     * @apiDescription Cancel a friend request
+     * @apiParam (body) {Number} id_recipient Friend request recipient user identifier.
+     * @apiUse TokenHeaderRequired
+     * @apiUse SuccessObjDescriptor
+     */
+    app.route("/friend_request")
+        .post(
+            [body('id_recipient').isInt()],
+            validation.validateOrBlock("cannot add friend request"),
+            UserController.sendFriendshipRequest
+        )
+        .put(
+            [ body('id_sender').isInt(), body('accept').isBoolean().toBoolean() ],
+            validation.validateOrBlock("cannot handle friend request"),
+            UserController.handleFriendshipRequest
+        )
+        .delete(
+            [ body('id_recipient').isInt() ],
+            validation.validateOrBlock("cannot delete friend request"),
+            UserController.deleteFriendshipRequest
+        );
+
+    /**
+     * @api {delete} /friend/:id Remove user from friends
+     * @apiName DeleteFriend
+     * @apiGroup User friends
+     * @apiDescription Remove a user from friends
+     * @apiParam {Number} id The user identifier of the friend to remove.
+     * @apiUse TokenHeaderRequired
+     * @apiUse SuccessObjDescriptor
+     */
+    app.route("/friend/:uid")
+        .delete(UserController.deleteFriend);
 
 
     // Event
-    /**
-     * Ensures that only the creator and the participating players can update event data.
-     * @param req Request Express request object (there should be an eid parameters)
-     * @param res
-     * @param next
-     */
-    const eventAccessMiddleware = async function(req, res, next) {
-        const eid = parseInt(req.params.eid);
-        const uid = userutil.getCurrUserId(req);
-        const creator = await db.Event.count({ where: { id_creator: uid, id: eid } });
-        const attendee = await db.EventAttendee.count({ where: { id_user: uid, id_event: eid } });
-        if (creator === 1 || attendee === 1) {
-            next();
-        } else {
-            return util.detailErrorResponse(res, 403, "you must be either an attendee or the creator of the event to access this endpoint");
-        }
+    const event_access = {
+        read: access_checks.get_event_access_callback(access_checks.ACCESS_READ),
+        write: access_checks.get_event_access_callback(access_checks.ACCESS_WRITE),
+        admin: access_checks.get_event_access_callback(access_checks.ACCESS_ADMIN),
+        list: access_checks.get_event_access_callback(access_checks.ACCESS_LIST)
     };
 
     /**
@@ -531,6 +455,7 @@ module.exports = function(app) {
      * @apiName CreateEvent
      * @apiGroup Event
      * @apiDescription Create an event.
+     * @apiParam (query) {Boolean} auto_join True for joining the event after creation
      * @apiParam (body) {String} name Event name
      * @apiParam (body) {String} start Start datetime (ISO8601)
      * @apiParam (body) {String} end End datetime (ISO8601)
@@ -542,7 +467,11 @@ module.exports = function(app) {
      * @apiUse ErrorDescriptor
      */
     app.route("/event")
-        .post(validation.getEventValidators(true), EventController.createEvent);
+        .post(
+            validation.getEventValidators(true).concat([ query('auto_join').optional().isBoolean().toBoolean() ]),
+            validation.validateOrBlock('cannot create event'),
+            EventController.createEvent
+        );
 
     /**
      * @api {get} /event/:id Get event
@@ -588,41 +517,33 @@ module.exports = function(app) {
      * @apiUse ErrorDescriptor
      */
     app.route("/event/:eid")
-        .get(EventController.getFullEvent)
-        .delete(EventController.deleteEvent)
-        .put(validation.getEventValidators(false), EventController.updateEvent);
+        .get(event_access.read, EventController.getFullEvent)
+        .delete(event_access.admin, EventController.deleteEvent)   // only creator
+        .put(event_access.admin, validation.getEventValidators(false), validation.validateOrBlock('cannot update event'), EventController.updateEvent);
 
     /**
-     * @api {get} /event/:id Get events
+     * @api {get} /events Get events
      * @apiName GetEvents
      * @apiGroup Event
-     * @apiDescription Get all events.
+     * @apiDescription Get all the events the current user has `list` access to.
      *
-     * @apiParam {Number} id The event identifier
-     * @apiParam (query) {Boolean} ongoing (Optional) If set, filters the events: true for fetching ongoing events only,
-     * false for the others.
-     * @apiParam (query) {Boolean} registered (Optional) If set, filters the events: true for fetching
-     * only the events he has subscribed to, false for the others.
+     * @apiParam (query) {Boolean} [ongoing] If set, filters the events: true for fetching ongoing events only,
+     * false for the other events.
+     * @apiParam (query) {Boolean} [registered] If set, filters the events: true for fetching
+     * only the events he is an attendee of, false for the other events.
+     * @apiParam (query) {String[]} [visibility] If set, filters the events: only event having the given visibilities
      *
      * @apiUse TokenHeaderRequired
      * @apiUse EventListDescriptor
      */
     app.route("/events")
-        .get(EventController.getAllEvents);
-
-    /**
-     * @api {get} /events/current Get user events
-     * @apiName GetCurrentUserEvents
-     * @apiGroup Event
-     * @apiDescription Get all the events created by the current user.
-     *
-     * @apiParam {Number} id Event identifier.
-     *
-     * @apiUse TokenHeaderRequired
-     * @apiUse EventListDescriptor
-     */
-    app.route("/events/current")
-        .get(EventController.getCurrentUserEvents);
+        .get([
+            query('ongoing').optional().isBoolean().toBoolean(),
+            query('registered').optional().isBoolean().toBoolean(),
+            query('visibility').optional().isArray().not().isEmpty().custom(validation.valuesIn([
+                db.Event.VISIBILITY_PUBLIC, db.Event.VISIBILITY_PRIVATE, db.Event.VISIBILITY_SECRET
+            ])),
+        ], validation.validateOrBlock("cannot list events"), EventController.getCurrentUserEvents);
 
     /**
      * @api {get} /event/:eid/stats Get event statistics
@@ -643,7 +564,7 @@ module.exports = function(app) {
      * @apiSuccess {Number} most_played.count Number of times played
      */
     app.route("/event/:eid/stats")
-        .get(EventController.getEventStats);
+        .get(event_access.read, EventController.getEventStats);
 
     /**
      * @api {get} /event/:eid/activities Get event activities
@@ -664,7 +585,7 @@ module.exports = function(app) {
      * 'Get current user' request for user structure).
      */
     app.route("/event/:eid/activities")
-        .get(EventController.getEventActivities);
+        .get(event_access.read, EventController.getEventActivities);
 
     /**
      * @api {post} /event/:eid/board_game/:source/:id Add to event from source
@@ -679,8 +600,7 @@ module.exports = function(app) {
      * @apiUse ProvidedBoardGamesListDescriptor
      */
     app.route("/event/:eid/board_game/:source/:id")
-        .post(eventAccessMiddleware, EventController.addBoardGameAndAddToEvent);
-
+        .post(event_access.write, EventController.addBoardGameAndAddToEvent);
 
     /**
      * @api {get} /event/:id/board_games Get provided board games
@@ -720,9 +640,9 @@ module.exports = function(app) {
      * @apiUse SuccessObjDescriptor
      */
     app.route("/event/:eid/board_games")
-        .get(EventController.getProvidedBoardGames)
-        .post(eventAccessMiddleware, EventController.addProvidedBoardGames)
-        .delete(eventAccessMiddleware, EventController.deleteProvidedBoardGames);
+        .get(event_access.read, EventController.getProvidedBoardGames)
+        .post(event_access.write, EventController.addProvidedBoardGames)
+        .delete(event_access.write, EventController.deleteProvidedBoardGames);
 
     /**
      * @api {post} /event/:id/game Add event game
@@ -749,10 +669,11 @@ module.exports = function(app) {
      */
     app.route("/event/:eid/game")
         .post(
-            eventAccessMiddleware,
+            event_access.write,
             validation.getGameValidators(true).concat([
                 validation.modelExists(check('eid'), db.Event)
             ]),
+            validation.validateOrBlock('cannot add game to the event'),
             GameController.addEventGame
         );
 
@@ -782,11 +703,12 @@ module.exports = function(app) {
      */
     app.route("/event/:eid/game/:gid")
         .put(
-            eventAccessMiddleware,
+            event_access.write,
             validation.getGameValidators(false).concat([
                 validation.modelExists(check('eid'), db.Event),
                 validation.modelExists(check('gid'), db.Game)
-            ]), GameController.updateEventGame
+            ]), validation.validateOrBlock('cannot update event game'),
+            GameController.updateEventGame
         );
 
     /**
@@ -804,7 +726,7 @@ module.exports = function(app) {
      * returned data is a list (not an actual object).
      */
     app.route("/event/:eid/games")
-        .get(GameController.getEventGames);
+        .get(event_access.read, GameController.getEventGames);
 
     /**
      * @api {get} /event/:id/games/latest Get recent event game
@@ -821,7 +743,7 @@ module.exports = function(app) {
      * returned data is a list (not an actual object).
      */
     app.route("/event/:eid/games/latest")
-        .get(GameController.getRecentEventGames);
+        .get(event_access.read, GameController.getRecentEventGames);
 
     /**
      * @api {get} /event/:id/attendees Get event attendees
@@ -833,39 +755,30 @@ module.exports = function(app) {
      *
      * @apiUse TokenHeaderRequired
      */
-
-    /**
-     * @api {post} /event/:id/attendees Add event attendees
-     * @apiName AddEventAttendees
-     * @apiGroup Event attendee
-     * @apiDescription Add attendees to the specified event.
-     * Note: only the creator or an attendee can use this endpoint.
-     *
-     * @apiParam {Number} id Event identifier.
-     * @apiParam (body) {Number[]} users List of ids of user to add to the event
-     * @apiUse TokenHeaderRequired
-     */
-
-    /**
-     * @api {delete} /event/:id/attendees Delete event attendees
-     * @apiName DeleteEventAttendees
-     * @apiGroup Event attendee
-     * @apiDescription Remove attendees from the specified event.
-     * Note: only the creator or an attendee can use this endpoint.
-     *
-     * @apiParam {Number} id Event identifier.
-     * @apiParam (body) {Number[]} users List of ids of user to remove from the event
-     *
-     * @apiUse TokenHeaderRequired
-     */
     app.route("/event/:eid/attendees")
-        .get(EventController.getEventAttendees)
-        .post(eventAccessMiddleware, [body('users').isArray().not().isEmpty()], EventController.addEventAttendees)
-        .delete(eventAccessMiddleware, [body('users').isArray().not().isEmpty()], EventController.deleteEventAttendees);
+        .get(event_access.read, EventController.getEventAttendees);
 
     /**
-     * @api {post} /event/:id/subscribe Subscribe to event
-     * @apiName SubscribeToEvent
+     * @api {delete} /event/:id/attendee/:uid Delete event attendee
+     * @apiName DeleteEventAttendee
+     * @apiGroup Event attendee
+     * @apiDescription Remove an attendee from the specified event.
+     * Note: only the creator can use this endpoint
+     *
+     * @apiParam {Number} eid Event identifier.
+     * @apiParam {Number} uid Attendee user identifier.
+     *
+     * @apiUse TokenHeaderRequired
+     */
+    app.route("/event/:eid/attendee/:uid")
+        .delete(
+            event_access.admin,
+            EventJoinController.deleteEventAttendee
+        );
+
+    /**
+     * @api {post} /event/:id/join Join event
+     * @apiName JoinEvent
      * @apiGroup Event
      * @apiDescription Subscribe the current user to the event.
      *
@@ -874,8 +787,12 @@ module.exports = function(app) {
      * @apiUse TokenHeaderRequired
      * @apiUse SuccessObjDescriptor
      */
-    app.route("/event/:eid/subscribe")
-        .post(EventController.subscribeToEvent);
+    app.route("/event/:eid/join")
+        .post(
+            [param('eid').custom(validation.model(db.Event))],
+            validation.validateOrBlock("event not found: cannot join"),
+            EventJoinController.joinEvent
+        );
 
     /**
      * @api {get} /event/:id/rankings Get event rankings
@@ -888,7 +805,7 @@ module.exports = function(app) {
      * @apiUse TokenHeaderRequired
      */
     app.route("/event/:eid/rankings")
-        .get(StatsController.getEventRankings);
+        .get(event_access.read, StatsController.getEventRankings);
 
     /**
      * @api {get} /event/:id/ranking/:type Get event ranking
@@ -903,7 +820,7 @@ module.exports = function(app) {
      * @apiUse TokenHeaderRequired
      */
     app.route("/event/:eid/ranking/:type(" + StatsController.availableRankings.join("|") + ")")
-        .get(StatsController.getEventRanking);
+        .get(event_access.read, StatsController.getEventRanking);
 
 
     /**
@@ -918,7 +835,7 @@ module.exports = function(app) {
      * @apiSuccess {User[]} matchmaking.users List of other users wishing to play the board game
      */
     app.route("/event/:eid/matchmaking")
-        .get(EventController.getEventMatchmaking);
+        .get(event_access.read, EventController.getEventMatchmaking);
 
     /**
      * @api {get} /event/:id/wish_to_play Get event wish to play
@@ -937,10 +854,10 @@ module.exports = function(app) {
      * @apiSuccess {BoardGame} wished.board_game Board game data (see "Add board game" request for structure)
      */
     app.route("/event/:eid/wish_to_play")
-        .get([
+        .get(event_access.read, [
             query('exclude_current').optional().isBoolean().toBoolean(),
             query('provided_games_only').optional().isBoolean().toBoolean()
-        ], EventController.getEventWishToPlayGames);
+        ], validation.validateOrBlock('cannot get user wish to play list'), EventController.getEventWishToPlayGames);
 
     /**
      * @api {get} /event/:eid/timers Get current user event timers
@@ -952,7 +869,156 @@ module.exports = function(app) {
      * @apiUse TimerListDescriptor
      */
     app.route("/event/:eid/timers")
-        .get(TimerController.getCurrentUserEventTimers);
+        .get(event_access.read, TimerController.getCurrentUserEventTimers);
+
+    /**
+     * @api {post} /timer Create event timer
+     * @apiName CreateEventTimer
+     * @apiGroup Event
+     * @apiDescription Create a new timer associated to an event. Must be either the creator of the event or an attendee.
+     * @apiParam (param) {Number} id_event Event identifier.
+     * @apiParam (body) {String} timer_type=`COUNT_UP` The type of timer to create. One of: `COUNT_UP`, `COUNT_DOWN `or `RELOAD`.
+     * @apiParam (body) {Number} [id_board_game=null] Board game identifier
+     * @apiParam (body) {Number} [initial_duration=0] Start time of all players' timers in milliseconds.
+     * @apiParam (body) {Number} [current_player=0] Turn order of the current player (an integer in `[0, n_players[`)
+     * @apiParam (body) {Number} [reload_increment=0] If the timer is of type `RELOAD`, the amount of time add every at every `next()` action.
+     * @apiParam (body) {PlayerTimer[]} player_timers Individual player timers information.
+     * @apiParam (body) {Number} player_timers.id_user Player user identifier if registered on the app (mutually exclusive with `name`), or `null`.
+     * @apiParam (body) {String} player_timers.name Player name if the player is not registered on the application (mutually
+     * exclusive with `user`), or `null`.
+     * @apiParam (body) {Number} player_timers.color=#ffffff Player's color (hexcode, e.g.: `#ffffff`).
+     * @apiUse TokenHeaderRequired
+     * @apiUse TimerDescriptor
+     */
+    app.route("/event/:eid/timer")
+        .post(
+            event_access.write,
+            validation.getTimerValidators(true),
+            validation.validateOrBlock('cannot create event timer'),
+            TimerController.createTimer
+        );
+
+    /**
+     * @api {get} /event/:eid/invites List event invites
+     * @apiName ListEventInvites
+     * @apiGroup Event invites
+     * @apiDescription List invites associated with the given event.
+     *
+     * @apiParam (query) {String[]} [status] If set: filter invites based on the given statuses.
+     *
+     * @apiUse TokenHeaderRequired
+     * @apiUse EventInviteListDescriptor
+     */
+    app.route("/event/:eid/invites")
+        .get(
+            event_access.write, [  // write access because only create or attendees can access
+                param('eid').custom(validation.model(db.Event)),
+                query('status').optional().isArray().not().isEmpty().custom(validation.valuesIn(db.EventInvite.STATUSES))
+            ], validation.validateOrBlock("cannot list event invites"),
+            EventJoinController.listEventInvites
+        );
+
+    /**
+     * @api {post} /event/:eid/invite Send event invite
+     * @apiName SendEventInvite
+     * @apiGroup Event invites
+     * @apiDescription Send an event invite to a user (from the current user)
+     *
+     * @apiParam (param) {Number} eid Event identifier
+     * @apiParam (body) {Number} id_invitee Invite recipient user identifier
+     *
+     * @apiUse TokenHeaderRequired
+     * @apiUse EventInviteDescriptor
+     */
+
+    /**
+     * @api {put} /event/:eid/invite  Handle event invite
+     * @apiName HandleEventInvite
+     * @apiGroup Event invites
+     * @apiDescription Handle an event invite (sent to the current user)
+     *
+     * @apiParam (param) {Number} eid Event identifier
+     * @apiParam (body) {Boolean} accept True for accepting the request, false for rejecting it
+     *
+     * @apiUse TokenHeaderRequired
+     * @apiUse EventInviteDescriptor
+     */
+    app.route("/event/:eid/invite")
+        .post(
+            event_access.write, [
+                body('id_invitee').custom(validation.model(db.User)),
+                param('eid').custom(validation.model(db.Event))
+            ], validation.validateOrBlock("cannot send event invite"),
+            EventJoinController.sendEventInvite
+        )
+        .put(
+            [
+                body('accept').isBoolean().toBoolean(),
+                param('eid').custom(validation.model(db.Event))
+            ], validation.validateOrBlock("cannot handle event invite"),
+            EventJoinController.handleEventInvite
+        );
+
+
+    /**
+     * @api {get} /event/:eid/join_requests List event join requests
+     * @apiName ListEventJoinRequests
+     * @apiGroup Event join request
+     * @apiDescription List join requests associated with the given event.
+     *
+     * @apiParam (query) {String[]} [status] If set: filter join requests based on the given statuses.
+     *
+     * @apiUse TokenHeaderRequired
+     * @apiUse EventJoinRequestsListDescriptor
+     */
+    app.route('/event/:eid/join_requests')
+        .get(
+            event_access.write, [  // write access because only create or attendees can access
+                param('eid').custom(validation.model(db.Event)),
+                query('status').optional().isArray().not().isEmpty().custom(validation.valuesIn(db.EventInvite.STATUSES))
+            ], validation.validateOrBlock("cannot list event join requests"),
+            EventJoinController.listJoinRequests
+        );
+
+    /**
+     * @api {post} /event/:eid/join_request Send event join request
+     * @apiName SendEventJoinRequest
+     * @apiGroup Event join request
+     * @apiDescription Send a join request for an event.
+     *
+     * @apiParam (param) {Number} eid Event identifier
+     *
+     * @apiUse TokenHeaderRequired
+     * @apiUse EventJoinRequestDescriptor
+     */
+
+    /**
+     * @api {put} /event/:eid/join_request Handle event join request
+     * @apiName HandleEventJoinRequest
+     * @apiGroup Event join request
+     * @apiDescription Handle a join request for the given event.
+     *
+     * @apiParam (param) {Number} eid Event identifier
+     * @apiParam (body) {Number} id_requester Invite recipient user identifier
+     * @apiParam (body) {Boolean} accept True for accepting the request, false for refusing it.
+     *
+     * @apiUse TokenHeaderRequired
+     * @apiUse EventJoinRequestDescriptor
+     */
+    app.route('/event/:eid/join_request')
+        .post(
+            [
+                param('eid').custom(validation.model(db.Event))
+            ], validation.validateOrBlock("cannot add join request"),
+            EventJoinController.sendJoinRequest
+        ).put(
+            event_access.write, [
+                body('id_requester').isNumeric().toInt(),
+                body('accept').isBoolean().toBoolean(),
+                param('eid').isNumeric().toInt()
+            ], validation.validateOrBlock("cannot handle join request"),
+            EventJoinController.handleJoinRequest
+        );
 
     // Board game
     /**
@@ -1080,28 +1146,6 @@ module.exports = function(app) {
         .post(validation.getTimerValidators(true), TimerController.createTimer);
 
     /**
-     * @api {post} /timer Create event timer
-     * @apiName CreateEventTimer
-     * @apiGroup Event
-     * @apiDescription Create a new timer associated to an event. Must be either the creator of the event or an attendee.
-     * @apiParam (param) {Number} id_event Event identifier.
-     * @apiParam (body) {String} timer_type=`COUNT_UP` The type of timer to create. One of: `COUNT_UP`, `COUNT_DOWN `or `RELOAD`.
-     * @apiParam (body) {Number} [id_board_game=null] Board game identifier
-     * @apiParam (body) {Number} [initial_duration=0] Start time of all players' timers in milliseconds.
-     * @apiParam (body) {Number} [current_player=0] Turn order of the current player (an integer in `[0, n_players[`)
-     * @apiParam (body) {Number} [reload_increment=0] If the timer is of type `RELOAD`, the amount of time add every at every `next()` action.
-     * @apiParam (body) {PlayerTimer[]} player_timers Individual player timers information.
-     * @apiParam (body) {Number} player_timers.id_user Player user identifier if registered on the app (mutually exclusive with `name`), or `null`.
-     * @apiParam (body) {String} player_timers.name Player name if the player is not registered on the application (mutually
-     * exclusive with `user`), or `null`.
-     * @apiParam (body) {Number} player_timers.color=#ffffff Player's color (hexcode, e.g.: `#ffffff`).
-     * @apiUse TokenHeaderRequired
-     * @apiUse TimerDescriptor
-     */
-    app.route("/event/:eid/timer")
-        .post(eventAccessMiddleware, validation.getTimerValidators(true), TimerController.createTimer);
-
-    /**
      * @api {post} /timer/:tid Get timer
      * @apiName GetTimer
      * @apiGroup Timer
@@ -1166,5 +1210,4 @@ module.exports = function(app) {
      */
     app.route("/admin/user")
         .put(AdminController.updateUserStatus);
-
 };

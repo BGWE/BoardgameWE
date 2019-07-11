@@ -1,8 +1,9 @@
 const moment = require("moment");
 const _ = require("lodash");
-const { body, param } = require('express-validator/check');
+const { body, validationResult } = require('express-validator/check');
 const db = require('../models/index');
-const TimerController = require('../TimerController');
+const userutil = require('./user');
+const util = require('./util');
 
 /**
  * Extract the value located at the given validation path in obj
@@ -43,6 +44,29 @@ const conditionallyOptional = (builder, isOptional) => {
 
 /** shortcut for conditionallyOptional */
 const co = (b, opt) => conditionallyOptional(b, opt);
+
+/**
+ * Generate a custom validator that checks whether a
+ * @param accepted_values
+ * @param [caseSensitive=false]
+ * @returns {Function}
+ */
+exports.valuesIn = function(accepted_values, caseSensitive) {
+    caseSensitive = caseSensitive || false;
+    if (!caseSensitive) {
+        accepted_values = accepted_values.map(s => s.toLowerCase())
+    }
+    let accepted_set = new Set(accepted_values);
+    return values => {
+        for (let i = 0; i < values.length; ++i) {
+            const v = values[i];
+            if (!accepted_set.has(caseSensitive ? v : v.toLowerCase())) {
+                throw new Error("Invalid value '" + value + "'. Should be in '" + accepted_values + "'.");
+            }
+        }
+        return true;
+    }
+};
 
 exports.toMoment = value => moment.utc(value, moment.ISO_8061);
 
@@ -87,7 +111,7 @@ exports.mutuallyExclusive = function(other) {
         if(!!value ^ !!valueByPath(req[location], replacePathLast(path, other))) {
            return true;
         }
-        throw new Error("'id_user' and 'name' fields are mutually exclusive.")
+        throw new Error("'id_user' and 'name' fields are mutually exclusive.");
     };
 };
 
@@ -127,7 +151,11 @@ exports.getEventValidators = function(is_create) {
         co(body('start'), !is_create)
             .custom(exports.checkIso8601)
             .customSanitizer(exports.toMoment),
-        body('hide_rankings').optional().isBoolean()
+        body('hide_rankings').optional().isBoolean(),
+        co(body('visibility'), !is_create).customSanitizer(s => s.toUpperCase()).isIn(db.Event.VISIBILITIES),
+        body('attendees_can_edit').optional().isBoolean().toBoolean(),
+        body('invite_required').optional().isBoolean().toBoolean(),
+        body('user_can_join').optional().isBoolean().toBoolean()
     ];
 };
 
@@ -150,4 +178,19 @@ exports.getTimerValidators = function(is_create) {
 
 exports.modelExists = (builder, model) => {
     return builder.isNumeric().toInt().custom(exports.model(model));
+};
+
+/**
+ * Return error response if validation didn't go well
+ * @param message Error message to send in case of error
+ * @returns {*}
+ */
+exports.validateOrBlock = function(message) {
+    return (req, res, next) => {
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) {
+            return util.detailErrorResponse(res, 400, message, errors);
+        }
+        next();
+    };
 };

@@ -91,16 +91,17 @@ exports.getCurrentUser = function(req, res) {
 };
 
 exports.getUser = function(req, res) {
-    return handleUserResponse(res, db.User.findByPk(parseInt(req.params.uid)));
+    const current_uid = userutil.getCurrUserId(req);
+    const uid = parseInt(req.params.uid);
+    return util.sendModelOrError(res, db.User.findByPk(uid, {
+        attributes: includes.userShallowAttributes,
+        include: includes.getFriendshipIncludesSQ(current_uid)
+    }), (u) => includes.formatShallowUserWithCurrent(u, current_uid));
 };
 
 exports.updateUser = function(req, res) {
     // TODO security: implement token invalidation check when password changes
     let userId = userutil.getCurrUserId(req);
-    if (userId !== parseInt(req.params.uid)) { // TODO: allow update of another user for admins?
-        return util.detailErrorResponse(res, 404, "cannot update data of another user");
-    }
-
     return db.User.findByPk(userId)
         .then(user => {
             let updateFn = function() {
@@ -152,7 +153,6 @@ exports.forgotPassword = function(req, res) {
                     return util.successResponse(res);
                 })
                 .catch(err => {
-                    console.log(err);
                     return util.detailErrorResponse(res, 500, "failed to send password recovery email");
                 });
         }
@@ -166,7 +166,6 @@ exports.resetPassword = function(req, res) {
 
     return db.User.findByPk(userId)
         .then(user => {
-            console.log(user);
             try {
                 let payload = userutil.getPayloadFromResetPasswordToken(token, user.password, user.createdAt);
             } catch (error) {
@@ -375,4 +374,100 @@ exports.addBoardGameAndAddToWishToPlay = function(req, res) {
     const bggId = parseInt(req.params.id);
     const source = req.params.source;
     return BoardGameController.executeIfBoardGameExists(bggId, source, req, res, createFn);
+};
+
+// Friends
+const formatUserFriends = async function(id_user) {
+    let users1 = await db.Friendship.findAll({
+        where: { id_user1: id_user },
+        include: [ includes.getShallowUserIncludeSQ('user2') ]
+    });
+    let users2 = await db.Friendship.findAll({
+        where: { id_user2: id_user },
+        include: [ includes.getShallowUserIncludeSQ('user1') ]
+    });
+    return users1.map(f => f.user2).concat(users2.map(f => f.user1));
+};
+
+exports.getCurrentUserFriends = function(req, res) {
+    const uid = userutil.getCurrUserId(req);
+    return util.sendModelOrError(res, formatUserFriends(uid));
+};
+
+exports.getUserFriends = function(req, res) {
+    return util.sendModelOrError(res, formatUserFriends(parseInt(req.params.uid)));
+};
+
+exports.getFriendshipRequests = function(req, res) {
+    return util.sendModelOrError(res, db.FriendshipRequest.findAll({
+        where: {
+            status: db.FriendshipRequest.STATUS_PENDING,
+            id_user_to: userutil.getCurrUserId(req)
+        },
+        include: [includes.getShallowUserIncludeSQ('user_from')]
+    }));
+};
+
+exports.sendFriendshipRequest = function(req, res) {
+    return util.sendModelOrError(res, db.FriendshipRequest.create({
+        id_user_from: userutil.getCurrUserId(req),
+        id_user_to: req.body.id_recipient,
+        status: db.FriendshipRequest.STATUS_PENDING
+    }, {
+        include: [includes.getShallowUserIncludeSQ('user_to')]
+    }));
+};
+
+exports.handleFriendshipRequest = function(req, res) {
+    const current_user_id =  userutil.getCurrUserId(req);
+    const id_sender = req.body.id_sender;
+    return db.sequelize.transaction(t => {
+        return db.FriendshipRequest.findOne({
+            where: {
+                id_user_from: id_sender,
+                id_user_to: current_user_id,
+                status: db.FriendshipRequest.STATUS_PENDING
+            },
+            transaction: t
+        }).then(async request => {
+            const accept = req.body.accept;
+            request.status = accept ? db.FriendshipRequest.STATUS_ACCEPTED : db.FriendshipRequest.STATUS_REJECTED;
+            if (accept) {
+                await db.Friendship.create({
+                    id_user1: current_user_id,
+                    id_user2: id_sender
+                });
+            }
+            return util.sendModelOrError(res, request.save({
+                transaction: t,
+                include: [includes.getShallowUserIncludeSQ('user_to')]
+            }));
+        })
+    }).catch(err => {
+        return util.detailErrorResponse(res, 404, "request not found");
+    });
+};
+
+exports.deleteFriendshipRequest = function (req, res) {
+    const current_user_id =  userutil.getCurrUserId(req);
+    return util.handleDeletion(res, db.FriendshipRequest.destroy({
+        where: {
+            id_user_from: current_user_id,
+            id_user_to: req.body.id_recipient,
+            status: db.FriendshipRequest.STATUS_PENDING
+        }
+    }));
+};
+
+exports.deleteFriend = function (req, res) {
+    const current_user_id =  userutil.getCurrUserId(req);
+    const friend_id = parseInt(req.params.uid);
+    return util.handleDeletion(res, db.Friendship.destroy({
+        where: {
+            [db.Op.or]: [
+                {id_user1: current_user_id, id_user2: friend_id},
+                {id_user1: friend_id, id_user2: current_user_id}
+            ]
+        }
+    }));
 };

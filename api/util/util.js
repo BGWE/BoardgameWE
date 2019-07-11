@@ -15,6 +15,10 @@ exports.parseList = function(s, fn, sep) {
     return s.split(sep).map(v => fn(v));
 };
 
+exports.boolOrDefault = function(b, deflt) {
+    return b !== undefined ? b : deflt;
+};
+
 exports.toDictMapping = (arr, field) => {
     let object = {};
     for (let i in arr) {
@@ -27,7 +31,17 @@ exports.toDictMapping = (arr, field) => {
     return object;
 };
 
-exports.rank = (data, score_fn, lower_better) => {
+/**
+ *
+ * @param data
+ * @param score_fn
+ * @param lower_better
+ * @param [write_fn] A function defining how to write new fields. Prototype (o, f, v) where o element of which the rank
+ * are currently defined, f is the name of the rank to write and v its value
+ * @returns {*}
+ */
+exports.rank = (data, score_fn, lower_better, write_fn) => {
+    write_fn = write_fn || ((o, f, v) => {o[f] = v;});
     let copy = data.slice(0);
     copy.sort((a, b) => (lower_better ? -1 : 1) * (score_fn(b) - score_fn(a)));
 
@@ -42,11 +56,11 @@ exports.rank = (data, score_fn, lower_better) => {
             prev_natu_rank = prev_natu_rank + 1;
             prev_score = copy[i].score;
         }
-        copy[i].score = score_fn(copy[i]);
-        copy[i].natural_rank = prev_natu_rank;
-        copy[i].rank = copy[i].natural_rank;
-        copy[i].skip_rank = prev_skip_rank;
-        copy[i].win = copy[i].score === best_score;
+        write_fn(copy[i], 'score', score_fn(copy[i]));
+        write_fn(copy[i], 'natural_rank', prev_natu_rank);
+        write_fn(copy[i], 'rank', prev_natu_rank);
+        write_fn(copy[i], 'skip_rank', prev_skip_rank);
+        write_fn(copy[i], 'win', copy[i].score === best_score);
     }
     return copy;
 };
@@ -87,6 +101,10 @@ exports.errorObj = {error: "err"};
  */
 exports.successResponse = function(res, data) {
     return res.status(200).json(data);
+};
+
+exports.sendSuccessObj = function(res) {
+    return exports.successResponse(res, {success: true});
 };
 
 /**
@@ -159,3 +177,4 @@ exports.getPaginationParams = function(req, order) {
         order
     };
 };
+

@@ -1,11 +1,12 @@
 const db = require("./models/index");
 const util = require("./util/util");
 const includes = require("./util/db_include");
+const userutil = require("./util/user");
 const { validationResult } = require('express-validator/check');
 
 exports.gameFullIncludesSQ = [
     includes.defaultBoardGameIncludeSQ,
-    includes.genericIncludeSQ(db.GamePlayer, "game_players", [includes.defaultUserIncludeSQ])
+    includes.genericIncludeSQ(db.GamePlayer, "game_players", [includes.getShallowUserIncludeSQ("user")])
 ];
 
 /**
@@ -90,10 +91,6 @@ const getGamePlayerData = function(game, validated_players) {
  * @returns {*}
  */
 exports.addGameQuery = function(eid, req, res) {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-        return util.detailErrorResponse(res, 400, "cannot update event", errors);
-    }
     return db.sequelize.transaction(t => {
         return db.Game.create({
             id_event: eid,
@@ -126,10 +123,6 @@ exports.addEventGame = function(req, res) {
 };
 
 exports.updateEventGame = function(req, res) {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-        return util.detailErrorResponse(res, 400, "cannot update event", errors);
-    }
     return db.sequelize.transaction(t => {
         return db.Game.findByPk(req.params.gid, {transaction: t})
             .then(game => {
@@ -169,7 +162,11 @@ exports.updateEventGame = function(req, res) {
 };
 
 exports.rankForGame = function(game) {
-    return util.rank(game.game_players, (player) => player.score, game.ranking_method === "POINTS_LOWER_BETTER");
+    return util.rank(
+        game.game_players,
+        (player) => player.score, game.ranking_method === "POINTS_LOWER_BETTER",
+        (o, f, v) => { o.dataValues[f] = v; }  // write in dataValues not to lose values on the way
+    );
 };
 
 exports.sendAllGamesFiltered = function (filtering, res, options) {
@@ -187,6 +184,12 @@ exports.sendAllGamesFiltered = function (filtering, res, options) {
 exports.getGames = function (req, res) {
     // no filtering
     return exports.sendAllGamesFiltered(undefined, res);
+};
+
+exports.getUserGames = function(req, res) {
+    const current_uid = userutil.getCurrUserId(req);
+    const player_query = db.selectFieldQuery("GamePlayers", "id_game", {id_user: current_uid});
+    return exports.sendAllGamesFiltered({id: {[db.Op.in]: db.sequelize.literal('(' + player_query + ')')}}, res);
 };
 
 exports.getGame = function (req, res) {
