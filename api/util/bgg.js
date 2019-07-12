@@ -10,13 +10,15 @@ function search(boardgame_name) {
     return rp({uri: BGG_ROOT_PATH + 'search', qs: url_variables});
 }
 
-function get(boardgame_id) {
-    let url_variables = {id: boardgame_id, stats: 1};
+function get(ids) {
+    let url_variables = {id: ids.map(s => s.toString()).join(), stats: 1};
+    console.log(url_variables);
     return rp({uri: BGG_ROOT_PATH + 'thing', qs: url_variables});
 }
 
 function getBoardGamePromise(boardgame_id, res, _then) {
     return exports.get(boardgame_id).then(_then).catch(err => {
+        console.log(err);
         return util.detailErrorResponse(res, 404, "could not fetch game from board game geek");
     });
 }
@@ -39,35 +41,50 @@ function format_search_response(body) {
 }
 
 function format_get_response(body) {
-    let game = {};
-    parse_string(body, function (err, result) {
-        if (err) {console.log(err); return;}
-        const TAGS_WITH_CONTENT = ['thumbnail', 'image', 'description'];
-        const SINGLE_TAGS = ['yearpublished', 'minplayers', 'maxplayers', 'playingtime', 'minplaytime', 'maxplaytime'];
-        const LINK_TAGS_TYPE = ['boardgamecategory', 'boardgamemechanic', 'boardgamefamily', 'boardgameexpansion'];
+  let games = [];
+  parse_string(body, function (err, result) {
+    if (err) {
+      console.log(err);
+      return;
+    }
+    const TAGS_WITH_CONTENT = ['thumbnail', 'image', 'description'];
+    const SINGLE_TAGS = ['yearpublished', 'minplayers', 'maxplayers', 'playingtime', 'minplaytime', 'maxplaytime'];
+    const LINK_TAGS_TYPE = ['boardgamecategory', 'boardgamemechanic', 'boardgamefamily'];
 
-        result.items.item.forEach(function (_item) {
-            TAGS_WITH_CONTENT.forEach(function (tag) {
-                game[tag] = get_tag(_item, tag);
-            });
+    result.items.item.forEach(function (_item) {
+      let game = {};
+      TAGS_WITH_CONTENT.forEach(function (tag) {
+        game[tag] = get_tag(_item, tag);
+      });
 
-            SINGLE_TAGS.forEach(function (tag) {
-                game[tag] = get_attribute_from_tag(_item, tag, 'value');
-            });
+      SINGLE_TAGS.forEach(function (tag) {
+        game[tag] = get_attribute_from_tag(_item, tag, 'value');
+      });
 
-            LINK_TAGS_TYPE.forEach(function (type) {
-                let tags = get_tags_for_attribute(_item, 'link', 'type', type);
+      LINK_TAGS_TYPE.forEach(function (type) {
+        let tags = get_tags_for_attribute(_item, 'link', 'type', type);
 
-                game[type] = tags.map(function (tag) {
-                    return tag.$.value;
-                })
-            });
+        game[type] = tags.map(function (tag) {
+          return tag.$.value;
+        })
+      });
 
-            game["name"] = get_game_name_from_item(_item);
-            game["score"] = get_rating(_item);
-        });
+      let expansions_tags = get_tags_for_attribute(_item, 'link', 'type', 'boardgameexpansion');
+      game.expansion_of = expansions_tags
+          .filter(t => has_attribute(t, 'inbound') && t.$.inbound === "true")
+          .map(t => parseInt(t.$.id));
+
+      game.expansions = expansions_tags
+          .filter(t => !has_attribute(t, 'inbound') || t.$.inbound !== "true")
+          .map(t => parseInt(t.$.id));
+
+      game.id = get_attribute(_item, "id");
+      game.name = get_game_name_from_item(_item);
+      game.score = get_rating(_item);
+      games.push(game);
     });
-    return game;
+  });
+  return games;
 }
 
 function get_rating(_json) {
@@ -79,7 +96,9 @@ function get_rating(_json) {
     throw new Error("Cannot access average score from returned _json.")
 }
 
-
+function has_attribute(_json, attribute) {
+  return _json.hasOwnProperty('$') && _json.$.hasOwnProperty(attribute);
+}
 
 function get_attribute(_json, attribute) {
     if (_json.hasOwnProperty('$') && _json.$.hasOwnProperty(attribute)) return _json.$[attribute];
