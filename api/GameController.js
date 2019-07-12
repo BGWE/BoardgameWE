@@ -1,7 +1,7 @@
 const db = require("./models/index");
 const util = require("./util/util");
 const includes = require("./util/db_include");
-const { validationResult } = require('express-validator/check');
+const userutil = require("./util/user");
 
 exports.gameFullIncludesSQ = [
     includes.defaultBoardGameIncludeSQ,
@@ -161,7 +161,11 @@ exports.updateEventGame = function(req, res) {
 };
 
 exports.rankForGame = function(game) {
-    return util.rank(game.game_players, (player) => player.score, game.ranking_method === "POINTS_LOWER_BETTER");
+    return util.rank(
+        game.game_players,
+        (player) => player.score, game.ranking_method === "POINTS_LOWER_BETTER",
+        (o, f, v) => { o.dataValues[f] = v; }  // write in dataValues not to lose values on the way
+    );
 };
 
 exports.sendAllGamesFiltered = function (filtering, res, options) {
@@ -179,6 +183,12 @@ exports.sendAllGamesFiltered = function (filtering, res, options) {
 exports.getGames = function (req, res) {
     // no filtering
     return exports.sendAllGamesFiltered(undefined, res);
+};
+
+exports.getUserGames = function(req, res) {
+    const current_uid = userutil.getCurrUserId(req);
+    const player_query = db.selectFieldQuery("GamePlayers", "id_game", {id_user: current_uid});
+    return exports.sendAllGamesFiltered({id: {[db.Op.in]: db.sequelize.literal('(' + player_query + ')')}}, res);
 };
 
 exports.getGame = function (req, res) {

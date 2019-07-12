@@ -91,7 +91,12 @@ exports.getCurrentUser = function(req, res) {
 };
 
 exports.getUser = function(req, res) {
-    return handleUserResponse(res, db.User.findByPk(parseInt(req.params.uid)));
+    const current_uid = userutil.getCurrUserId(req);
+    const uid = parseInt(req.params.uid);
+    return util.sendModelOrError(res, db.User.findByPk(uid, {
+        attributes: includes.userShallowAttributes,
+        include: includes.getFriendshipIncludesSQ(current_uid)
+    }), (u) => includes.formatShallowUserWithCurrent(u, current_uid));
 };
 
 exports.updateUser = function(req, res) {
@@ -372,23 +377,16 @@ exports.addBoardGameAndAddToWishToPlay = function(req, res) {
 };
 
 // Friends
-const friendshipToUser = (field_friend) => {
-    return u => u[field_friend];
-};
-
 const formatUserFriends = async function(id_user) {
     let users1 = await db.Friendship.findAll({
         where: { id_user1: id_user },
-        include: [ includes.getUserIncludeSQ('user2') ]
+        include: [ includes.getShallowUserIncludeSQ('user2') ]
     });
     let users2 = await db.Friendship.findAll({
         where: { id_user2: id_user },
-        include: [ includes.getUserIncludeSQ('user1') ]
+        include: [ includes.getShallowUserIncludeSQ('user1') ]
     });
-    return Array.concat(
-        users1.map(u => friendshipToUser("user2")(u)),
-        users2.map(u => friendshipToUser("user1")(u))
-    );
+    return users1.map(f => f.user2).concat(users2.map(f => f.user1));
 };
 
 exports.getCurrentUserFriends = function(req, res) {
@@ -397,13 +395,16 @@ exports.getCurrentUserFriends = function(req, res) {
 };
 
 exports.getUserFriends = function(req, res) {
-    return util.sendModelOrError(res, parseInt(req.params.uid));
+    return util.sendModelOrError(res, formatUserFriends(parseInt(req.params.uid)));
 };
 
 exports.getFriendshipRequests = function(req, res) {
     return util.sendModelOrError(res, db.FriendshipRequest.findAll({
-        where: {id_user_from: userutil.getCurrUserId(req)},
-        include: [includes.getUserIncludeSQ('user_to')]
+        where: {
+            status: db.FriendshipRequest.STATUS_PENDING,
+            id_user_to: userutil.getCurrUserId(req)
+        },
+        include: [includes.getShallowUserIncludeSQ('user_from')]
     }));
 };
 
@@ -413,7 +414,7 @@ exports.sendFriendshipRequest = function(req, res) {
         id_user_to: req.body.id_recipient,
         status: db.FriendshipRequest.STATUS_PENDING
     }, {
-        include: [includes.getUserIncludeSQ('user_to')]
+        include: [includes.getShallowUserIncludeSQ('user_to')]
     }));
 };
 
@@ -424,16 +425,11 @@ exports.handleFriendshipRequest = function(req, res) {
         return db.FriendshipRequest.findOne({
             where: {
                 id_user_from: id_sender,
-                id_user_to: current_user_id
+                id_user_to: current_user_id,
+                status: db.FriendshipRequest.STATUS_PENDING
             },
             transaction: t
         }).then(async request => {
-            if(request.status === db.FriendshipRequest.STATUS_ACCEPTED) {
-                return util.detailErrorResponse(res, 403, "cannot handle an accepted friendship request");
-            } else if (request.status === db.FriendshipRequest.STATUS_REJECTED) {
-                return util.detailErrorResponse(res, 403, "cannot handle a rejected friendship request");
-            }
-
             const accept = req.body.accept;
             request.status = accept ? db.FriendshipRequest.STATUS_ACCEPTED : db.FriendshipRequest.STATUS_REJECTED;
             if (accept) {
@@ -444,10 +440,34 @@ exports.handleFriendshipRequest = function(req, res) {
             }
             return util.sendModelOrError(res, request.save({
                 transaction: t,
-                include: [includes.getUserIncludeSQ('user_to')]
+                include: [includes.getShallowUserIncludeSQ('user_to')]
             }));
         })
     }).catch(err => {
         return util.detailErrorResponse(res, 404, "request not found");
     });
+};
+
+exports.deleteFriendshipRequest = function (req, res) {
+    const current_user_id =  userutil.getCurrUserId(req);
+    return util.handleDeletion(res, db.FriendshipRequest.destroy({
+        where: {
+            id_user_from: current_user_id,
+            id_user_to: req.body.id_recipient,
+            status: db.FriendshipRequest.STATUS_PENDING
+        }
+    }));
+};
+
+exports.deleteFriend = function (req, res) {
+    const current_user_id =  userutil.getCurrUserId(req);
+    const friend_id = parseInt(req.params.uid);
+    return util.handleDeletion(res, db.Friendship.destroy({
+        where: {
+            [db.Op.or]: [
+                {id_user1: current_user_id, id_user2: friend_id},
+                {id_user1: friend_id, id_user2: current_user_id}
+            ]
+        }
+    }));
 };

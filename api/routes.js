@@ -5,7 +5,6 @@ const jwt = require("jsonwebtoken");
 const userutil = require("./util/user");
 const util = require("./util/util");
 const db = require("./models/index");
-const _ = require("lodash");
 
 module.exports = function(app) {
     const { body, param, check, query } = require('express-validator/check');
@@ -34,7 +33,16 @@ module.exports = function(app) {
      * @apiUse DBDatetimeFields
      */
     app.route("/user")
-        .post(UserController.register);
+        .post([
+                body('password').isString().not().isEmpty().isLength({min: 8}),
+                body('name').isString().not().isEmpty(),
+                body('surname').isString().not().isEmpty(),
+                body('email').isString().not().isEmpty().isEmail(),
+                body('username').isString().not().isEmpty(),
+            ],
+            validation.validateOrBlock("cannot register user"),
+            UserController.register
+        );
 
     /**
      * @api {post} /user/login Authenticate user
@@ -132,13 +140,13 @@ module.exports = function(app) {
      * @api {get} /user/:id Get user
      * @apiName GetUser
      * @apiGroup User
-     * @apiDescription Get the specified user data. Can only be executed against friends of the current user.
+     * @apiDescription Get the specified user data.
      * @apiUse TokenHeaderRequired
      *
      * @apiParam {Number} id The user identifier
      *
-     * @apiUse UserDescriptor
-     * @apiUse DBDatetimeFields
+     * @apiUse ShallowUserDescriptor
+     * @apiUse UserCurrentFriendshipDescriptor
      */
 
     /**
@@ -153,8 +161,22 @@ module.exports = function(app) {
      * @apiUse DBDatetimeFields
      */
     app.route("/user/:uid")
-        .get(user_access.read, UserController.getUser)
+        .get(UserController.getUser)
         .put(user_access.write, UserController.updateUser);
+
+    /**
+     * @api {put} /user/:id/games Get user games
+     * @apiName GetUserGames
+     * @apiGroup User
+     * @apiDescription Get list of games played by the current user.
+     * @apiUse TokenHeaderRequired
+     *
+     * @apiParam {Number} id User identifier
+     * @apiSuccess {Game[]} games List of the games played by the specified user (see "Add event game" for Game
+     * structure). Note: the returned data is a list (not an actual object).
+     */
+    app.route("/user/:uid/games")
+        .get(user_access.read, GameController.getUserGames);
 
     /**
      * @api {get} /user/:id/stats Get user stats
@@ -324,10 +346,10 @@ module.exports = function(app) {
 
     // TODO should return shallow user data
     /**
-     * @api {get} /user/current/friends Get current user friends
+     * @api {get} /user/:id/friends Get user friends
      * @apiName GetUserFriends
      * @apiGroup User friends
-     * @apiDescription Get user friends
+     * @apiDescription Get user friends. Can only be executed against friends of the current user.
      * @apiParam {Number} id User identifier.
      * @apiUse TokenHeaderRequired
      * @apiUse UserListDescriptor
@@ -338,7 +360,7 @@ module.exports = function(app) {
     /**
      * @api {get} /user/current/event_invites Get current user event invites
      * @apiName GetCurrentUserEventInvites
-     * @apiGroup Event join request
+     * @apiGroup Event invites
      * @apiDescription Get event invites sent to the current user
      * @apiParam (query) {String[]} [status] If set: filter invites based on the given statuses.
      * @apiUse TokenHeaderRequired
@@ -360,7 +382,7 @@ module.exports = function(app) {
         .get(UserController.getFriendshipRequests);
 
     /**
-     * @api {post} /friend_requests Send friend request
+     * @api {post} /friend_request Send friend request
      * @apiName SendFriendRequest
      * @apiGroup User friends
      * @apiDescription Send a friend request from the current to the specified user
@@ -370,14 +392,24 @@ module.exports = function(app) {
      */
 
     /**
-     * @api {put} /friend_requests Handle friend request
+     * @api {put} /friend_request Handle friend request
      * @apiName HandleFriendRequest
      * @apiGroup User friends
-     * @apiDescription Handler (i.e. accept or reject) a friend request
+     * @apiDescription Handle (i.e. accept or reject) a friend request
      * @apiParam (body) {Number} id_sender User identifier of the sender of the friend.
      * @apiParam (body) {Boolean} accept True for accepting the request, false for rejecting it.
      * @apiUse TokenHeaderRequired
      * @apiUse FriendRequestDescriptor
+     */
+
+    /**
+     * @api {delete} /friend_request Cancel friend request
+     * @apiName CancelFriendRequest
+     * @apiGroup User friends
+     * @apiDescription Cancel a friend request
+     * @apiParam (body) {Number} id_recipient Friend request recipient user identifier.
+     * @apiUse TokenHeaderRequired
+     * @apiUse SuccessObjDescriptor
      */
     app.route("/friend_request")
         .post(
@@ -389,7 +421,24 @@ module.exports = function(app) {
             [ body('id_sender').isInt(), body('accept').isBoolean().toBoolean() ],
             validation.validateOrBlock("cannot handle friend request"),
             UserController.handleFriendshipRequest
+        )
+        .delete(
+            [ body('id_recipient').isInt() ],
+            validation.validateOrBlock("cannot delete friend request"),
+            UserController.deleteFriendshipRequest
         );
+
+    /**
+     * @api {delete} /friend/:id Remove user from friends
+     * @apiName DeleteFriend
+     * @apiGroup User friends
+     * @apiDescription Remove a user from friends
+     * @apiParam {Number} id The user identifier of the friend to remove.
+     * @apiUse TokenHeaderRequired
+     * @apiUse SuccessObjDescriptor
+     */
+    app.route("/friend/:uid")
+        .delete(UserController.deleteFriend);
 
 
     // Event
@@ -405,6 +454,7 @@ module.exports = function(app) {
      * @apiName CreateEvent
      * @apiGroup Event
      * @apiDescription Create an event.
+     * @apiParam (query) {Boolean} auto_join True for joining the event after creation
      * @apiParam (body) {String} name Event name
      * @apiParam (body) {String} start Start datetime (ISO8601)
      * @apiParam (body) {String} end End datetime (ISO8601)
@@ -417,7 +467,7 @@ module.exports = function(app) {
      */
     app.route("/event")
         .post(
-            validation.getEventValidators(true),
+            validation.getEventValidators(true).concat([ query('auto_join').optional().isBoolean().toBoolean() ]),
             validation.validateOrBlock('cannot create event'),
             EventController.createEvent
         );
@@ -714,7 +764,8 @@ module.exports = function(app) {
      * @apiDescription Remove an attendee from the specified event.
      * Note: only the creator can use this endpoint
      *
-     * @apiParam {Number} id Event identifier.
+     * @apiParam {Number} eid Event identifier.
+     * @apiParam {Number} uid Attendee user identifier.
      *
      * @apiUse TokenHeaderRequired
      */
@@ -941,7 +992,7 @@ module.exports = function(app) {
      */
 
     /**
-     * @api {post} /event/:eid/join_request Handle event join request
+     * @api {put} /event/:eid/join_request Handle event join request
      * @apiName HandleEventJoinRequest
      * @apiGroup Event join request
      * @apiDescription Handle a join request for the given event.

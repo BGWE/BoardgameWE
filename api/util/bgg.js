@@ -1,4 +1,3 @@
-const request = require('request');
 const util = require("./util.js");
 const rp = require('request-promise');
 let parse_string = require('xml2js').parseString;

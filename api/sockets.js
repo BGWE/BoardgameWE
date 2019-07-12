@@ -1,4 +1,4 @@
-import {can_access_event, can_access_timer, ACCESS_READ, ACCESS_WRITE} from "./util/access_checks";
+const access = require("./util/access_checks");
 
 const socketioJwt = require("socketio-jwt");
 const config = require("./config/config.js");
@@ -76,12 +76,16 @@ module.exports = function(io) {
         async can_access_timer(access_type) {
             try {
                 if (this.timer.id_event) {
-                    return await can_access_event(access_type, () => this.timer.id_event, () => getCurrentUser(this.socket).id);
+                    return await access.can_access_event(access_type, () => this.timer.id_event, () => getCurrentUser(this.socket).id);
                 } else {
-                    return await can_access_timer(access_type, () => this.id_timer, () => getCurrentUser(this.socket).id)
+                    return await access.can_access_timer(access_type, () => this.id_timer, () => getCurrentUser(this.socket).id)
                 }
-            } catch (e if e instanceof NotFoundError) {
-                return false;
+            } catch (e) {
+                if (e instanceof NotFoundError) {
+                    return false;
+                } else {
+                    throw  e;
+                }
             }
         }
 
@@ -271,7 +275,7 @@ module.exports = function(io) {
             } else {
                 timer_room = new TimerRoom(socket, id_timer);
                 timer_room.setTimer();
-                if (timer_room.can_access_timer(ACCESS_READ)) {
+                if (timer_room.can_access_timer(access.ACCESS_READ)) {
                     timer_room.join();
                 } else {
                     timer_room = null;
@@ -292,7 +296,7 @@ module.exports = function(io) {
             }
         });
 
-        socket.on('timer_start', middlewares.timers("timer_start", ACCESS_WRITE), async function() {
+        socket.on('timer_start', middlewares.timers("timer_start", access.ACCESS_WRITE), async function() {
             try {
                 const action = await db.sequelize.transaction(async (transaction) => {
                     return await timer_room.startTimer(null, transaction);
@@ -307,7 +311,7 @@ module.exports = function(io) {
             }
         });
 
-        socket.on('timer_stop', middlewares.timers("timer_stop", ACCESS_WRITE), async function() {
+        socket.on('timer_stop', middlewares.timers("timer_stop", access.ACCESS_WRITE), async function() {
             try {
                 const action = await db.sequelize.transaction(async (transaction) => {
                     return await timer_room.stopTimer(transaction);
@@ -322,13 +326,13 @@ module.exports = function(io) {
             }
         });
 
-        socket.on('timer_next', middlewares.timers("timer_next", ACCESS_WRITE), async function() {
+        socket.on('timer_next', middlewares.timers("timer_next", access.ACCESS_WRITE), async function() {
             timer_room.nextPlayer().then(genericHandleChangePlayer(timer_room, true)).catch(async (e) => {
                 sendErrorEvent(socket, "cannot update timer: " + e.message)
             });
         });
 
-        socket.on('timer_prev', middlewares.timers("timer_prev", ACCESS_WRITE), async function() {
+        socket.on('timer_prev', middlewares.timers("timer_prev", access.ACCESS_WRITE), async function() {
             timer_room.prevPlayer().then(genericHandleChangePlayer(timer_room, false)).catch(async (e) => {
                 sendErrorEvent(socket, "cannot update timer: " + e.message)
             });
@@ -359,7 +363,7 @@ module.exports = function(io) {
             });
         });
 
-        socket.on('timer_change_player_turn_order', middlewares.timers("timer_change_player_turn_order", ACCESS_WRITE), async function() {
+        socket.on('timer_change_player_turn_order', middlewares.timers("timer_change_player_turn_order", access.ACCESS_WRITE), async function() {
             await db.sequelize.transaction(function(transaction) {
                 return Promise.all([
                     timer_room.updateCurrentPlayer(0, transaction),

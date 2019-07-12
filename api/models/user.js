@@ -1,7 +1,7 @@
 'use strict';
 const bcrypt = require("bcryptjs");
 module.exports = (sequelize, DataTypes) => {
-  var User = sequelize.define('User', {
+  let User = sequelize.define('User', {
     name: DataTypes.STRING,
     surname: DataTypes.STRING,
     password: DataTypes.STRING,
@@ -21,7 +21,30 @@ module.exports = (sequelize, DataTypes) => {
   }, {});
 
   User.associate = function(models) {
-    // associations can be defined here
+      models.User.hasMany(models.Friendship, {
+          onDelete: "CASCADE",
+          foreignKey: 'id_user1',
+          sourceKey: 'id',
+          as: 'friend1'
+      });
+      models.User.hasMany(models.Friendship, {
+          onDelete: "CASCADE",
+          foreignKey: 'id_user2',
+          sourceKey: 'id',
+          as: 'friend2'
+      });
+      models.User.hasMany(models.FriendshipRequest, {
+          onDelete: "CASCADE",
+          foreignKey: 'id_user_from',
+          sourceKey: 'id',
+          as: 'request_user_from'
+      });
+      models.User.hasMany(models.FriendshipRequest, {
+          onDelete: "CASCADE",
+          foreignKey: 'id_user_to',
+          sourceKey: 'id',
+          as: 'request_user_to'
+      });
   };
 
   User.prototype.validPassword = function (password) {
