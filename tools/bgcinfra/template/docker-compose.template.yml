@@ -15,9 +15,9 @@ services:
     container_name: "{{ CONTAINER_APISERVER_NAME }}"
     depends_on:
       - "db"
-    image: "node:8"
-    user: "node"
-    working_dir: /home/node/app
+    build:
+      context: ../..
+      dockerfile: tools/bgcinfra/configs/Dockerfile
     restart: always
     environment:
       PORT: 3000
@@ -32,12 +32,3 @@ services:
       TEST_PROTOCOL: "{{ TEST_PROTOCOL }}"
     ports:
       - "{{ CONTAINER_APISERVER_HOST_PORT }}:3000"
-    volumes:
-      - "{{ CONTAINER_APISERVER_SRC_DIR }}:/home/node/app"
-    command:  >
-      bash -c "yarn install
-      && sleep 15
-      && cd api/
-      && ../node_modules/.bin/sequelize db:migrate
-      && cd ..
-      && yarn start"
