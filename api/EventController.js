@@ -149,14 +149,16 @@ exports.deleteEvent = function(req, res) {
     });
 };
 
-exports.sendProvidedBoardGames = function(eid, res) {
-    return util.sendModelOrError(res, db.ProvidedBoardGame.findAll({
-        where: { id_event: eid },
-        include: [
-            includes.getUserIncludeSQ("provider"),
-            includes.getBoardGameIncludeSQ("provided_board_game")
-        ]
-    }));
+exports.sendProvidedBoardGames = function (eid, res) {
+  return util.sendModelOrError(res, db.ProvidedBoardGame.findAll({
+    where: {id_event: eid},
+    include: [
+      includes.getUserIncludeSQ("provider"),
+      includes.getBoardGameIncludeSQ("provided_board_game", [
+        BoardGameController.boardGameIncludes
+      ])
+    ]
+  }));
 };
 
 exports.addProvidedBoardGames = function(req, res) {
