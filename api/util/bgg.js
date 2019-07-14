@@ -12,13 +12,11 @@ function search(boardgame_name) {
 
 function get(ids) {
     let url_variables = {id: ids.map(s => s.toString()).join(), stats: 1};
-    console.log(url_variables);
     return rp({uri: BGG_ROOT_PATH + 'thing', qs: url_variables});
 }
 
 function getBoardGamePromise(boardgame_id, res, _then) {
     return exports.get(boardgame_id).then(_then).catch(err => {
-        console.log(err);
         return util.detailErrorResponse(res, 404, "could not fetch game from board game geek");
     });
 }
@@ -78,7 +76,7 @@ function format_get_response(body) {
           .filter(t => !has_attribute(t, 'inbound') || t.$.inbound !== "true")
           .map(t => parseInt(t.$.id));
 
-      game.id = get_attribute(_item, "id");
+      game.id = parseInt(get_attribute(_item, "id"));
       game.name = get_game_name_from_item(_item);
       game.score = get_rating(_item);
       games.push(game);
