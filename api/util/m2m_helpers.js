@@ -2,6 +2,7 @@
  *  Many2Many helpers
  */
 const util = require('./util');
+const db = require('../models/index');
 
 /**
  * Add associations
@@ -81,4 +82,29 @@ exports.deleteAssociations = function(req, res, m2m, transform) {
         console.debug(err);
         return util.errorResponse(res);
     });
+};
+
+/**
+ * Return array of promises for diffing the set of association for a given fixed field.
+ * @param m2m helper options
+ * @param m2m.model_class Sequelize model
+ * @param m2m.fixed.id int The fixed id
+ * @param m2m.fixed.field str
+ * @param m2m.other.ids Array Array of identifier for the second field
+ * @param m2m.other.field str The variable id field
+ * @param m2m.attributes Other attributes values
+ * @param m2m.options Object options (transaction,...)
+ */
+exports.diffAssociations = function (m2m) {
+  const to_insert = m2m.other.ids.map(id => { return { ... m2m.attributes, [m2m.fixed.field]: m2m.fixed.id, [m2m.other.field]: id }; });
+  let queries = [
+    m2m.model_class.destroy({ where: {
+      [m2m.fixed.field]: m2m.fixed.id,
+      [m2m.other.field]: {[db.Op.notIn]: m2m.other.ids}
+    }, ... m2m.options })
+  ];
+  if (m2m.other.ids.length > 0) {
+    queries.push(m2m.model_class.bulkCreate(to_insert, {ignoreDuplicates: true, ... m2m.options}));
+  }
+  return queries;
 };
