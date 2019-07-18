@@ -244,9 +244,6 @@ describe('User Controller Tests:', () => {
                         expect(res.body).to.have.property('id');
                         expect(res.body).to.have.property('username');
                         expect(res.body.username).to.be.equal('pparker');
-                        expect(res.body).to.have.property('admin');
-                        expect(res.body).to.have.property('createdAt');
-                        expect(res.body).to.have.property('updatedAt');
                         done();
                     });
             });
@@ -305,12 +302,12 @@ describe('User Controller Tests:', () => {
                     });
             });
 
-            it('should fail when user is not found/not current user', (done) => {
+            it('should fail when user is not found/does not have the right privileges', (done) => {
                 chai.request(TEST_URL)
                     .put('/user/1111')
                     .set('Authentication', authToken)
                     .end((err, res) => {
-                        expect(res).to.have.status(404);
+                        expect(res).to.have.status(403);
                         done();
                     });
             });
