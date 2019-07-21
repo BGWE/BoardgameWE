@@ -45,6 +45,12 @@ module.exports = (sequelize, DataTypes) => {
           sourceKey: 'id',
           as: 'request_user_to'
       });
+      models.User.hasMany(models.UserAchievements, {
+          onDelete: "CASCADE",
+          foreignKey: 'id_user',
+          sourceKey: 'id',
+          as: 'user'
+      });
   };
 
   User.prototype.validPassword = function (password) {
