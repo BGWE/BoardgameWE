@@ -1,3 +1,5 @@
+const lodash = require("lodash");
+
 exports.listToString = (list) => {
     if (list.length === 0) {
         return "";
@@ -15,18 +17,6 @@ exports.parseList = function(s, fn, sep) {
 
 exports.boolOrDefault = function(b, deflt) {
     return b !== undefined ? b : deflt;
-};
-
-exports.toDictMapping = (arr, field) => {
-    let object = {};
-    for (let i in arr) {
-        if (!arr.hasOwnProperty(i)) {
-            continue;
-        }
-        let item = arr[i];
-        object[item[field]] = item;
-    }
-    return object;
 };
 
 /**
@@ -63,20 +53,8 @@ exports.rank = (data, score_fn, lower_better, write_fn) => {
     return copy;
 };
 
-exports.unique = (data) => {
-    data = data.slice(0);
-    data.sort();
-    let outputData = [];
-    for (let i = 0; i < data.length; ++i) {
-        if (outputData.length === 0 || data[i] !== outputData[outputData.length - 1]) {
-            outputData.push(data[i]);
-        }
-    }
-    return outputData;
-};
-
 exports.rankPlayersFromData = (dict, aggregate) => {
-    let scores = [];
+    let scores = lodash.obj
     for (let _key in dict.players) {
         if (!dict.players.hasOwnProperty(_key)) { continue; }
         scores.push({
