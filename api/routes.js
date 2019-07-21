@@ -14,6 +14,7 @@ module.exports = function(app) {
     const GameController = require("./GameController");
     const StatsController = require("./StatsController");
     const UserController = require("./UserController");
+    const AchievementsController = require("./AchievementsController");
     const EventController = require("./EventController");
     const EventJoinController = require("./EventJoinController");
     const AdminController = require("./AdminController");
@@ -368,6 +369,13 @@ module.exports = function(app) {
      */
     app.route("/user/current/event_invites")
         .get(EventJoinController.getCurrentUserEventInvites);
+
+    // Achievements
+    app.route("/user/current/achievements")
+        .get(AchievementsController.getCurrentUserAchievements);
+
+    app.route("/user/:uid/achievements")
+        .get(user_access.read, AchievementsController.getAchievements);
 
     // Friendships
     /**

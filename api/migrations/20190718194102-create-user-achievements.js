@@ -10,6 +10,7 @@ module.exports = {
       },
       id_user: {
         allowNull: false,
+        references: {model: 'Users', key: 'id'},
         type: Sequelize.INTEGER
       },
       id_achievement: {
