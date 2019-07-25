@@ -1,12 +1,13 @@
 const db = require("./models/index");
 const GameController = require("./GameController");
 const util = require("./util/util");
+const lodash = require("lodash");
 
 const AGGREGATE = {
     sum: (array) => array.reduce((acc, curr) => acc + curr),
     freq: (array) => array.reduce((acc, curr) => acc + curr) * 1.0 / array.length,
     count: (array) => array.length,
-    count_unique: (array) => util.unique(array).length
+    count_unique: (array) => lodash.uniq(array).length
 };
 
 const extractPlayerDescriptor = (gamePlayer) => {

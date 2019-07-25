@@ -30,6 +30,11 @@ sockets(io);
 let routes = require('./api/routes');
 routes(app);
 
-server.listen(port, hostname, () => {
-    console.log(`Server running at http://${hostname}:${port}/`);
-});
+if(!module.parent) {
+    server.listen(port, hostname, () => {
+        console.log(`Server running at http://${hostname}:${port}/`);
+    });
+}
+
+
+module.exports = server;

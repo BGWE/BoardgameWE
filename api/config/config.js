@@ -9,13 +9,13 @@ let database = {
     seederStorage: "sequelize"
 };
 
-if (process.env.NODE_ENV !== "production") {
+if (process.env.NODE_ENV !== "production" && process.env.NODE_ENV !== "testing") {
     database.logging = console.log;
 } else {
     database.logging = false;
 }
 
-if (process.env.USE_SSL) {
+if (process.env.NODE_ENV !== "development" && process.env.USE_SSL) {
     database.dialectOptions = {ssl: true};
 }
 

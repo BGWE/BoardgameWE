@@ -60,9 +60,13 @@ typings/
 # doc
 doc/
 
+# vscode
+.vscode
+
 # dev env
 docker/docker-compose.yml
 docker/postgres-data
+tools/bgcinfra/bgcvenv/*
 .disable.ebextensions/*
 
 .idea
