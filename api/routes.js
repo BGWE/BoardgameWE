@@ -372,10 +372,7 @@ module.exports = function(app) {
 
     // Achievements
     app.route("/user/current/achievements")
-        .get(AchievementsController.getCurrentUserAchievements);
-
-    app.route("/user/:uid/achievements")
-        .get(user_access.read, AchievementsController.getAchievements);
+        .get(asyncMiddleware(AchievementsController.getCurrentUserAchievements));
 
     // Friendships
     /**
