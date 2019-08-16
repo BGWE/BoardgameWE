@@ -13,8 +13,23 @@ module.exports = {
         createdAt: Sequelize.literal("(now() at time zone 'utc')"),
         updatedAt: Sequelize.literal("(now() at time zone 'utc')")
       }, {
+        id_user: 1,
+        id_achievement: 'a.games.victories.0',
+        createdAt: Sequelize.literal("(now() at time zone 'utc')"),
+        updatedAt: Sequelize.literal("(now() at time zone 'utc')")
+      }, {
+        id_user: 1,
+        id_achievement: 'a.games.victories.1',
+        createdAt: Sequelize.literal("(now() at time zone 'utc')"),
+        updatedAt: Sequelize.literal("(now() at time zone 'utc')")
+      }, {
         id_user: 2,
         id_achievement: 'a.events.victories',
+        createdAt: Sequelize.literal("(now() at time zone 'utc')"),
+        updatedAt: Sequelize.literal("(now() at time zone 'utc')")
+      }, {
+        id_user: 2,
+        id_achievement: 'a.games.victories.0',
         createdAt: Sequelize.literal("(now() at time zone 'utc')"),
         updatedAt: Sequelize.literal("(now() at time zone 'utc')")
       }], {});
