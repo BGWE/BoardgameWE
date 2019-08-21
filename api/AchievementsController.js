@@ -98,6 +98,8 @@ achievementsDict['a.boardgames.number.1'] = new TresholdAchievement('a.boardgame
 achievementsDict['a.boardgames.number.2'] = new TresholdAchievement('a.boardgames.number.2', countNumberOfBoardGames, AchievementType.greater, 30);
 achievementsDict['a.boardgames.tasteful'] = new Achievement('a.boardgames.tasteful', checkTasteful);
 
+achievementsDict['a.eastereggs.onion'] = new Achievement('a.eastereggs.onion', dummyFunction);
+
 exports.checkAchievements = async function(oldAchievements, uid) {
     console.log("Checking achievements");
 
@@ -132,12 +134,25 @@ exports.getCurrentUserAchievements = async function(req, res) {
 
     let achievements = await db.UsersAchievements.findAll({where: { id_user: uid }});
     let newAchievements = await exports.checkAchievements(achievements, uid);
-    return util.successResponse(res, achievements.concat(newAchievements));
+    achievements.concat(newAchievements);
+    return util.successResponse(res, achievements);
 }
 
 addAchievement = function(uid, achievement_id) {
-    db.UsersAchievements.upsert({
+    db.UsersAchievements.findOrCreate({where :{
         id_achievement: achievement_id,
         id_user: uid
+    }, defaults: {
+        id_achievement: achievement_id,
+        id_user: uid}
     });
+}
+
+exports.addOnionAchievement = function(req, res) {
+    let uid = userutil.getCurrUserId(req);
+    addAchievement(uid, 'a.eastereggs.onion');
+}
+
+exports.getTotalNumberOfAchievements = async function(req, res) {
+    return util.successResponse(res, Object.keys(achievementsDict).length);
 }

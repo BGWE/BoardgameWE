@@ -374,6 +374,12 @@ module.exports = function(app) {
     app.route("/user/current/achievements")
         .get(asyncMiddleware(AchievementsController.getCurrentUserAchievements));
 
+    app.route("/user/current/easteregg")
+        .post(AchievementsController.addOnionAchievement);
+
+    app.route("/achievements/total")
+        .get(AchievementsController.getTotalNumberOfAchievements);
+
     // Friendships
     /**
      * @api {get} /friend_requests Get friend requests
