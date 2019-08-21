@@ -371,6 +371,9 @@ module.exports = function(app) {
         .get(EventJoinController.getCurrentUserEventInvites);
 
     // Achievements
+    app.route("/user/:uid/achievements")
+        .get(asyncMiddleware(AchievementsController.getUserAchievements));
+
     app.route("/user/current/achievements")
         .get(asyncMiddleware(AchievementsController.getCurrentUserAchievements));
 

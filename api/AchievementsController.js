@@ -16,22 +16,6 @@ class Achievement {
     async checkConditions(uid) {
         return await this.conditions(uid);
     }
-
-    getName() {
-        return this.id + ".name";
-    }
-
-    getDescription() {
-        return this.id + ".description";
-    }
-
-    getId() {
-        return this.id;
-    }
-
-    getType() {
-        return this.type;
-    }
 }
 
 class TresholdAchievement extends Achievement {
@@ -129,13 +113,23 @@ exports.checkAchievements = async function(oldAchievements, uid) {
     return newAchievements;
 }
 
-exports.getCurrentUserAchievements = async function(req, res) {
-    let uid = userutil.getCurrUserId(req);
-
+exports.sendUserAchievements = async function(uid, req, res) {
     let achievements = await db.UsersAchievements.findAll({where: { id_user: uid }});
     let newAchievements = await exports.checkAchievements(achievements, uid);
     achievements.concat(newAchievements);
+
     return util.successResponse(res, achievements);
+}
+
+exports.getCurrentUserAchievements = async function(req, res) {
+    let response = await exports.sendUserAchievements(userutil.getCurrUserId(req), req, res);
+    return response;
+}
+
+exports.getUserAchievements = async function(req, res) {
+    console.log(req.params);
+    let response = await exports.sendUserAchievements(parseInt(req.params.uid), req, res);
+    return response;
 }
 
 addAchievement = function(uid, achievement_id) {
