@@ -4,8 +4,7 @@ const util = require("./util/util");
 
 var AchievementType = {
     smaller: 1,
-    equal: 2,
-    greater: 3
+    greater: 2,
   };
 
 class Achievement {
@@ -16,22 +15,6 @@ class Achievement {
 
     async checkConditions(uid) {
         return await this.conditions(uid);
-    }
-
-    getName() {
-        return this.id + ".name";
-    }
-
-    getDescription() {
-        return this.id + ".description";
-    }
-
-    getId() {
-        return this.id;
-    }
-
-    getType() {
-        return this.type;
     }
 }
 
@@ -45,11 +28,7 @@ class TresholdAchievement extends Achievement {
     async checkConditions(uid) {
         let active = false;
         if (this.type == AchievementType.greater) {
-            active = (await this.conditions(uid) > this.value);
-        } else if (this.type == AchievementType.smaller) {
-            active = (await this.conditions(uid) < this.value);
-        } else if (this.type == AchievementType.equal) {
-            active = (await this.conditions(uid) == this.value);
+            active = (await this.conditions(uid) >= this.value);
         }
         return active;
     }
@@ -64,21 +43,26 @@ dummyFunction = function(uid) {
     return 0;
 }
 
-checkNumberOfGames = async function(uid) {
+// TODO: Checks whether a user possesses Azul, Scythe and 7 wonders
+checkTasteful = async function(uid) {
+    return 0;
+}
+
+countNumberOfGames = async function(uid) {
     return await db.GamePlayer.count({
         where: { id_user: uid }
     });
 }
 
-checkNumberOfEvents = async function(uid) {
+countNumberOfEvents = async function(uid) {
     return await db.EventAttendee.count({
         where: { id_user: uid }
     });
 }
 
-checkNumberOfBoardGames = async function(uid) {
+countNumberOfBoardGames = async function(uid) {
     return await db.LibraryGame.count({
-        where: {id_user: uid },
+        where: { id_user: uid },
         distinct: true,
         col: "id_board_game"
     })
@@ -87,11 +71,18 @@ checkNumberOfBoardGames = async function(uid) {
 const achievementsDict = {};
 achievementsDict['a.events.losses'] = new Achievement('a.events.losses', dummyFunction);
 achievementsDict['a.events.victories'] = new Achievement('a.events.victories', dummyFunction);
-achievementsDict['a.events.number.0'] = new TresholdAchievement('a.events.number.0', checkNumberOfEvents, 5);
-achievementsDict['a.events.number.1'] = new TresholdAchievement('a.events.number.1', checkNumberOfEvents, 15);
-achievementsDict['a.games.number.0'] = new TresholdAchievement('a.games.number.0', checkNumberOfGames, 15);
-achievementsDict['a.games.number.1'] = new TresholdAchievement('a.games.number.1', checkNumberOfGames, 30);
-achievementsDict['a.boardgames.number.0'] = new TresholdAchievement('a.boardgames.number.0', checkNumberOfBoardGames, 5);
+achievementsDict['a.events.number.0'] = new TresholdAchievement('a.events.number.0', countNumberOfEvents, AchievementType.greater, 5);
+achievementsDict['a.events.number.1'] = new TresholdAchievement('a.events.number.1', countNumberOfEvents, AchievementType.greater, 15);
+
+achievementsDict['a.games.number.0'] = new TresholdAchievement('a.games.number.0', countNumberOfGames, AchievementType.greater, 15);
+achievementsDict['a.games.number.1'] = new TresholdAchievement('a.games.number.1', countNumberOfGames, AchievementType.greater, 30);
+
+achievementsDict['a.boardgames.number.0'] = new TresholdAchievement('a.boardgames.number.0', countNumberOfBoardGames, AchievementType.greater, 5);
+achievementsDict['a.boardgames.number.1'] = new TresholdAchievement('a.boardgames.number.1', countNumberOfBoardGames, AchievementType.greater, 15);
+achievementsDict['a.boardgames.number.2'] = new TresholdAchievement('a.boardgames.number.2', countNumberOfBoardGames, AchievementType.greater, 30);
+achievementsDict['a.boardgames.tasteful'] = new Achievement('a.boardgames.tasteful', checkTasteful);
+
+achievementsDict['a.eastereggs.onion'] = new Achievement('a.eastereggs.onion', dummyFunction);
 
 exports.checkAchievements = async function(oldAchievements, uid) {
     console.log("Checking achievements");
@@ -110,38 +101,52 @@ exports.checkAchievements = async function(oldAchievements, uid) {
     for (let key in filteredKeys) {
         a = achievementsDict[filteredKeys[key]];
         if (await a.checkConditions(uid)) {
-            console.log("Gained achievement" + a.getId());
-            addAchievement(uid, a.getId());
-            newAchievements.push(a);
+            aid = a.getId();
+            addAchievement(uid, aid);
+            newAchievements.push({
+                id_achievement: aid,
+                id_user: uid
+            });
+            console.log("Gained achievement " + aid);
         }
     }
     return newAchievements;
 }
 
-preProcessAchievements = function(achievements) {
-    return achievements.map(achievement => {
-        a = achievementsDict[achievement.id_achievement];
-        achievement.setDataValue('name', a.getName());
-        achievement.setDataValue('description', a.getDescription());
-        achievement.setDataValue('type', a.getType());
-        return achievement;
-    });
+exports.sendUserAchievements = async function(uid, req, res) {
+    let achievements = await db.UsersAchievements.findAll({where: { id_user: uid }});
+    let newAchievements = await exports.checkAchievements(achievements, uid);
+    achievements.concat(newAchievements);
+
+    return util.successResponse(res, achievements);
 }
 
 exports.getCurrentUserAchievements = async function(req, res) {
-    let uid = userutil.getCurrUserId(req);
+    let response = await exports.sendUserAchievements(userutil.getCurrUserId(req), req, res);
+    return response;
+}
 
-    let achievements = await db.UsersAchievements.findAll({
-        where: { id_user: uid }
-    });
-    let newAchievements = await exports.checkAchievements(achievements, uid);
-    preProcessAchievements(achievements);
-    return util.successResponse(res, achievements.concat(newAchievements));
+exports.getUserAchievements = async function(req, res) {
+    console.log(req.params);
+    let response = await exports.sendUserAchievements(parseInt(req.params.uid), req, res);
+    return response;
 }
 
 addAchievement = function(uid, achievement_id) {
-    db.UsersAchievements.upsert({
+    db.UsersAchievements.findOrCreate({where :{
         id_achievement: achievement_id,
         id_user: uid
+    }, defaults: {
+        id_achievement: achievement_id,
+        id_user: uid}
     });
+}
+
+exports.addOnionAchievement = function(req, res) {
+    let uid = userutil.getCurrUserId(req);
+    addAchievement(uid, 'a.eastereggs.onion');
+}
+
+exports.getTotalNumberOfAchievements = async function(req, res) {
+    return util.successResponse(res, Object.keys(achievementsDict).length);
 }
