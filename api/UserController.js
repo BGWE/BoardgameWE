@@ -408,6 +408,16 @@ exports.getFriendshipRequests = function(req, res) {
     }));
 };
 
+exports.getSentFriendshipRequest = function(req, res) {
+    return util.sendModelOrError(res, db.FriendshipRequest.findAll({
+        where : {
+            status: db.FriendshipRequest.STATUS_PENDING,
+            id_user_from: userutil.getCurrUserId(req)
+        },
+        include: [includes.getShallowUserIncludeSQ('user_to')]
+    }));
+}
+
 exports.sendFriendshipRequest = function(req, res) {
     return util.sendModelOrError(res, db.FriendshipRequest.create({
         id_user_from: userutil.getCurrUserId(req),

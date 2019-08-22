@@ -383,6 +383,17 @@ module.exports = function(app) {
         .get(UserController.getFriendshipRequests);
 
     /**
+     * @api {get} /sent_friend_requests Get sent friend requests
+     * @apiName GetSentFriendRequests
+     * @apiGroup User friends
+     * @apiDescription Get current user sent friend requests
+     * @apiUse TokenHeaderRequired
+     * @apiUse SentFriendRequestListDescriptor
+     */
+    app.route("/sent_friend_requests")
+        .get(UserController.getSentFriendshipRequest);
+
+    /**
      * @api {post} /friend_request Send friend request
      * @apiName SendFriendRequest
      * @apiGroup User friends
