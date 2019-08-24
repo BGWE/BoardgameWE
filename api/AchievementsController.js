@@ -43,7 +43,7 @@ exports.sendUserAchievements = function (req, res, id_user) {
   });
 };
 
-exports.getCurrentUserAchievements = function (req, res, id_user) {
+exports.getCurrentUserAchievements = function (req, res) {
   return exports.sendUserAchievements(req, res, userutil.getCurrUserId(req));
 };
 exports.getUserAchievements = function(req, res) {
