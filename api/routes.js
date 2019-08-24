@@ -380,8 +380,10 @@ module.exports = function(app) {
     app.route("/user/current/easteregg")
         .post(AchievementsController.addOnionAchievement);
 
-    app.route("/achievements/total")
-        .get(AchievementsController.getTotalNumberOfAchievements);
+    // TODO: a request for getting this information only is probably a bad idea
+    // what is it used for ? cannot it be returned with another request ?
+    // app.route("/achievements/total")
+    //     .get(AchievementsController.getTotalNumberOfAchievements);
 
     // Friendships
     /**

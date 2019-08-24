@@ -22,9 +22,6 @@ const C = {
   }
 };
 
-exports.CONDITION_TYPES = C;
-exports.C = C;
-
 /** Check whether the count returned by the count promise is greater or equal to the number */
 exports.check_count_fn = (count_promise, number) => {
   return async (id_user) => {

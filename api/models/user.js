@@ -45,7 +45,7 @@ module.exports = (sequelize, DataTypes) => {
           sourceKey: 'id',
           as: 'request_user_to'
       });
-      models.User.hasMany(models.UsersAchievements, {
+      models.User.hasMany(models.UserAchievement, {
           onDelete: "CASCADE",
           foreignKey: 'id_user',
           sourceKey: 'id',
