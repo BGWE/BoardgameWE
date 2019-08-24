@@ -372,10 +372,10 @@ module.exports = function(app) {
 
     // Achievements
     app.route("/user/:uid/achievements")
-        .get(asyncMiddleware(AchievementsController.getUserAchievements));
+        .get(AchievementsController.getUserAchievements);
 
     app.route("/user/current/achievements")
-        .get(asyncMiddleware(AchievementsController.getCurrentUserAchievements));
+        .get(AchievementsController.getCurrentUserAchievements);
 
     app.route("/user/current/easteregg")
         .post(AchievementsController.addOnionAchievement);

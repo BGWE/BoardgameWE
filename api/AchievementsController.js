@@ -43,7 +43,7 @@ exports.sendUserAchievements = function (req, res, id_user) {
   });
 };
 
-exports.getCurrentUserAchievements = async function (req, res, id_user) {
+exports.getCurrentUserAchievements = function (req, res, id_user) {
   return exports.sendUserAchievements(req, res, userutil.getCurrUserId(req));
 };
 exports.getUserAchievements = function(req, res) {
@@ -63,6 +63,6 @@ exports.addOnionAchievement = function(req, res) {
   });
 };
 
-exports.getTotalNumberOfAchievements = async function(req, res) {
+exports.getTotalNumberOfAchievements = function(req, res) {
   return util.successResponse(res, Object.keys(achievementsDict).length);
 };
