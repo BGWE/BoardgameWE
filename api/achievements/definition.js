@@ -1,5 +1,5 @@
-const db = require("../models/index");
 const lodash = require("lodash");
+const checks = require("./checks");
 
 /**
  * Achievements: a certain milestone in the life of a board game player
@@ -25,48 +25,14 @@ const lodash = require("lodash");
 const S = { BGA: "BGA", GAM: "GAM", EVE: "EVE", INT: "INT"};
 exports.SCOPES = S;
 
-const make_code = (scope, is_badge, name, {progress, other}) => {
+const make_code = (scope, is_badge, name, progress) => {
   if (!exports.SCOPES[scope]) {
     throw new Error("invalid scope");
   }
   if (is_badge && progress === undefined) {
     throw  new Error("missing progress for badge");
   }
-  let code = scope + "_" + (is_badge ? "B_" + String(progress).padStart(2, "0") : "A") + "_" + name.toUpperCase().substr(32);
-  if (other !== undefined) {
-    code += "_" + lodash.toPairs().map(e => e[0].toLowerCase() + "_" + e[1]);
-  }
-  return code;
-};
-
-const C = {
-  COUNT: { // count entries
-    make_query_fn(table, user_field, options) {
-      let ufield = user_field === undefined ? "id_user" : user_field;
-      return (id_user) => {
-        return table.count({where: {[ufield]: id_user}, ...options});
-      };
-    }
-  },
-  COUNT_JOIN: { // count entries filtered based on a join (the other relation contains the user information)
-    make_query_fn(table, include_table, as, number, user_field, options) {
-      let ufield = user_field === undefined ? "id_user" : user_field;
-      return (id_user) => {
-        return table.count({
-          include: [{ model: include_table, as, where: {[ufield]: id_user}, required: true }],
-          ... options
-        });
-      };
-    }
-  }
-};
-exports.CONDITION_TYPES = C;
-
-const check_count_fn = (count_promise, number) => {
-  return async (id_user) => {
-    let promise = count_promise(id_user);
-    return (await promise) >= number;
-  };
+  return scope + "_" + (is_badge ? "B_" + String(progress).padStart(2, "0") : "A") + "_" + name.toUpperCase().substr(0, 32);
 };
 
 /**
@@ -78,7 +44,7 @@ const check_count_fn = (count_promise, number) => {
  * @param badge_progress null|undefined|int If defined and an integer, indicates the achievement is a badge and which
  * is its progress
  * @param meta Object additional data to be associated with the achievement
- * @returns {{code: {name: *, progress: *, scope: *, is_badge: boolean, previous: *, code: (string|*), meta: *, check_fn: *}}}
+ * @returns {{}}
  */
 const make_achievement = (scope, name, check_fn, badge_progress, meta) => {
   const is_badge = badge_progress !== undefined && badge_progress !== null;
@@ -93,9 +59,8 @@ const make_achievement = (scope, name, check_fn, badge_progress, meta) => {
     code: identifier,
     meta, check_fn
   };
-  return { code: achievement };
+  return {[identifier]: achievement};
 };
-
 
 /**
  *
@@ -116,33 +81,20 @@ const array2obj = (arr, k) => {
   return arr.map(v => { return {[k]: v};});
 };
 
-/**
- * Check functions
- */
-const gam_victory_count = async (id_user) => {
-  let games = await db.Game.findAll({ include: {model: db.GamePlayer, as: "player", where: {id_user}} });
-
-
-};
-
-const bga_played_count = C.COUNT_JOIN.make_query_fn(db.Game, db.GamePlayer, "player", "id_user", { group: "id_board_game" });
-const gam_played_count = C.COUNT.make_query_fn(db.GamePlayer);
-const bga_owned_count = C.COUNT.make_query_fn(db.LibraryGame);
-
-
 const A = {
     // game played
-    ...make_badges(array2obj([1, 5, 10, 25], "cnt"), S.GAM, "played", b => check_count_fn(gam_played_count, b.cnt)),
-    ...make_badges(array2obj([1, 5, 10, 25], "cnt"), S.BGA, "played", b => check_count_fn(bga_played_count, b.cnt)),
-    ...make_badges(array2obj([1, 5, 10, 25], "cnt"), S.BGA, "owned", b => check_count_fn(bga_owned_count, b.cnt))
+    ...make_badges(array2obj([1, 15, 30], "cnt"), S.GAM, "played", b => checks.check_count_fn(checks.game_played_count, b.cnt)),
+    ...make_badges(array2obj([1, 5, 15, 30], "cnt"), S.BGA, "played", b => checks.check_count_fn(checks.bga_played_count, b.cnt)),
+    ...make_badges(array2obj([1, 5, 10, 25], "cnt"), S.BGA, "owned", b => checks.check_count_fn(checks.bga_owned_count, b.cnt)),
+    ...make_badges(array2obj([1, 5, 15], "cnt"), S.EVE, "attended", b => checks.check_count_fn(checks.event_attended_count, b.cnt)),
+    ...make_badges(array2obj([1, 5, 15], "cnt"), S.GAM, "lost", b => checks.check_count_fn(checks.game_lost_count, b.cnt)),
+    ...make_badges(array2obj([1, 5, 15], "cnt"), S.GAM, "won", b => checks.check_count_fn(checks.game_won_count, b.cnt)),
+    ...make_achievement(S.INT, "easteregg-onion", checks.false_check)
 };
-
-
-// ... make_achievement(S.GAM, "victories1", C.COUNT.make_check_fn(), 0),
-// ... make_achievement(S.GAM, "victories5", C.COUNT.make_check_fn(), 1),
 
 
 exports.ACHIEVEMENTS = A;
+exports.A = A;
 
 
 
