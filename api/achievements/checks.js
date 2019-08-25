@@ -4,16 +4,16 @@ const C = {
   COUNT: { // count entries
     make_query_fn(table, user_field, options) {
       let ufield = user_field === undefined ? "id_user" : user_field;
-      return (id_user) => {
-        return table.count({where: {[ufield]: id_user}, ...options});
+      return async (id_user) => {
+        return await table.count({where: {[ufield]: id_user}, ...options});
       };
     }
   },
   COUNT_JOIN: { // count entries filtered based on a join (the other relation contains the user information)
     make_query_fn(table, include_table, as, number, user_field, options) {
       let ufield = user_field === undefined ? "id_user" : user_field;
-      return (id_user) => {
-        return table.count({
+      return async (id_user) => {
+        return await table.count({
           include: [{ model: include_table, as, where: {[ufield]: id_user}, required: true }],
           ... options
         });
