@@ -1,0 +1,84 @@
+{
+  "achievements": {
+    "GAM_B_WON": {
+      "descr": "You won your first game|You won {count} games"
+    },
+    "GAM_B_00_WON": {
+      "title": "Imperator"
+    },
+    "GAM_B_01_WON": {
+      "title": "Pyrrhus"
+    },
+    "GAM_B_02_WON": {
+      "title": "Napoleon"
+    },
+    "GAM_B_LOST": {
+      "descr": "You lost your first game|You lost {count} games"
+    },
+    "GAM_B_00_LOST": {
+      "title": "Perseverance I"
+    },
+    "GAM_B_01_LOST": {
+      "title": "Perseverance II"
+    },
+    "GAM_B_02_LOST": {
+      "title": "Perseverance III"
+    },
+    "EVE_B_ATTENDED": {
+      "descr": "Attend to your first event|Attend {count} events"
+    },
+    "EVE_B_00_ATTENDED": {
+      "title": "Novice componion"
+    },
+    "EVE_B_01_ATTENDED": {
+      "title": "Veteran componion"
+    },
+    "EVE_B_02_ATTENDED": {
+      "title": "Componion among componions"
+    },
+    "GAM_B_PLAYED": {
+      "descr": "You played to your first game|You played to {count} games"
+    },
+    "GAM_B_00_PLAYED": {
+      "title": "Bachelor"
+    },
+    "GAM_B_01_PLAYED": {
+      "title": "Master I"
+    },
+    "GAM_B_02_PLAYED": {
+      "title": "Master II"
+    },
+    "BGA_B_OWNED": {
+      "descr": "Own your first board game|Own {count} boardgames"
+    },
+    "BGA_B_00_OWNED": {
+      "title": "Amateur"
+    },
+    "BGA_B_01_OWNED": {
+      "title": "Collector III"
+    },
+    "BGA_B_PLAYED": {
+      "title": "You have played {} discinct board games"
+    },
+    "BGA_B_00_PLAYED": {
+      "title": "Eclectic I"
+    },
+    "BGA_B_01_PLAYED": {
+      "title": "Eclectic II"
+    },
+    "BGA_B_02_PLAYED": {
+      "title": "Eclectic III"
+    },
+    "BGA_B_03_PLAYED": {
+      "title": "Eclectic IV"
+    },
+    "BGA_A_TASTEFUL": {
+      "descr": "Own 7 wonders, Scythe and Inis",
+      "title": "Good taste"
+    },
+    "INT_A_EASTEREGG-ONION": {
+      "descr": "You found yourself a new componion :)",
+      "title": "Onion Steak Haché!"
+    }
+  }
+}

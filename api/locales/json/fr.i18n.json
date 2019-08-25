@@ -1,0 +1,84 @@
+{
+  "achievements": {
+    "GAM_B_WON": {
+      "descr": ""
+    },
+    "GAM_B_00_WON": {
+      "title": ""
+    },
+    "GAM_B_01_WON": {
+      "title": ""
+    },
+    "GAM_B_02_WON": {
+      "title": ""
+    },
+    "GAM_B_LOST": {
+      "descr": ""
+    },
+    "GAM_B_00_LOST": {
+      "title": ""
+    },
+    "GAM_B_01_LOST": {
+      "title": ""
+    },
+    "GAM_B_02_LOST": {
+      "title": ""
+    },
+    "EVE_B_ATTENDED": {
+      "descr": ""
+    },
+    "EVE_B_00_ATTENDED": {
+      "title": ""
+    },
+    "EVE_B_01_ATTENDED": {
+      "title": ""
+    },
+    "EVE_B_02_ATTENDED": {
+      "title": ""
+    },
+    "GAM_B_PLAYED": {
+      "descr": ""
+    },
+    "GAM_B_00_PLAYED": {
+      "title": ""
+    },
+    "GAM_B_01_PLAYED": {
+      "title": ""
+    },
+    "GAM_B_02_PLAYED": {
+      "title": ""
+    },
+    "BGA_B_OWNED": {
+      "descr": ""
+    },
+    "BGA_B_00_OWNED": {
+      "title": ""
+    },
+    "BGA_B_01_OWNED": {
+      "title": ""
+    },
+    "BGA_B_PLAYED": {
+      "title": ""
+    },
+    "BGA_B_00_PLAYED": {
+      "title": ""
+    },
+    "BGA_B_01_PLAYED": {
+      "title": ""
+    },
+    "BGA_B_02_PLAYED": {
+      "title": ""
+    },
+    "BGA_B_03_PLAYED": {
+      "title": ""
+    },
+    "BGA_A_TASTEFUL": {
+      "descr": "",
+      "title": ""
+    },
+    "INT_A_EASTEREGG-ONION": {
+      "descr": "",
+      "title": ""
+    }
+  }
+}
