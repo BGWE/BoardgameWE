@@ -1,6 +1,7 @@
 const deepfreeze = require("deep-freeze-strict");
 const lodash = require("lodash");
 const checks = require("./checks");
+const {boolOrDefault} = require("../util/util.js");
 
 /**
  * Achievements: a certain milestone in the life of a board game player
@@ -40,7 +41,7 @@ const make_code = (scope, name, progress) => {
 };
 
 const make_i18n_key = (code, entry) => {
-  return ".".join([I18N_PREFIX, code, entry]);
+  return [I18N_PREFIX, code, entry].join(".");
 };
 
 exports.make_code = make_code;
@@ -70,11 +71,11 @@ class AbstractAchievement {
     }
   }
 
-  augment(i18n) {
+  augmented_descriptor(i18n) {
     return {
       ... this.descriptor,
-      title: i18n.__(make_i18n_key(code, I18N_TITLE)),
-      description: i18n.__(make_i18n_key(code, I18N_DESCRIPTION))
+      title: i18n.__(make_i18n_key(this.code, I18N_TITLE)),
+      description: i18n.__(make_i18n_key(this.code, I18N_DESCRIPTION))
     }
   }
 }
@@ -96,6 +97,10 @@ class Achievement extends AbstractAchievement {
 
   get code() {
     return make_code(this.scope, this.name);
+  }
+
+  get descriptor() {
+    return { ...super.descriptor, is_badge: false };
   }
 
   async check(id_user) {
@@ -164,9 +169,10 @@ class BadgeStep extends AbstractAchievement {
 
   get descriptor() {
     return {
-      ... super.descriptor(),
+      ... super.descriptor,
       progress: this.step,
-      count: this.count
+      count: this.count,
+      is_badge: true
     }
   }
 
@@ -174,9 +180,9 @@ class BadgeStep extends AbstractAchievement {
     return await this.badge.count_fn(id_user) >= this.count;
   }
 
-  augment(i18n) {
-    let o = super.augment(i18n);
-    o.description = i18n.__n(make_i18n_key(code, I18N_DESCRIPTION), this.count);
+  augmented_descriptor(i18n) {
+    let o = super.augmented_descriptor(i18n);
+    o.description = i18n.__n(make_i18n_key(this.badge.code, I18N_DESCRIPTION), this.count);
     return o;
   }
 }
@@ -237,3 +243,55 @@ const PER_SCOPE = make_per_scope();
 deepfreeze(PER_SCOPE);
 
 exports.PER_SCOPE = PER_SCOPE;
+
+/**
+ * Format one achievement into its augmented descriptor
+ * @param achievement Achievement code
+ * @param i18n A i18n for generated the localized part of the achievement descriptor
+ * @returns {{id_achievement: *, title, description}}
+ */
+exports.format = (achievement, i18n) => {
+  return {
+    ... achievement.dataValues,
+    ... ALL[achievement.id_achievement].augmented_descriptor(i18n)
+  };
+};
+
+/**
+ * Format all achievements in the list
+ * @param achievements List of achievement
+ * @param i18n A i18n for generated the localized part of the achievement descriptor
+ * @param group_badges {bool} True for structuring the response by badage and achievement instead of a plain list.
+ * @returns {*}
+ */
+exports.format_all = (achievements, i18n, group_badges) => {
+  if (!boolOrDefault(group_badges, true)) {
+    return achievements.map(achievement => exports.format(achievement.id_achievement, i18n));
+  }
+
+  // produce descriptor for all entries
+  let formatted = {achievements: [], badges: {}};
+  achievements.forEach(db_achievement => {
+    let achievement = ALL[db_achievement.id_achievement];
+    const descriptor = {
+      ... db_achievement.dataValues,
+      ... achievement.augmented_descriptor(i18n)
+    };
+    if (achievement instanceof BadgeStep) {
+      const code = achievement.badge.code;
+      if (!formatted.badges[code]) {
+        formatted.badges[code] = [];
+      }
+      formatted.badges[code].push(descriptor);
+    } else { // normal achievement
+      formatted.achievements.push(descriptor);
+    }
+  });
+
+  // sort badge steps by count
+  lodash.entriesIn(formatted.badges).forEach(pair => {
+    formatted.badges[pair[0]] = lodash.sortBy(pair[1], o => o.count);
+  });
+
+  return formatted;
+};
