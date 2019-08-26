@@ -24,7 +24,7 @@ module.exports = {
         production : {
             user: 'ec2-user',
             host : 'api.boardgamecomponion.com',
-            ref  : 'origin/prodinfra',
+            ref  : 'origin/releases/v3.0',
             repo : 'https://github.com/BGWE/BoardgameWE.git',
             path : '/home/ec2-user/BoardgameWE',
             'post-deploy' : 'source /home/ec2-user/BoardgameWE/source/tools/bgcinfra/configs/secret_env.sh && npm install && pm2 startOrRestart /home/ec2-user/BoardgameWE/source/tools/bgcinfra/configs/ecosystem.config.js --env production && sudo certbot certonly --debug --nginx --non-interactive --agree-tos --domains api.boardgamecomponion.com --email fabrice.servais@gmail.com'
