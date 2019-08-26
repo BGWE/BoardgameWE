@@ -53,8 +53,6 @@ exports.game_count_condition = async (id_user, count_cond) => {
     }
     game2players[p.id_game].push(p);
   });
-  console.log(games);
-  console.log(game2players);
 
   let count = 0;
   games.forEach(game => {
@@ -63,7 +61,6 @@ exports.game_count_condition = async (id_user, count_cond) => {
     const scores = players.map(p => p.score);
     count += count_cond(game, scores, player_score) ? 1 : 0;
   });
-  console.log(count);
   return count;
 };
 

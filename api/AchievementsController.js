@@ -3,6 +3,11 @@ const userutil = require("./util/user");
 const util = require("./util/util");
 const achievements = require("./achievements/definition");
 
+const addAchievement = function (id_user, achievement) {
+  const entry = { id_achievement: achievement.code, id_user };
+  return db.UserAchievement.findOrCreate({ where: entry, defaults: entry });
+};
+
 // TODO: not sure how this function was supposed to work so I haven't converted it with the new definition
 exports.checkAchievements = async function(oldAchievements, uid) {
     console.log("Checking achievements");
@@ -37,7 +42,7 @@ exports.sendUserAchievements = function (req, res, id_user) {
   return db.UserAchievement.findAll({
     where: {id_user}
   }).then(achvmts => {
-    return util.successResponse(res, achievements.augment(achvmts));
+    return util.successResponse(res, achievements.format_all(achvmts, req));
   }).catch(err => {
     return util.errorResponse(res);
   });
@@ -46,23 +51,16 @@ exports.sendUserAchievements = function (req, res, id_user) {
 exports.getCurrentUserAchievements = function (req, res) {
   return exports.sendUserAchievements(req, res, userutil.getCurrUserId(req));
 };
+
 exports.getUserAchievements = function(req, res) {
   return exports.sendUserAchievements(req, res, parseInt(req.params.uid));
 };
 
-const addAchievement = function (id_user, achievement) {
-  const entry = { id_achievement: achievement.code, id_user };
-  return db.UserAchievement.findOrCreate({ where: entry, defaults: entry });
-};
-
 exports.addOnionAchievement = function(req, res) {
-  return addAchievement(getCurrUserId(req), achievements.A.EASTER_EGG_ONION).then(achvmt => {
-    return util.successResponse(res, achvmt);
+  return addAchievement(userutil.getCurrUserId(req), achievements.A.EASTER_EGG_ONION).then(achvmt => {
+    return util.successResponse(res, achievements.format(achvmt, req));
   }).catch(err => {
     return util.errorResponse(res);
   });
 };
 
-exports.getTotalNumberOfAchievements = function(req, res) {
-  return util.successResponse(res, Object.keys(achievementsDict).length);
-};
