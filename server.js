@@ -33,7 +33,6 @@ i18n.configure({
   objectNotation: true
 });
 app.use(i18n.init);
-i18n.setLocale("en");
 
 // websocket
 const server = require('http').createServer(app);
