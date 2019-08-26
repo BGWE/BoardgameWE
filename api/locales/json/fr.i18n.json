@@ -1,7 +1,10 @@
 {
   "achievements": {
     "GAM_B_WON": {
-      "descr": ""
+      "descr": {
+        "one": "",
+        "other": ""
+      }
     },
     "GAM_B_00_WON": {
       "title": ""
@@ -13,7 +16,10 @@
       "title": ""
     },
     "GAM_B_LOST": {
-      "descr": ""
+      "descr": {
+        "one": "",
+        "other": ""
+      }
     },
     "GAM_B_00_LOST": {
       "title": ""
@@ -25,7 +31,10 @@
       "title": ""
     },
     "EVE_B_ATTENDED": {
-      "descr": ""
+      "descr": {
+        "one": "",
+        "other": ""
+      }
     },
     "EVE_B_00_ATTENDED": {
       "title": ""
@@ -37,7 +46,10 @@
       "title": ""
     },
     "GAM_B_PLAYED": {
-      "descr": ""
+      "descr": {
+        "one": "",
+        "other": ""
+      }
     },
     "GAM_B_00_PLAYED": {
       "title": ""
@@ -49,7 +61,10 @@
       "title": ""
     },
     "BGA_B_OWNED": {
-      "descr": ""
+      "descr": {
+        "one": "",
+        "other": ""
+      }
     },
     "BGA_B_00_OWNED": {
       "title": ""

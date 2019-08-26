@@ -3,6 +3,7 @@ const app = express();
 const bodyParser = require('body-parser');
 const boolParser = require('express-query-boolean');
 const cors = require('cors');
+const i18n = require("i18n");
 
 if (process.env.NODE_ENV !== 'production') {
     require('dotenv').load();
@@ -19,6 +20,20 @@ app.options('*', cors());
 
 // api documentation
 app.use('/doc', express.static(__dirname + '/doc'));
+
+// i18n
+i18n.configure({
+  locales: ['en', 'fr'],
+  directory: './api/locales/json',
+  extension: '.i18n.json',
+  defaultLocale: 'en',
+  register: global,
+  updateFiles: false,
+  syncFiles: false,
+  objectNotation: true
+});
+app.use(i18n.init);
+i18n.setLocale("en");
 
 // websocket
 const server = require('http').createServer(app);

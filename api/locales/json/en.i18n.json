@@ -1,7 +1,10 @@
 {
   "achievements": {
     "GAM_B_WON": {
-      "descr": "You won your first game|You won {count} games"
+      "descr": {
+        "one": "You won your first game",
+        "other": "You won %d games"
+      }
     },
     "GAM_B_00_WON": {
       "title": "Imperator"
@@ -13,7 +16,10 @@
       "title": "Napoleon"
     },
     "GAM_B_LOST": {
-      "descr": "You lost your first game|You lost {count} games"
+      "descr": {
+        "one": "You lost your first game",
+        "other": "You lost %d games"
+      }
     },
     "GAM_B_00_LOST": {
       "title": "Perseverance I"
@@ -25,7 +31,10 @@
       "title": "Perseverance III"
     },
     "EVE_B_ATTENDED": {
-      "descr": "Attend to your first event|Attend {count} events"
+      "descr": {
+        "one": "Attend to your first event",
+        "other": "Attend %d events"
+      }
     },
     "EVE_B_00_ATTENDED": {
       "title": "Novice componion"
@@ -37,7 +46,10 @@
       "title": "Componion among componions"
     },
     "GAM_B_PLAYED": {
-      "descr": "You played to your first game|You played to {count} games"
+      "descr": {
+        "one": "You played to your first game",
+        "other": "You played to %d games"
+      }
     },
     "GAM_B_00_PLAYED": {
       "title": "Bachelor"
@@ -49,7 +61,10 @@
       "title": "Master II"
     },
     "BGA_B_OWNED": {
-      "descr": "Own your first board game|Own {count} boardgames"
+      "descr": {
+        "one": "Own your first board game",
+        "other": "Own %d boardgames"
+      }
     },
     "BGA_B_00_OWNED": {
       "title": "Amateur"
@@ -58,7 +73,7 @@
       "title": "Collector III"
     },
     "BGA_B_PLAYED": {
-      "title": "You have played {} discinct board games"
+      "title": "You have played %d discinct board games"
     },
     "BGA_B_00_PLAYED": {
       "title": "Eclectic I"
