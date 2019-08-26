@@ -331,11 +331,15 @@ Resources:
             - |
               sudo yum -y update
             - |
-              sudo yum install -y certbot nodejs npm git
+              sudo yum install -y certbot npm git
             - |
               sudo pip install letsencrypt-nginx
             - |
-              sudo npm install -g pm2
+              sudo npm install -g pm2 n
+            - |
+              sudo n 10.16.3
+            - |
+              sudo n use 10.16.3
             - |
               # Signal the status from cfn-init
             - '/opt/aws/bin/cfn-signal -e $? '
