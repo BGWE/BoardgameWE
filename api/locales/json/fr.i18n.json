@@ -2,98 +2,98 @@
   "achievements": {
     "GAM_B_WON": {
       "descr": {
-        "one": "",
-        "other": ""
+        "one": "Tu a gagné ta première partie",
+        "other": "Tu as gagné %d parties"
       }
     },
     "GAM_B_00_WON": {
-      "title": ""
+      "title": "Imperator"
     },
     "GAM_B_01_WON": {
-      "title": ""
+      "title": "Pyrrhus"
     },
     "GAM_B_02_WON": {
-      "title": ""
+      "title": "Napoléon"
     },
     "GAM_B_LOST": {
       "descr": {
-        "one": "",
-        "other": ""
+        "one": "Tu as perdu ta première partie",
+        "other": "Tu as perdu %d parties"
       }
     },
     "GAM_B_00_LOST": {
-      "title": ""
+      "title": "Persévérant I"
     },
     "GAM_B_01_LOST": {
-      "title": ""
+      "title": "Persévérant II"
     },
     "GAM_B_02_LOST": {
-      "title": ""
+      "title": "Persévérant III"
     },
     "EVE_B_ATTENDED": {
       "descr": {
-        "one": "",
-        "other": ""
+        "one": "Tu as participé à un premier événement",
+        "other": "Tu as participé à %d événements"
       }
     },
     "EVE_B_00_ATTENDED": {
-      "title": ""
+      "title": "Compognon novice"
     },
     "EVE_B_01_ATTENDED": {
-      "title": ""
+      "title": "Compognon vétéran"
     },
     "EVE_B_02_ATTENDED": {
-      "title": ""
+      "title": "Compognon parmi les compognons"
     },
     "GAM_B_PLAYED": {
       "descr": {
-        "one": "",
-        "other": ""
+        "one": "Tu as joué à ta première partie",
+        "other": "Tu as joué à %d parties"
       }
     },
     "GAM_B_00_PLAYED": {
-      "title": ""
+      "title": "Bachelier"
     },
     "GAM_B_01_PLAYED": {
-      "title": ""
+      "title": "Master I"
     },
     "GAM_B_02_PLAYED": {
-      "title": ""
+      "title": "Master II"
     },
     "BGA_B_OWNED": {
       "descr": {
-        "one": "",
-        "other": ""
+        "one": "Tu as acquis ton premier jeu",
+        "other": "Tu possèdes %d jeux"
       }
     },
     "BGA_B_00_OWNED": {
-      "title": ""
+      "title": "Amateur"
     },
     "BGA_B_01_OWNED": {
-      "title": ""
+      "title": "Collectionneur III"
     },
     "BGA_B_PLAYED": {
-      "title": ""
+      "title": "Tu as joué à %d jeux différents"
     },
     "BGA_B_00_PLAYED": {
-      "title": ""
+      "title": "Éclectique I"
     },
     "BGA_B_01_PLAYED": {
-      "title": ""
+      "title": "Éclectique II"
     },
     "BGA_B_02_PLAYED": {
-      "title": ""
+      "title": "Éclectique III"
     },
     "BGA_B_03_PLAYED": {
-      "title": ""
+      "title": "Éclectique IV"
     },
     "BGA_A_TASTEFUL": {
-      "descr": "",
-      "title": ""
+      "descr": "Tu possèdes 7 Wonders, Scythe et Inis",
+      "title": "Goût distingué"
     },
     "INT_A_EASTEREGG-ONION": {
-      "descr": "",
-      "title": ""
+      "descr": "Tu t'es trouvé un nouveau compognon :)",
+      "title": "Onion Steak Haché!"
     }
   }
 }
