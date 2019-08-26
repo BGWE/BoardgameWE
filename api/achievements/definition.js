@@ -23,6 +23,9 @@ const checks = require("./checks");
  * - INT: interaction with the website
  */
 
+const I18N_PREFIX = "achievements";
+const I18N_TITLE = "title";
+const I18N_DESCRIPTION = "descr";
 const S = { BGA: "BGA", GAM: "GAM", EVE: "EVE", INT: "INT"};
 
 exports.S = S;
@@ -34,6 +37,10 @@ const make_code = (scope, name, progress) => {
   }
   let is_badge = progress !== undefined;
   return scope + "_" + (is_badge ? "B_" + String(progress).padStart(2, "0") : "A") + "_" + name.toUpperCase().substr(0, 32);
+};
+
+const make_i18n_key = (code, entry) => {
+  return ".".join([I18N_PREFIX, code, entry]);
 };
 
 exports.make_code = make_code;
@@ -66,8 +73,8 @@ class AbstractAchievement {
   augment(i18n) {
     return {
       ... this.descriptor,
-      title: i18n(this.code),
-      description: i18n(this.code)
+      title: i18n.__(make_i18n_key(code, I18N_TITLE)),
+      description: i18n.__(make_i18n_key(code, I18N_DESCRIPTION))
     }
   }
 }
@@ -166,6 +173,12 @@ class BadgeStep extends AbstractAchievement {
   async check(id_user) {
     return await this.badge.count_fn(id_user) >= this.count;
   }
+
+  augment(i18n) {
+    let o = super.augment(i18);
+    o.description = i18n.__n(make_i18n_key(code, I18N_DESCRIPTION), this.count);
+    return o;
+  }
 }
 
 const N = {};
@@ -193,7 +206,7 @@ exports.ACHIEVEMENTS = A;
 
 // each field is an array of achievements (sorted by increasing difficulty)
 const B = {};
-B.BOARD_GAME_PLAYED = new Badge(S.BGA, N.BOARD_GAME_PLAYED, [1, 5, 15, 30], checks.bga_played_count);
+B.BOARD_GAME_PLAYED = new Badge(S.BGA, N.BOARD_GAME_PLAYED, [2, 5, 15, 30], checks.bga_played_count);
 B.BOARD_GAME_OWNED = new Badge(S.BGA, N.BOARD_GAME_OWNED, [1, 5, 10, 25], checks.bga_owned_count);
 B.GAME_PLAYED = new Badge(S.GAM, N.GAME_PLAYED, [1, 15, 30], checks.game_played_count);
 B.EVENT_ATTENDED = new Badge(S.EVE, N.EVENT_ATTENDED, [1, 5, 15], checks.event_attended_count);
