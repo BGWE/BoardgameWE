@@ -103,8 +103,8 @@ class Achievement extends AbstractAchievement {
     return { ...super.descriptor, is_badge: false };
   }
 
-  async check(id_user) {
-    return await this.check_fn(id_user);
+  async check(id_user, options) {
+    return await this.check_fn(id_user, options);
   }
 }
 
@@ -176,8 +176,8 @@ class BadgeStep extends AbstractAchievement {
     }
   }
 
-  async check(id_user) {
-    return await this.badge.count_fn(id_user) >= this.count;
+  async check(id_user, options) {
+    return await this.badge.count_fn(id_user, options) >= this.count;
   }
 
   augmented_descriptor(i18n) {

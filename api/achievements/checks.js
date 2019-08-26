@@ -2,17 +2,17 @@ const db = require("../models/index");
 
 const C = {
   COUNT: { // count entries
-    make_query_fn(table, user_field, options) {
+    make_query_fn(table, user_field) {
       let ufield = user_field === undefined ? "id_user" : user_field;
-      return async (id_user) => {
+      return async (id_user, options) => {
         return await table.count({where: {[ufield]: id_user}, ...options});
       };
     }
   },
   COUNT_JOIN: { // count entries filtered based on a join (the other relation contains the user information)
-    make_query_fn(table, include_table, as, number, user_field, options) {
+    make_query_fn(table, include_table, as, number, user_field) {
       let ufield = user_field === undefined ? "id_user" : user_field;
-      return async (id_user) => {
+      return async (id_user, options) => {
         return await table.count({
           include: [{ model: include_table, as, where: {[ufield]: id_user}, required: true }],
           ... options
@@ -24,13 +24,13 @@ const C = {
 
 /** Check whether the count returned by the count promise is greater or equal to the number */
 exports.check_count_fn = (count_promise, number) => {
-  return async (id_user) => {
-    let promise = count_promise(id_user);
+  return async (id_user, options) => {
+    let promise = count_promise(id_user, options);
     return (await promise) >= number;
   };
 };
 
-exports.false_check = async (id_user) => {
+exports.false_check = async (id_user, options) => {
   return false;
 };
 
@@ -41,11 +41,12 @@ exports.false_check = async (id_user) => {
 /**
  * @param id_user
  * @param count_cond Given a game, the list of scores and a reference score, return true if the reference score should
+ * @param options Additional options for sequelize
  * be considered in the count.
  */
-exports.game_count_condition = async (id_user, count_cond) => {
-  let games = await db.Game.findAll({ include: {model: db.GamePlayer, as: "player", where: {id_user}, required: true} });
-  let players = await db.GamePlayer.findAll({ where: {id_game: {[db.Op.in]: games.map(g => g.id)}} });
+exports.game_count_condition = async (id_user, count_cond, options) => {
+  let games = await db.Game.findAll({ include: {model: db.GamePlayer, as: "player", where: {id_user}, required: true}, ...options });
+  let players = await db.GamePlayer.findAll({ where: {id_game: {[db.Op.in]: games.map(g => g.id)}}, ...options });
   let game2players = {};
   players.forEach(p => {
     if (!game2players[p.id_game]) {
@@ -74,12 +75,12 @@ const victory_cond = (game, scores, ref_score) => {
   }
 };
 
-exports.game_won_count = async (id_user) => {
-  return await exports.game_count_condition(id_user, victory_cond);
+exports.game_won_count = async (id_user, options) => {
+  return await exports.game_count_condition(id_user, victory_cond, options);
 };
 
-exports.game_lost_count = async (id_user) => {
-  return await exports.game_count_condition(id_user, (game, scores, ref_score) => !victory_cond(game, scores, ref_score));
+exports.game_lost_count = async (id_user, options) => {
+  return await exports.game_count_condition(id_user, (game, scores, ref_score) => !victory_cond(game, scores, ref_score), options);
 };
 
 exports.bga_played_count = C.COUNT_JOIN.make_query_fn(db.Game, db.GamePlayer, "player", "id_user", { group: "id_board_game" });
