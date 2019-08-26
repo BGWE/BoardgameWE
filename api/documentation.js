@@ -281,6 +281,23 @@
  */
 
 /**
+ * @apiDefine AchievementsDescriptor
+ * @apiSuccess {Achievement[]} achievements List of achievements
+ * @apiSuccess {Object} badges An object mapping badge code with list of sorted badge steps obtained. Each
+ * element of the list is a badge.
+ */
+
+/**
+ * @apiDefine AchievementDescriptor
+ * @apiSuccess {String} title Achievement title (localized)
+ * @apiSuccess {String} description Achievement description (localized)
+ * @apiSuccess {String} code Unique identifier of the achievement
+ * @apiSuccess {String} scope Achievement scope code
+ * @apiSuccess {String} name Achievement name (not-for-human)
+ * @apiSuccess {Boolean} is_badge A field set to false indicating the achievement is not a badge
+ */
+
+/**
  * @apiDefine SuccessObjDescriptor
  * @apiSuccess {Boolean} success True if success
  */

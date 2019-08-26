@@ -371,19 +371,38 @@ module.exports = function(app) {
         .get(EventJoinController.getCurrentUserEventInvites);
 
     // Achievements
+    /**
+     * @api {get} /user/:uid/achievements Get user achievements
+     * @apiName GetUserAchievements
+     * @apiGroup Achievement
+     * @apiDescription Get the user achievements of the given user
+     * @apiUse TokenHeaderRequired
+     * @apiUse AchievementsDescriptor
+    */
     app.route("/user/:uid/achievements")
         .get(AchievementsController.getUserAchievements);
 
+  /**
+   * @api {get} /user/current/achievements Get current user achievements
+   * @apiName GetCurrentUserAchievements
+   * @apiGroup Achievement
+   * @apiDescription Get the current user achievements of the given user
+   * @apiUse TokenHeaderRequired
+   * @apiUse AchievementsDescriptor
+   */
     app.route("/user/current/achievements")
         .get(AchievementsController.getCurrentUserAchievements);
 
+  /**
+   * @api {get} /user/current/easteregg Add easter egg achievement
+   * @apiName AddEasterEggAchievement
+   * @apiGroup Achievement
+   * @apiDescription Add the easter egg achievement to the current user
+   * @apiUse TokenHeaderRequired
+   * @apiUse AchievementDescriptor
+   */
     app.route("/user/current/easteregg")
         .post(AchievementsController.addOnionAchievement);
-
-    // TODO: a request for getting this information only is probably a bad idea
-    // what is it used for ? cannot it be returned with another request ?
-    // app.route("/achievements/total")
-    //     .get(AchievementsController.getTotalNumberOfAchievements);
 
     // Friendships
     /**
