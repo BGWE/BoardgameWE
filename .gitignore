@@ -65,5 +65,7 @@ docker/docker-compose.yml
 docker/postgres-data
 .disable.ebextensions/*
 
+tools/bgcinfra/bgcvenv/*
+
 .idea
 .DS_Store
