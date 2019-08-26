@@ -4,7 +4,7 @@ const checks = require("./checks");
 
 /**
  * Achievements: a certain milestone in the life of a board game player
- * Badges: a sequence of achievements, ussually of increasing difficulty
+ * Badges: a sequence of achievements, usually of increasing difficulty
  *
  * Achievement identifier:
  *
@@ -175,7 +175,7 @@ class BadgeStep extends AbstractAchievement {
   }
 
   augment(i18n) {
-    let o = super.augment(i18);
+    let o = super.augment(i18n);
     o.description = i18n.__n(make_i18n_key(code, I18N_DESCRIPTION), this.count);
     return o;
   }
