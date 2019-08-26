@@ -6,17 +6,17 @@ module.exports = {
       createdAt: Sequelize.literal("(now() at time zone 'utc')"),
       updatedAt: Sequelize.literal("(now() at time zone 'utc')")
     };
-    return queryInterface.bulkInsert('UsersAchievements', [
-      { id_user: 1, id_achievement: 'a.events.victories', ...timeData},
-      { id_user: 1, id_achievement: 'a.events.losses', ...timeData},
-      { id_user: 1, id_achievement: 'a.games.victories.0', ...timeData},
-      { id_user: 1, id_achievement: 'a.games.victories.1', ...timeData},
-      { id_user: 2, id_achievement: 'a.events.victories', ...timeData},
-      { id_user: 2, id_achievement: 'a.games.victories.0', ...timeData}
+    return queryInterface.bulkInsert('UserAchievements', [
+      { id_user: 1, id_achievement: 'GAM_B_00_WON', ...timeData},
+      { id_user: 1, id_achievement: 'GAM_B_00_LOST', ...timeData},
+      { id_user: 1, id_achievement: 'GAM_B_01_WON', ...timeData},
+      { id_user: 1, id_achievement: 'GAM_B_02_WON', ...timeData},
+      { id_user: 2, id_achievement: 'GAM_B_00_WON', ...timeData},
+      { id_user: 2, id_achievement: 'GAM_B_01_WON', ...timeData}
     ], {});
   },
 
   down: (queryInterface, Sequelize) => {
-    return queryInterface.bulkDelete('UsersAchievements', null, {});
+    return queryInterface.bulkDelete('UserAchievements', null, {});
   }
 };

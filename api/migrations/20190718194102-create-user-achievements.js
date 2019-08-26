@@ -2,7 +2,7 @@
 module.exports = {
   up: (queryInterface, Sequelize) => {
     return queryInterface.sequelize.transaction(transaction => {
-      return queryInterface.createTable('UsersAchievements', {
+      return queryInterface.createTable('UserAchievements', {
         id_user: {
           allowNull: false,
           references: {model: 'Users', key: 'id'},
@@ -21,7 +21,7 @@ module.exports = {
           type: Sequelize.DATE
         }
       }).then(() => {
-        return queryInterface.addConstraint('UsersAchievements', ['id_user', 'id_achievement'], {
+        return queryInterface.addConstraint('UserAchievements', ['id_user', 'id_achievement'], {
           type: 'primary key',
           name: 'user_achievements_primary_key',
           transaction
@@ -30,6 +30,6 @@ module.exports = {
     });
   },
   down: (queryInterface, Sequelize) => {
-    return queryInterface.dropTable('UsersAchievements');
+    return queryInterface.dropTable('UserAchievements');
   }
 };
