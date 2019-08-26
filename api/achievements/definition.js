@@ -130,10 +130,6 @@ class Badge {
     return this.scope + "_B_" + this.name.toUpperCase().substr(0, 32);
   }
 
-  step(index) {
-    return new BadgeStep(this, index);
-  }
-
   get nb_steps() {
     return this.stages.length;
   }
@@ -141,6 +137,15 @@ class Badge {
   get steps() {
     let self = this;
     return lodash.range(this.nb_steps).map(i => self.step(i));
+  }
+
+  step(index) {
+    return new BadgeStep(this, index);
+  }
+
+  async validated_steps(id_user, options) {
+    const count = await this.count_fn(id_user, options);
+    return this.steps().filter(s => s.count >= count);
   }
 }
 
