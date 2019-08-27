@@ -45,7 +45,7 @@ exports.false_check = async (id_user, options) => {
  * be considered in the count.
  */
 exports.game_count_condition = async (id_user, count_cond, options) => {
-  let games = await db.Game.findAll({ include: {model: db.GamePlayer, as: "player", where: {id_user}, required: true}, ...options });
+  let games = await db.Game.findAll({ include: {model: db.GamePlayer, as: "game_players", where: {id_user}, required: true}, ...options });
   let players = await db.GamePlayer.findAll({ where: {id_game: {[db.Op.in]: games.map(g => g.id)}}, ...options });
   let game2players = {};
   players.forEach(p => {
@@ -58,7 +58,7 @@ exports.game_count_condition = async (id_user, count_cond, options) => {
   let count = 0;
   games.forEach(game => {
     let players = game2players[game.id];
-    const player_score = game.players[0].score;
+    const player_score = game.game_players[0].score;
     const scores = players.map(p => p.score);
     count += count_cond(game, scores, player_score) ? 1 : 0;
   });
