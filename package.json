@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "test": "nyc mocha",
-    "envstart": "eval $(egrep -v '^#' .env | xargs) npm start"
+    "envstart": "eval $(egrep -v '^#' .env | xargs) pm2 start server.js"
   },
   "repository": {
     "type": "git",
