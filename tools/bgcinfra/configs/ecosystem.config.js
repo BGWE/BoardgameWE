@@ -19,7 +19,6 @@ module.exports = {
             DB_NAME: 'bgcomponion',
             DB_USERNAME: 'dbadmin',
             USE_SSL: 'true',
-            DB_PASSWORD: execSync("aws --region eu-west-1 ssm get-parameter --name DB_PASSWORD --query 'Parameter.Value' --output text")
         }
     }],
     
