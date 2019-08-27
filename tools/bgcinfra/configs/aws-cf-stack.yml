@@ -366,8 +366,8 @@ Resources:
                         server_name  localhost;
                         error_page  497 https://$host$request_uri;
 
-                        ssl_certificate      /etc/letsencrypt/live/api.boardgamecomponion.com/fullchain.pem;
-                        ssl_certificate_key  /etc/letsencrypt/live/api.boardgamecomponion.com/privkey.pem;
+                        ssl_certificate      /etc/letsencrypt/live/apiredirect.boardgamecomponion.com/fullchain.pem;
+                        ssl_certificate_key  /etc/letsencrypt/live/apiredirect.boardgamecomponion.com/privkey.pem;
                         ssl_session_timeout  5m;
                         ssl_protocols  TLSv1.1 TLSv1.2;
                         ssl_ciphers "EECDH+AESGCM:EDH+AESGCM:AES256+EECDH:AES256+EDH";
@@ -537,7 +537,7 @@ Parameters:
       The subdomain of the dns entry. For example, hello -> hello.mydomain.com,
       hello is the subdomain.
     Type: String
-    Default: api
+    Default: apiredirect
 Mappings:
   AWSInstanceType2Arch:
     t1.micro:
