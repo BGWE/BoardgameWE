@@ -2,7 +2,8 @@ const { execSync } = require('child_process');
 module.exports = {
     apps : [{
         name: 'API',
-        script: 'server.js',
+        script: 'npm',
+        args: '-- run envstart',
         
         // Options reference: https://pm2.io/doc/en/runtime/reference/ecosystem-file/
         instances: 1,
