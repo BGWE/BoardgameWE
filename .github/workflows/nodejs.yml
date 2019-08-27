@@ -19,5 +19,7 @@ jobs:
       run: eval "$(ssh-agent -s)" && echo "${{ secrets.SSH_KEY }}" | ssh-add -
     - name: Stash changes
       run: git stash
+    - name: Check known hosts
+      run: cat ~/.ssh/known_hosts
     - name: Deploy
       run: node_modules/.bin/pm2 deploy ./tools/bgcinfra/configs/ecosystem.config.js production
