@@ -15,9 +15,7 @@ jobs:
       run: npm install
     - name: Install dependencies
       run: npm install pm2
-    - name: Start SSH agent
-      run: eval "$(ssh-agent -s)"
-    - name: Add SSH Key
-      run: echo "${{ secrets.SSH_KEY }}" | ssh-add -
+    - name: Start SSH agent and Add SSH Key
+      run: eval "$(ssh-agent -s)" && echo "${{ secrets.SSH_KEY }}" | ssh-add -
     - name: Deploy
       run: pm2 deploy ./tools/bgcinfra/configs/ecosystem.config.js production
