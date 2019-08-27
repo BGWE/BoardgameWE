@@ -30,7 +30,6 @@ module.exports = {
             repo : 'https://github.com/BGWE/BoardgameWE.git',
             path : '/home/ec2-user/BoardgameWE',
             'post-deploy' : '\
-                source /home/ec2-user/BoardgameWE/source/tools/bgcinfra/configs/secret_env.sh && \
                 npm install && \
                 mv /home/ec2-user/BoardgameWE/source/tools/bgcinfra/configs/secret_env.sh /home/ec2-user/BoardgameWE/source/.env && \
                 npm run envstart && \
