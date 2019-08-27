@@ -32,7 +32,7 @@ module.exports = {
             'post-deploy' : '\
                 source /home/ec2-user/BoardgameWE/source/tools/bgcinfra/configs/secret_env.sh && \
                 npm install && \
-                pm2 startOrRestart /home/ec2-user/BoardgameWE/source/tools/bgcinfra/configs/ecosystem.config.js --env production && \
+                npm run envstart && \
                 sudo certbot certonly --debug --nginx --non-interactive --agree-tos --domains api.boardgamecomponion.com --email fabrice.servais@gmail.com && \
                 sudo cp /tmp/https.conf /etc/nginx/conf.d/https.conf && \
                 sudo nginx -s reload'
