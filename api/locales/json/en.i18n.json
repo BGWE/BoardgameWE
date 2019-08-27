@@ -7,13 +7,34 @@
       }
     },
     "GAM_B_00_WON": {
-      "title": "Imperator"
+      "title": "One small step for a man"
     },
     "GAM_B_01_WON": {
-      "title": "Pyrrhus"
+      "title": "Sergeant"
     },
     "GAM_B_02_WON": {
-      "title": "Napoleon"
+      "title": "Captain"
+    },
+    "GAM_B_03_WON": {
+      "title": "General"
+    },
+    "GAM_B_04_WON": {
+      "title": "Charles Martel"
+    },
+    "GAM_B_05_WON": {
+      "title": "Alexander the Great"
+    },
+    "GAM_B_06_WON": {
+      "title": "Hannibal Barca"
+    },
+    "GAM_B_07_WON": {
+      "title": "Attila the Hun"
+    },
+    "GAM_B_08_WON": {
+      "title": "Napoléon Bonaparte"
+    },
+    "GAM_B_09_WON": {
+      "title": "Subutai"
     },
     "GAM_B_LOST": {
       "descr": {
@@ -67,25 +88,67 @@
       }
     },
     "BGA_B_00_OWNED": {
-      "title": "Amateur"
+      "title": "A journey of a thousand miles begins with a single step"
     },
     "BGA_B_01_OWNED": {
-      "title": "Collector III"
+      "title": "It's alright mom, I'm not going to get addicted"
+    },
+    "BGA_B_02_OWNED": {
+      "title": "Amateur"
+    },
+    "BGA_B_03_OWNED": {
+      "title": "Initiate"
+    },
+    "BGA_B_04_OWNED": {
+      "title": "Collector"
+    },
+    "BGA_B_05_OWNED": {
+      "title": "Retailer"
+    },
+    "BGA_B_06_OWNED": {
+      "title": "Galerist"
+    },
+    "BGA_B_07_OWNED": {
+      "title": "Curator"
+    },
+    "BGA_B_08_OWNED": {
+      "title": "Warehouse manager"
+    },
+    "BGA_B_09_OWNED": {
+      "title": "Amazon"
     },
     "BGA_B_PLAYED": {
       "descr": "You have played %d discinct board games"
     },
     "BGA_B_00_PLAYED": {
-      "title": "Eclectic I"
+      "title": "Selective"
     },
     "BGA_B_01_PLAYED": {
-      "title": "Eclectic II"
+      "title": "Curious"
     },
     "BGA_B_02_PLAYED": {
-      "title": "Eclectic III"
+      "title": "Eclectic"
     },
     "BGA_B_03_PLAYED": {
-      "title": "Eclectic IV"
+      "title": "Explorer"
+    },
+    "BGA_B_04_PLAYED": {
+      "title": "Marco Polo"
+    },
+    "BGA_B_05_PLAYED": {
+      "title": "Magellan"
+    },
+    "BGA_B_06_PLAYED": {
+      "title": "Christopher Columbus"
+    },
+    "BGA_B_07_PLAYED": {
+      "title": "Ibn Battuta"
+    },
+    "BGA_B_08_PLAYED": {
+      "title": "James Cook"
+    },
+    "BGA_B_09_PLAYED": {
+      "title": "Vasco de Gama"
     },
     "BGA_A_TASTEFUL": {
       "descr": "Own 7 wonders, Scythe and Inis",
