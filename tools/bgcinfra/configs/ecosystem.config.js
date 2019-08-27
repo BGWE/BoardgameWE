@@ -35,7 +35,7 @@ module.exports = {
                 npm install && \
                 pm2 startOrRestart /home/ec2-user/BoardgameWE/source/tools/bgcinfra/configs/ecosystem.config.js --env production && \
                 sudo certbot certonly --debug --nginx --non-interactive --agree-tos --domains api.boardgamecomponion.com --email fabrice.servais@gmail.com && \
-                sudo mv /tmp/https.conf /etc/nginx/conf.d/ && \
+                sudo cp /tmp/https.conf /etc/nginx/conf.d/https.conf && \
                 sudo nginx -s reload'
         }
     }
