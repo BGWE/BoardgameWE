@@ -25,7 +25,7 @@ achievements.BGA_B_00_OWNED.title,Amateur,Amateur
 achievements.BGA_B_01_OWNED.title,Collector I,Collectionneur I
 achievements.BGA_B_01_OWNED.title,Collector II,Collectionneur II
 achievements.BGA_B_01_OWNED.title,Collector III,Collectionneur III
-achievements.BGA_B_PLAYED.title,You have played %d discinct board games,Tu as joué à %d jeux différents
+achievements.BGA_B_PLAYED.descr,You have played %d discinct board games,Tu as joué à %d jeux différents
 achievements.BGA_B_00_PLAYED.title,Eclectic I,Éclectique I
 achievements.BGA_B_01_PLAYED.title,Eclectic II,Éclectique II
 achievements.BGA_B_02_PLAYED.title,Eclectic III,Éclectique III

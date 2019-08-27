@@ -73,7 +73,7 @@
       "title": "Collectionneur III"
     },
     "BGA_B_PLAYED": {
-      "title": "Tu as joué à %d jeux différents"
+      "descr": "Tu as joué à %d jeux différents"
     },
     "BGA_B_00_PLAYED": {
       "title": "Éclectique I"

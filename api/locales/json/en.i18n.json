@@ -73,7 +73,7 @@
       "title": "Collector III"
     },
     "BGA_B_PLAYED": {
-      "title": "You have played %d discinct board games"
+      "descr": "You have played %d discinct board games"
     },
     "BGA_B_00_PLAYED": {
       "title": "Eclectic I"
