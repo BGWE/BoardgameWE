@@ -145,7 +145,7 @@ class Badge {
 
   async validated_steps(id_user, options) {
     const count = await this.count_fn(id_user, options);
-    return this.steps().filter(s => s.count >= count);
+    return this.steps.filter(s => s.count <= count);
   }
 }
 
