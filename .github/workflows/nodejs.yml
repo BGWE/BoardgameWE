@@ -10,11 +10,11 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v1
+    - uses: actions/checkout@master
     - name: npm install
       run: npm install
     - name: Install dependencies
-      run: npm install -g pm2
+      run: npm install pm2
     - name: Add SSH Key
       run: echo ${{ secrets.SSH_KEY }} | ssh-add -
     - name: Deploy
