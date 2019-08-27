@@ -161,5 +161,5 @@ exports.getPaginationParams = function(req, order) {
  * @returns {Set<any>}
  */
 exports.set_diff = function(set1, set2) {
-    return new Set(set1.map(v => !set2.has(v)));
+    return new Set([...set1].map(v => !set2.has(v)));
 };
