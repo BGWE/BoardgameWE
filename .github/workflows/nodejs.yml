@@ -18,6 +18,6 @@ jobs:
     - name: Start SSH agent
       run: eval "$(ssh-agent -s)"
     - name: Add SSH Key
-      run: echo ${{ secrets.SSH_KEY }} | ssh-add -
+      run: echo "${{ secrets.SSH_KEY }}" | ssh-add -
     - name: Deploy
       run: pm2 deploy ./tools/bgcinfra/configs/ecosystem.config.js production
