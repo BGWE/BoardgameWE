@@ -1,3 +1,4 @@
+const { execSync } = require('child_process');
 module.exports = {
     apps : [{
         name: 'API',
@@ -16,7 +17,8 @@ module.exports = {
             DB_HOSTNAME: 'bgc-db-instance.cbzmmlktqvhn.eu-west-1.rds.amazonaws.com',
             DB_NAME: 'bgcomponion',
             DB_USERNAME: 'dbadmin',
-            USE_SSL: 'true'
+            USE_SSL: 'true',
+            DB_PASSWORD: execSync("aws --region eu-west-1 ssm get-parameter --name DB_PASSWORD --query 'Parameter.Value' --output text")
         }
     }],
     
