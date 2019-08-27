@@ -10,12 +10,12 @@ const C = {
     }
   },
   COUNT_JOIN: { // count entries filtered based on a join (the other relation contains the user information)
-    make_query_fn(table, include_table, as, number, user_field) {
+    make_query_fn(table, include_table, as, user_field, query_options) {
       let ufield = user_field === undefined ? "id_user" : user_field;
       return async (id_user, options) => {
         return await table.count({
           include: [{ model: include_table, as, where: {[ufield]: id_user}, required: true }],
-          ... options
+          ...options, ...query_options
         });
       };
     }
@@ -83,7 +83,7 @@ exports.game_lost_count = async (id_user, options) => {
   return await exports.game_count_condition(id_user, (game, scores, ref_score) => !victory_cond(game, scores, ref_score), options);
 };
 
-exports.bga_played_count = C.COUNT_JOIN.make_query_fn(db.Game, db.GamePlayer, "player", "id_user", { group: "id_board_game" });
+exports.bga_played_count = C.COUNT_JOIN.make_query_fn(db.Game, db.GamePlayer, "game_players", "id_user", { distinct: true, col: "id_board_game" });
 exports.game_played_count = C.COUNT.make_query_fn(db.GamePlayer);
 exports.bga_owned_count = C.COUNT.make_query_fn(db.LibraryGame);
 exports.event_attended_count = C.COUNT.make_query_fn(db.EventAttendee);
