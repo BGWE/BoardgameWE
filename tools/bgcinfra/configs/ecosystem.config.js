@@ -38,7 +38,7 @@ module.exports = {
                 cp /home/ec2-user/BoardgameWE/source/tools/bgcinfra/configs/develop_env.sh /home/ec2-user/BoardgameWE/source/.env && \
                 pm2 start npm -- run envstart && \
                 sudo certbot certonly --debug --nginx --non-interactive --agree-tos --domains api-dev.boardgamecomponion.com --email fabrice.servais@gmail.com && \
-                sudo cp /tmp/https.conf /etc/nginx/conf.d/https.conf && \
+                sudo cp /tmp/https_dev.conf /etc/nginx/conf.d/https.conf && \
                 sudo nginx -s reload'
         },
         production : {
