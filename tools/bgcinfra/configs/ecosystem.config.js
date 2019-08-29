@@ -29,7 +29,7 @@ module.exports = {
     deploy : {
         development: {
             user: 'ec2-user',
-            host : 'apiredirect.boardgamecomponion.com',
+            host : 'api-dev.boardgamecomponion.com',
             ref  : 'origin/develop',
             repo : 'https://github.com/BGWE/BoardgameWE.git',
             path : '/home/ec2-user/BoardgameWE',
