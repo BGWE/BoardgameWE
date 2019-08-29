@@ -1,0 +1,23 @@
+name: CI
+
+on:
+  push:
+    branches:
+    - master
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@master
+    - name: npm install
+      run: npm install
+    - name: Install dependencies
+      run: npm install pm2
+    - name: Start SSH agent and Add SSH Key
+      run: eval "$(ssh-agent -s)" && echo "${{ secrets.SSH_KEY }}" | ssh-add -
+    - name: Stash changes
+      run: git stash
+    - name: Deploy
+      run: node_modules/.bin/pm2 deploy ./tools/bgcinfra/configs/ecosystem.config.js production

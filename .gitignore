@@ -69,5 +69,7 @@ docker/postgres-data
 tools/bgcinfra/bgcvenv/*
 .disable.ebextensions/*
 
+tools/bgcinfra/bgcvenv/*
+
 .idea
 .DS_Store

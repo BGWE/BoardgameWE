@@ -1,7 +1,9 @@
+const { execSync } = require('child_process');
 module.exports = {
     apps : [{
         name: 'API',
-        script: 'server.js',
+        script: 'npm',
+        args: 'run envstart',
         
         // Options reference: https://pm2.io/doc/en/runtime/reference/ecosystem-file/
         instances: 1,
@@ -23,11 +25,17 @@ module.exports = {
     deploy : {
         production : {
             user: 'ec2-user',
-            host : 'api.boardgamecomponion.com',
-            ref  : 'origin/prodinfra',
+            host : 'apiredirect.boardgamecomponion.com',
+            ref  : 'origin/releases/v3.0',
             repo : 'https://github.com/BGWE/BoardgameWE.git',
             path : '/home/ec2-user/BoardgameWE',
-            'post-deploy' : 'source /home/ec2-user/BoardgameWE/source/tools/bgcinfra/configs/secret_env.sh && npm install && pm2 startOrRestart /home/ec2-user/BoardgameWE/source/tools/bgcinfra/configs/ecosystem.config.js --env production && sudo certbot certonly --debug --nginx --non-interactive --agree-tos --domains api.boardgamecomponion.com --email fabrice.servais@gmail.com'
+            'post-deploy' : '\
+                npm install && \
+                cp /home/ec2-user/BoardgameWE/source/tools/bgcinfra/configs/secret_env.sh /home/ec2-user/BoardgameWE/source/.env && \
+                pm2 start npm -- run envstart && \
+                sudo certbot certonly --debug --nginx --non-interactive --agree-tos --domains apiredirect.boardgamecomponion.com --email fabrice.servais@gmail.com && \
+                sudo cp /tmp/https.conf /etc/nginx/conf.d/https.conf && \
+                sudo nginx -s reload'
         }
     }
 };
