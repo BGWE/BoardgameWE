@@ -75,8 +75,9 @@ exports.getUserAchievements = function(req, res) {
 
 exports.addOnionAchievement = function(req, res) {
   return addAchievement(userutil.getCurrUserId(req), Achievements.A.EASTER_EGG_ONION).then(achvmt => {
-    return util.successResponse(res, Achievements.format(achvmt, req));
+    return util.successResponse(res, Achievements.format(achvmt[0], req));
   }).catch(err => {
+    console.log(err);
     return util.errorResponse(res);
   });
 };
