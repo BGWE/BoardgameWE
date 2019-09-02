@@ -4,8 +4,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "nyc mocha tests/*.js --exit",
-    "test_no_coverage": "mocha tests/*.js --exit"
+    "test": "nyc mocha",
+    "envstart": "eval $(egrep -v '^#' .env | xargs) npm start"
   },
   "repository": {
     "type": "git",
