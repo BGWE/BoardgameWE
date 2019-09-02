@@ -422,7 +422,7 @@ module.exports = function(app) {
      * @apiGroup User friends
      * @apiDescription Get current user sent friend requests
      * @apiUse TokenHeaderRequired
-     * @apiUse SentFriendRequestListDescriptor
+     * @apiUse FriendRequestDescriptor
      */
     app.route("/sent_friend_requests")
         .get(UserController.getSentFriendshipRequest);
