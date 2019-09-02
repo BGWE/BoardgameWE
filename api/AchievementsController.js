@@ -1,4 +1,4 @@
-const db = require("./models/index");
+fconst db = require("./models/index");
 const userutil = require("./util/user");
 const util = require("./util/util");
 const Achievements = require("./achievements/definition");
@@ -60,6 +60,8 @@ exports.getCurrentUserAchievements = function (req, res) {
   return exports.checkAchievements(uid).then(created => {
     return exports.sendUserAchievements(req, res, uid);
   }).catch(err => {
+    console.log("Error in getCurrentUserAchievements");
+    console.log(err);
     return util.errorResponse(res);
   });
 };
@@ -69,6 +71,8 @@ exports.getUserAchievements = function(req, res) {
   return exports.checkAchievements(uid).then(created => {
     return exports.sendUserAchievements(req, res, uid);
   }).catch(err => {
+    console.log("Error in getUserAchievements");
+    console.log(err);
     return util.errorResponse(res);
   });
 };
