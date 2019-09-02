@@ -1,0 +1,55 @@
+key,en,fr
+achievements.GAM_B_WON.descr.one,You won your first game,Tu a gagné ta première partie
+achievements.GAM_B_WON.descr.other,You won %d games,Tu as gagné %d parties
+achievements.GAM_B_00_WON.title,One small step for a man,C'est un petit pas pour l'homme
+achievements.GAM_B_01_WON.title,Sergeant,Sergent
+achievements.GAM_B_02_WON.title,Captain,Capitaine
+achievements.GAM_B_03_WON.title,General,Général
+achievements.GAM_B_04_WON.title,Charles Martel,Charles Martel
+achievements.GAM_B_05_WON.title,Alexander the Great,Alexandre le Grand
+achievements.GAM_B_06_WON.title,Hannibal Barca,Hannibal Barca
+achievements.GAM_B_07_WON.title,Attila the Hun,Attila le Hun
+achievements.GAM_B_08_WON.title,Napoléon Bonaparte,Napoléon Bonaparte
+achievements.GAM_B_09_WON.title,Subutai,Subutai
+achievements.GAM_B_LOST.descr.one,You lost your first game,Tu as perdu ta première partie
+achievements.GAM_B_LOST.descr.other,You lost %d games,Tu as perdu %d parties
+achievements.GAM_B_00_LOST.title,Perseverance I,Persévérant I
+achievements.GAM_B_01_LOST.title,Perseverance II,Persévérant II
+achievements.GAM_B_02_LOST.title,Perseverance III,Persévérant III
+achievements.EVE_B_ATTENDED.descr.one,Attend to your first event,Tu as participé à un premier événement
+achievements.EVE_B_ATTENDED.descr.other,Attend %d events,Tu as participé à %d événements
+achievements.EVE_B_00_ATTENDED.title,Novice componion,Compognon novice
+achievements.EVE_B_01_ATTENDED.title,Veteran componion,Compognon vétéran
+achievements.EVE_B_02_ATTENDED.title,Componion among componions,Compognon parmi les compognons
+achievements.GAM_B_PLAYED.descr.one,You played to your first game,Tu as joué à ta première partie
+achievements.GAM_B_PLAYED.descr.other,You played to %d games,Tu as joué à %d parties
+achievements.GAM_B_00_PLAYED.title,Bachelor,Bachelier
+achievements.GAM_B_01_PLAYED.title,Master I,Master I
+achievements.GAM_B_02_PLAYED.title,Master II,Master II
+achievements.BGA_B_OWNED.descr.one,Own your first board game,Tu as acquis ton premier jeu
+achievements.BGA_B_OWNED.descr.other,Own %d boardgames,Tu possèdes %d jeux
+achievements.BGA_B_00_OWNED.title,A journey of a thousand miles begins with a single step,Un voyage d'un millier de kilomètres commence avec un seul pas
+achievements.BGA_B_01_OWNED.title,"It's alright mom, I'm not going to get addicted","Tout va bien maman, je ne vais pas devenir accro"
+achievements.BGA_B_02_OWNED.title,Amateur,Amateur
+achievements.BGA_B_03_OWNED.title,Initiate,Initié
+achievements.BGA_B_04_OWNED.title,Collector,Collectionneur
+achievements.BGA_B_05_OWNED.title,Retailer,Re-vendeur
+achievements.BGA_B_06_OWNED.title,Galerist,Galeriste
+achievements.BGA_B_07_OWNED.title,Curator,Curateur
+achievements.BGA_B_08_OWNED.title,Warehouse manager,Gestionnaire d'entrepôt
+achievements.BGA_B_09_OWNED.title,Amazon,Amazon
+achievements.BGA_B_PLAYED.descr,You have played %d discinct board games,Tu as joué à %d jeux différents
+achievements.BGA_B_00_PLAYED.title,Selective,Sélectif
+achievements.BGA_B_01_PLAYED.title,Curious,Curieux
+achievements.BGA_B_02_PLAYED.title,Eclectic,Éclectique
+achievements.BGA_B_03_PLAYED.title,Explorer,Explorateur
+achievements.BGA_B_04_PLAYED.title,Marco Polo,Macro Polo
+achievements.BGA_B_05_PLAYED.title,Magellan,Magellan
+achievements.BGA_B_06_PLAYED.title,Christopher Columbus,Christophe Colomb
+achievements.BGA_B_07_PLAYED.title,Ibn Battuta,Ibn Battuta
+achievements.BGA_B_08_PLAYED.title,James Cook,James Cook
+achievements.BGA_B_09_PLAYED.title,Vasco de Gama,Vasco de Gama
+achievements.BGA_A_TASTEFUL.descr,"Own 7 wonders, Scythe and Inis","Tu possèdes 7 Wonders, Scythe et Inis"
+achievements.BGA_A_TASTEFUL.title,Good taste,Goût distingué
+achievements.INT_A_EASTEREGG-ONION.descr,You found yourself a new componion :),Tu t'es trouvé un nouveau compognon :)
+achievements.INT_A_EASTEREGG-ONION.title,Onion Steak Haché!,Onion Steak Haché!

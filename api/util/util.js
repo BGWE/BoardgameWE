@@ -154,3 +154,12 @@ exports.getPaginationParams = function(req, order) {
     };
 };
 
+/**
+ *
+ * @param set1
+ * @param set2
+ * @returns {Set<any>}
+ */
+exports.set_diff = function(set1, set2) {
+    return new Set([...set1].map(v => !set2.has(v)));
+};

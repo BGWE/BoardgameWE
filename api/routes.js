@@ -14,6 +14,7 @@ module.exports = function(app) {
     const GameController = require("./GameController");
     const StatsController = require("./StatsController");
     const UserController = require("./UserController");
+    const AchievementsController = require("./AchievementsController");
     const EventController = require("./EventController");
     const EventJoinController = require("./EventJoinController");
     const AdminController = require("./AdminController");
@@ -368,6 +369,40 @@ module.exports = function(app) {
      */
     app.route("/user/current/event_invites")
         .get(EventJoinController.getCurrentUserEventInvites);
+
+    // Achievements
+    /**
+     * @api {get} /user/:uid/achievements Get user achievements
+     * @apiName GetUserAchievements
+     * @apiGroup Achievement
+     * @apiDescription Get the user achievements of the given user
+     * @apiUse TokenHeaderRequired
+     * @apiUse AchievementsDescriptor
+    */
+    app.route("/user/:uid/achievements")
+        .get(AchievementsController.getUserAchievements);
+
+  /**
+   * @api {get} /user/current/achievements Get current user achievements
+   * @apiName GetCurrentUserAchievements
+   * @apiGroup Achievement
+   * @apiDescription Get the current user achievements of the given user
+   * @apiUse TokenHeaderRequired
+   * @apiUse AchievementsDescriptor
+   */
+    app.route("/user/current/achievements")
+        .get(AchievementsController.getCurrentUserAchievements);
+
+  /**
+   * @api {get} /user/current/easteregg Add easter egg achievement
+   * @apiName AddEasterEggAchievement
+   * @apiGroup Achievement
+   * @apiDescription Add the easter egg achievement to the current user
+   * @apiUse TokenHeaderRequired
+   * @apiUse AchievementDescriptor
+   */
+    app.route("/user/current/easteregg")
+        .post(AchievementsController.addOnionAchievement);
 
     // Friendships
     /**
