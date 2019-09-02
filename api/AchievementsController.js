@@ -1,4 +1,4 @@
-fconst db = require("./models/index");
+const db = require("./models/index");
 const userutil = require("./util/user");
 const util = require("./util/util");
 const Achievements = require("./achievements/definition");
