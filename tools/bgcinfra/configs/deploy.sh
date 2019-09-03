@@ -4,8 +4,6 @@
 set -e
 
 addSSHKey () {
-    echo "openssl aes-256-cbc -K $encrypted_3f4d3615b6b0_key -iv $encrypted_3f4d3615b6b0_iv -in $1 -out /tmp/key.pem -d"
-    openssl aes-256-cbc -K $encrypted_3f4d3615b6b0_key -iv $encrypted_3f4d3615b6b0_iv -in "$1" -out /tmp/key.pem -d
     eval "$(ssh-agent -s)"
     chmod 600 /tmp/key.pem
     ssh-add /tmp/key.pem
@@ -17,7 +15,8 @@ bash ./tools/bgcinfra/configs/disableHostKeyChecking.sh
 if [[ $TRAVIS_BRANCH == "develop" ]]; then
     echo "Deploy for branch 'develop'"
 
-    addSSHKey "BGCDev.pem.enc"
+    openssl aes-256-cbc -K $encrypted_3f4d3615b6b0_key -iv $encrypted_3f4d3615b6b0_iv -in BGCDev.pem.enc -out /tmp/key.pem -d
+    addSSHKey
 
     # Deploy
     pm2 deploy ./tools/bgcinfra/configs/ecosystem.config.js development
@@ -25,7 +24,8 @@ if [[ $TRAVIS_BRANCH == "develop" ]]; then
 elif [[ $TRAVIS_BRANCH == "master" ]]; then
     echo "Deploy for branch 'master'"
 
-    addSSHKey "BGCProd.pem.enc"
+    openssl aes-256-cbc -K $encrypted_3f4d3615b6b0_key -iv $encrypted_3f4d3615b6b0_iv -in BGCProd.pem.enc -out /tmp/key.pem -d
+    addSSHKey 
 
     # Deploy
     pm2 deploy ./tools/bgcinfra/configs/ecosystem.config.js production
