@@ -8,13 +8,7 @@ branches:
     - develop
 
 install:
-- npm install
-- npm install pm2
-- pwd & ls -al
-- mkdir -p ~/.ssh
-- ls -al ~
-- ls -al ~/.ssh
-- touch ~/.ssh/BGCDev.pem
+- npm install -g pm2
 - openssl aes-256-cbc -K $encrypted_3f4d3615b6b0_key -iv $encrypted_3f4d3615b6b0_iv
   -in BGCDev.pem.enc -out /tmp/BGCDev.pem -d
 - eval "$(ssh-agent -s)"
@@ -24,8 +18,7 @@ install:
 
 
 script:
-- git stash
-- node_modules/.bin/pm2 deploy ./tools/bgcinfra/configs/ecosystem.config.js development
+- pm2 deploy ./tools/bgcinfra/configs/ecosystem.config.js development
 
 env:
 - CI=false
