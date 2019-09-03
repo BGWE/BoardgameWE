@@ -11,7 +11,7 @@ install:
 - npm install -g pm2
 
 script:
-- sh ./tools/bgcinfra/configs/deploy.sh
+- bash ./tools/bgcinfra/configs/deploy.sh
 
 env:
 - CI=false
