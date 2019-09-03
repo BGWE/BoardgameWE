@@ -19,6 +19,7 @@ jobs:
       run: sh ./tools/bgcinfra/configs/deploy.sh
       env:
         SSH_KEY: ${{ secrets.DEV_ENV_SSH_KEY }}
+    - uses: hmarr/debug-action
     - name: Stash changes
       run: git stash
     - name: Deploy
