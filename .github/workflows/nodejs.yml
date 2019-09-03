@@ -23,3 +23,5 @@ jobs:
       run: git stash
     - name: Deploy
       run: node_modules/.bin/pm2 deploy ./tools/bgcinfra/configs/ecosystem.config.js development
+      env:
+        SSH_KEY: ${{ secrets.DEV_ENV_SSH_KEY }}
