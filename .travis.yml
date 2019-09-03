@@ -2,11 +2,14 @@ language: node_js
 node_js:
 - '11'
 
+branches:
+  only:
+    - master
+    - develop
+
 install:
 - npm install
 - npm install pm2
-
-before_deploy:
 - pwd & ls -al
 - mkdir -p ~/.ssh
 - ls -al ~
@@ -18,7 +21,8 @@ before_deploy:
 - ssh-add /tmp/deploy_rsa
 - echo -e "Host ${DEPLOY_HOST}\n\tStrictHostKeyChecking no\n" >> ~/.ssh/config
 
-deploy:
+
+script:
 - sh ./tools/bgcinfra/configs/deploy.sh
 - node_modules/.bin/pm2 deploy ./tools/bgcinfra/configs/ecosystem.config.js development
 
