@@ -24,6 +24,7 @@ install:
 
 
 script:
+- git stash
 - node_modules/.bin/pm2 deploy ./tools/bgcinfra/configs/ecosystem.config.js development
 
 env:
