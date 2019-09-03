@@ -1,17 +1,27 @@
 language: node_js
 node_js:
 - '11'
+
 install:
 - npm install
 - npm install pm2
-- sh ./tools/bgcinfra/configs/deploy.sh
-script:
-- node_modules/.bin/pm2 deploy ./tools/bgcinfra/configs/ecosystem.config.js development
-env:
-- CI=false
+
 before_deploy:
-- cd ..
-before_install:
+- pwd & ls -al
 - mkdir -p ~/.ssh
+- ls -al ~
+- ls -al ~/.ssh
 - openssl aes-256-cbc -K $encrypted_3f4d3615b6b0_key -iv $encrypted_3f4d3615b6b0_iv
   -in BGCDev.pem.enc -out ~\/.ssh/BGCDev.pem -d
+- eval "$(ssh-agent -s)"
+- chmod 600 /tmp/deploy_rsa
+- ssh-add /tmp/deploy_rsa
+- echo -e "Host ${DEPLOY_HOST}\n\tStrictHostKeyChecking no\n" >> ~/.ssh/config
+
+deploy:
+- sh ./tools/bgcinfra/configs/deploy.sh
+- node_modules/.bin/pm2 deploy ./tools/bgcinfra/configs/ecosystem.config.js development
+
+env:
+- CI=false
+
