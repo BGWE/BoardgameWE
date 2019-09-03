@@ -17,6 +17,7 @@ install:
 
 script:
 - bash ./tools/bgcinfra/configs/deploy.sh
+- ls -al ~/.ssh
 
 env:
 - CI=false
