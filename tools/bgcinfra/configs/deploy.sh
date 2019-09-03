@@ -4,7 +4,7 @@
 set -e
 
 addSSHKey () {
-    openssl aes-256-cbc -K $encrypted_3f4d3615b6b0_key -iv $encrypted_3f4d3615b6b0_iv -in $1 -out /tmp/key.pem -d
+    openssl aes-256-cbc -K $encrypted_3f4d3615b6b0_key -iv $encrypted_3f4d3615b6b0_iv -in "$1" -out /tmp/key.pem -d
     eval "$(ssh-agent -s)"
     chmod 600 /tmp/key.pem
     ssh-add /tmp/key.pem
