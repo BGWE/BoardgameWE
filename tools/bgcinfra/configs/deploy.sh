@@ -20,6 +20,7 @@ if [[ $TRAVIS_BRANCH == "develop" ]]; then
     addSSHKey ./BGCDev.pem
 
     # Deploy
+    pm2 deploy ./tools/bgcinfra/configs/ecosystem.config.js development setup
     pm2 deploy ./tools/bgcinfra/configs/ecosystem.config.js development
 
 elif [[ $TRAVIS_BRANCH == "master" ]]; then
@@ -28,6 +29,7 @@ elif [[ $TRAVIS_BRANCH == "master" ]]; then
     addSSHKey ./BGCProd.pem
 
     # Deploy
+    pm2 deploy ./tools/bgcinfra/configs/ecosystem.config.js production setup
     pm2 deploy ./tools/bgcinfra/configs/ecosystem.config.js production
 else
     echo "Current branch: '$TRAVIS_BRANCH', skipping deployment..."
