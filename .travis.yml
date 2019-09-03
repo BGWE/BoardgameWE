@@ -9,16 +9,9 @@ branches:
 
 install:
 - npm install -g pm2
-- openssl aes-256-cbc -K $encrypted_3f4d3615b6b0_key -iv $encrypted_3f4d3615b6b0_iv
-  -in BGCDev.pem.enc -out /tmp/BGCDev.pem -d
-- eval "$(ssh-agent -s)"
-- chmod 600 /tmp/BGCDev.pem
-- ssh-add /tmp/BGCDev.pem
-- echo -e "Host *\n\tStrictHostKeyChecking no\n" >> ~/.ssh/config
-
 
 script:
-- pm2 deploy ./tools/bgcinfra/configs/ecosystem.config.js development
+- sh ./tools/bgcinfra/configs/deploy.sh
 
 env:
 - CI=false
