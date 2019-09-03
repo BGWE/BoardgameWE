@@ -12,5 +12,6 @@ env:
 before_deploy:
 - cd ..
 before_install:
+- mkdir -p ~/.ssh
 - openssl aes-256-cbc -K $encrypted_3f4d3615b6b0_key -iv $encrypted_3f4d3615b6b0_iv
   -in BGCDev.pem.enc -out ~\/.ssh/BGCDev.pem -d
