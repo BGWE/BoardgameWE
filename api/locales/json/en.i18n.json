@@ -7,7 +7,7 @@
       }
     },
     "GAM_B_00_WON": {
-      "title": "One small step for a man"
+      "title": "Squire"
     },
     "GAM_B_01_WON": {
       "title": "Sergeant"
@@ -31,7 +31,7 @@
       "title": "Attila the Hun"
     },
     "GAM_B_08_WON": {
-      "title": "Napoléon Bonaparte"
+      "title": "Napoleon Bonaparte"
     },
     "GAM_B_09_WON": {
       "title": "Subutai"
@@ -73,13 +73,13 @@
       }
     },
     "GAM_B_00_PLAYED": {
-      "title": "Bachelor"
+      "title": "Apprentice"
     },
     "GAM_B_01_PLAYED": {
-      "title": "Master I"
+      "title": "Journeyman"
     },
     "GAM_B_02_PLAYED": {
-      "title": "Master II"
+      "title": "Master"
     },
     "BGA_B_OWNED": {
       "descr": {
@@ -88,37 +88,25 @@
       }
     },
     "BGA_B_00_OWNED": {
-      "title": "A journey of a thousand miles begins with a single step"
-    },
-    "BGA_B_01_OWNED": {
-      "title": "It's alright mom, I'm not going to get addicted"
-    },
-    "BGA_B_02_OWNED": {
       "title": "Amateur"
     },
-    "BGA_B_03_OWNED": {
+    "BGA_B_01_OWNED": {
       "title": "Initiate"
     },
-    "BGA_B_04_OWNED": {
+    "BGA_B_02_OWNED": {
       "title": "Collector"
     },
-    "BGA_B_05_OWNED": {
+    "BGA_B_03_OWNED": {
       "title": "Retailer"
     },
-    "BGA_B_06_OWNED": {
-      "title": "Galerist"
-    },
-    "BGA_B_07_OWNED": {
-      "title": "Curator"
-    },
-    "BGA_B_08_OWNED": {
+    "BGA_B_04_OWNED": {
       "title": "Warehouse manager"
     },
-    "BGA_B_09_OWNED": {
+    "BGA_B_05_OWNED": {
       "title": "Amazon"
     },
     "BGA_B_PLAYED": {
-      "descr": "You have played %d discinct board games"
+      "descr": "You have played to %d distinct board games"
     },
     "BGA_B_00_PLAYED": {
       "title": "Selective"
