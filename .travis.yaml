@@ -1,0 +1,18 @@
+language: node_js
+
+node_js:
+- '11'
+
+install:
+- npm install
+- npm install pm2
+- sh ./tools/bgcinfra/configs/deploy.sh
+
+script:
+- node_modules/.bin/pm2 deploy ./tools/bgcinfra/configs/ecosystem.config.js development
+
+env:
+- CI=false
+
+before_deploy:
+- cd ..
