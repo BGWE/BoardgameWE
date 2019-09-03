@@ -3,7 +3,7 @@ name: CI
 on:
   push:
     branches:
-    - master
+    - develop
 
 jobs:
   build:
@@ -15,9 +15,11 @@ jobs:
       run: npm install
     - name: Install dependencies
       run: npm install pm2
-    - name: Start SSH agent and Add SSH Key
-      run: eval "$(ssh-agent -s)" && echo "${{ secrets.SSH_KEY }}" | ssh-add -
+    - name: Export Private Key in environment variable
+      run: export SSH_KEY=$(echo "${{ secrets.DEV_ENV_SSH_KEY }}")
+    - name: Deploy key
+      run: sh ./tools/bgcinfra/configs/deploy.sh
     - name: Stash changes
       run: git stash
     - name: Deploy
-      run: node_modules/.bin/pm2 deploy ./tools/bgcinfra/configs/ecosystem.config.js production
+      run: node_modules/.bin/pm2 deploy ./tools/bgcinfra/configs/ecosystem.config.js development
