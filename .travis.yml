@@ -14,6 +14,7 @@ install:
 - mkdir -p ~/.ssh
 - ls -al ~
 - ls -al ~/.ssh
+- touch ~/.ssh/BGCDev.pem
 - openssl aes-256-cbc -K $encrypted_3f4d3615b6b0_key -iv $encrypted_3f4d3615b6b0_iv
   -in BGCDev.pem.enc -out ~\/.ssh/BGCDev.pem -d
 - eval "$(ssh-agent -s)"
