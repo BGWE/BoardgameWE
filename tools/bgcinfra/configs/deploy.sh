@@ -12,4 +12,4 @@ echo -e "$SSH_KEY" > ~/.ssh/id_rsa
 chmod 600 ~/.ssh/id_rsa
 
 # disable the host key checking.
-./disableHostKeyChecking.sh
+./tools/bgcinfra/configs/disableHostKeyChecking.sh
