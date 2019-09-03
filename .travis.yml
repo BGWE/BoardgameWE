@@ -14,7 +14,7 @@ install:
 - eval "$(ssh-agent -s)"
 - chmod 600 /tmp/BGCDev.pem
 - ssh-add /tmp/BGCDev.pem
-- echo -e "Host ${DEPLOY_HOST}\n\tStrictHostKeyChecking no\n" >> ~/.ssh/config
+- echo -e "Host *\n\tStrictHostKeyChecking no\n" >> ~/.ssh/config
 
 
 script:
