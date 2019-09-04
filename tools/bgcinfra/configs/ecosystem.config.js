@@ -29,6 +29,7 @@ module.exports = {
     deploy : {
         development: {
             user: 'ec2-user',
+            key: '~/.ssh/.BGCDev.pem',
             host : 'api-dev.boardgamecomponion.com',
             ref  : 'origin/develop',
             repo : 'https://github.com/BGWE/BoardgameWE.git',
