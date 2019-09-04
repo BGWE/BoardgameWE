@@ -30,15 +30,17 @@ module.exports = {
         development: {
             user: 'ec2-user',
             key: '~/.ssh/BGCDev.pem',
-            host : 'api-dev.boardgamecomponion.com',
+            host : 'api-dev-test.boardgamecomponion.com',
             ref  : 'origin/develop',
             repo : 'https://github.com/BGWE/BoardgameWE.git',
             path : '/home/ec2-user/BoardgameWE',
             'post-deploy' : '\
+                export CERTDOMAIN=api-dev-test.boardgamecomponion.com && \
                 npm install && \
                 cp /home/ec2-user/BoardgameWE/source/tools/bgcinfra/configs/develop_env.sh /home/ec2-user/BoardgameWE/source/.env && \
                 pm2 start npm -- run envstart && \
-                sudo certbot certonly --debug --nginx --non-interactive --agree-tos --domains api-dev.boardgamecomponion.com --email fabrice.servais@gmail.com && \
+                sudo certbot certonly --debug --nginx --non-interactive --agree-tos --domains ${CERTDOMAIN} --email fabrice.servais@gmail.com && \
+                sudo ln -sf /etc/letsencrypt/live/${CERTDOMAIN} /etc/letsencrypt/live/bgccert && \
                 sudo cp /tmp/https_dev.conf /etc/nginx/conf.d/https.conf && \
                 sudo nginx -s reload'
         },

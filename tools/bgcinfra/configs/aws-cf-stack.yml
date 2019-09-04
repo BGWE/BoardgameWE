@@ -402,8 +402,8 @@ Resources:
                         server_name  localhost;
                         error_page  497 https://$host$request_uri;
 
-                        ssl_certificate      /etc/letsencrypt/live/api-dev.boardgamecomponion.com/fullchain.pem;
-                        ssl_certificate_key  /etc/letsencrypt/live/api-dev.boardgamecomponion.com/privkey.pem;
+                        ssl_certificate      /etc/letsencrypt/live/bgccert/fullchain.pem;
+                        ssl_certificate_key  /etc/letsencrypt/live/bgccert/privkey.pem;
                         ssl_session_timeout  5m;
                         ssl_protocols  TLSv1.1 TLSv1.2;
                         ssl_ciphers "EECDH+AESGCM:EDH+AESGCM:AES256+EECDH:AES256+EDH";
