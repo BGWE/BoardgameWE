@@ -44,6 +44,7 @@ module.exports = {
         },
         production : {
             user: 'ec2-user',
+            key: '~/.ssh/BGCProd.pem',
             host : 'apiredirect.boardgamecomponion.com',
             ref  : 'origin/releases/v3.0',
             repo : 'https://github.com/BGWE/BoardgameWE.git',
