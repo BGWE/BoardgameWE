@@ -38,6 +38,7 @@ app.use(i18n.init);
 const server = require('http').createServer(app);
 const sockets = require('./api/sockets');
 const io = require('socket.io')(server);
+io.set('origins', 'boardgamecomponion.com:*');
 sockets(io);
 
 // api
