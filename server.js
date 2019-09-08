@@ -4,6 +4,8 @@ const bodyParser = require('body-parser');
 const boolParser = require('express-query-boolean');
 const cors = require('cors');
 const i18n = require("i18n");
+const winston = require('winston');
+const winstonExpress = require('express-winston');
 
 if (process.env.NODE_ENV !== 'production') {
     require('dotenv').load();
@@ -34,6 +36,19 @@ i18n.configure({
 });
 app.use(i18n.init);
 
+// logging
+const winston_logger_defaults = {
+  transports: [ new winston.transports.Console() ],
+  format: winston.format.combine(winston.format.colorize(), winston.format.simple()),
+  headerBlacklist: ["Authentication"],
+  requestWhitelist: ["query", "body"]
+};
+
+app.use(winstonExpress.logger({
+  ... winston_logger_defaults,
+  msg: "HTTP {{res.statusCode}} {{req.method}} {{req.url}}",
+}));
+
 // websocket
 const server = require('http').createServer(app);
 const sockets = require('./api/sockets');
@@ -43,6 +58,12 @@ sockets(io);
 
 // api
 let routes = require('./api/routes');
+
+// error logging
+app.use(winstonExpress.errorLogger({
+  ... winston_logger_defaults
+}));
+
 routes(app);
 
 if(!module.parent) {

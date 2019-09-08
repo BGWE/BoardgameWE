@@ -21,6 +21,7 @@ module.exports = function(app) {
     const TimerController = require("./TimerController");
     const AppWideController = require("./AppWideController");
     const access_checks = require('./util/access_checks');
+    const logging = require('./util/logging');
 
     // User routes
     /**
@@ -34,7 +35,8 @@ module.exports = function(app) {
      * @apiUse DBDatetimeFields
      */
     app.route("/user")
-        .post([
+        .post(logging.bodyLogFilter({b: ['password']}),
+            [
                 body('password').isString().not().isEmpty().isLength({min: 8}),
                 body('name').isString().not().isEmpty(),
                 body('surname').isString().not().isEmpty(),
@@ -54,7 +56,7 @@ module.exports = function(app) {
      * @apiSuccess {String} token JSON Web Token
      */
     app.route("/user/login")
-        .post(UserController.signIn);
+        .post(logging.bodyLogFilter({b: ['password']}), UserController.signIn);
 
     /**
      * @api {post} /user/forgot_password Send password recovery email
@@ -91,7 +93,7 @@ module.exports = function(app) {
      * @apiParam (body) {String} password New password.
      */
     app.route("/user/reset_password")
-        .post(UserController.resetPassword);
+        .post(logging.bodyLogFilter({b: ['token', 'password']}), UserController.resetPassword);
 
     // authentication middleware, applied to all except login and register
     app.use(/^\/(?!user\/register|user\/login|auth\/forgot_password|auth\/reset_password|statistics).*/, asyncMiddleware(async function(req, res, next) {
