@@ -184,6 +184,28 @@ describe('User Controller Tests:', () => {
                         done();
                     });
             });
+
+            it('should fail due to missing username', (done) => {
+                const payload = {
+                    name: "Incomplete",
+                    surname: "User",
+                    email: "incomplete@user.com",
+                    password: "testpassword",
+                };
+
+                chai.request(TEST_URL) 
+                    .post('/user')
+                    .send(payload)
+                    .end((err, res) => {
+                        expect(err).to.be.null;
+                        
+                        expect(res).to.have.status(403);
+                        expect(res.body).to.be.a('object');
+                        expect(res.body).to.have.property('success');
+                        expect(res.body.success).to.be.false;
+                        done();
+                    });
+            });
         });
     });
 
