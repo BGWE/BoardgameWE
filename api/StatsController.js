@@ -166,7 +166,15 @@ exports.getGCBGBRankings = function (games) {
 exports.computeGameRankings = function(games) {
     if (games.length === 0) {
         return {
-            count_games: 0
+            victory_count: [],
+            defeat_count: [],
+            victory_prop: [],
+            defeat_prop: [],
+            count_games: [],
+            count_unique_games: [],
+            is_last: [],
+            is_last_prop: [],
+            gcbgb: []
         }
     } else {
         let gcbgb = exports.getGCBGBRankings(games),
