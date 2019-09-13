@@ -54,7 +54,7 @@ exports.rank = (data, score_fn, lower_better, write_fn) => {
 };
 
 exports.rankPlayersFromData = (dict, aggregate) => {
-    let scores = lodash.obj
+    let scores = [];
     for (let _key in dict.players) {
         if (!dict.players.hasOwnProperty(_key)) { continue; }
         scores.push({
