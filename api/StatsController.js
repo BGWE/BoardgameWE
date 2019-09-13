@@ -164,22 +164,28 @@ exports.getGCBGBRankings = function (games) {
 };
 
 exports.computeGameRankings = function(games) {
-    let gcbgb = exports.getGCBGBRankings(games),
-        victories = exports.getVictories(games),
-        defeats = exports.getDefeats(games),
-        board_game_count = exports.getBoardGameCount(games),
-        is_last = exports.getIsLast(games);
-    return {
-        victory_count: util.rankPlayersFromData(victories, AGGREGATE.sum),
-        defeat_count: util.rankPlayersFromData(defeats, AGGREGATE.sum),
-        victory_prop: util.rankPlayersFromData(victories, AGGREGATE.freq),
-        defeat_prop: util.rankPlayersFromData(defeats, AGGREGATE.freq),
-        count_games: util.rankPlayersFromData(board_game_count, AGGREGATE.count),
-        count_unique_games: util.rankPlayersFromData(board_game_count, AGGREGATE.count_unique),
-        is_last: util.rankPlayersFromData(is_last, AGGREGATE.sum),
-        is_last_prop: util.rankPlayersFromData(is_last, AGGREGATE.freq),
-        gcbgb: util.rankPlayersFromData(gcbgb, AGGREGATE.sum)
-    };
+    if (games.length === 0) {
+        return {
+            count_games: 0
+        }
+    } else {
+        let gcbgb = exports.getGCBGBRankings(games),
+            victories = exports.getVictories(games),
+            defeats = exports.getDefeats(games),
+            board_game_count = exports.getBoardGameCount(games),
+            is_last = exports.getIsLast(games);
+        return {
+            victory_count: util.rankPlayersFromData(victories, AGGREGATE.sum),
+            defeat_count: util.rankPlayersFromData(defeats, AGGREGATE.sum),
+            victory_prop: util.rankPlayersFromData(victories, AGGREGATE.freq),
+            defeat_prop: util.rankPlayersFromData(defeats, AGGREGATE.freq),
+            count_games: util.rankPlayersFromData(board_game_count, AGGREGATE.count),
+            count_unique_games: util.rankPlayersFromData(board_game_count, AGGREGATE.count_unique),
+            is_last: util.rankPlayersFromData(is_last, AGGREGATE.sum),
+            is_last_prop: util.rankPlayersFromData(is_last, AGGREGATE.freq),
+            gcbgb: util.rankPlayersFromData(gcbgb, AGGREGATE.sum)
+        };
+    }
 };
 
 exports.getRankings = function (req, res) {
