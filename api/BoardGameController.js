@@ -124,9 +124,10 @@ exports.deleteBoardGame = function(req, res) {
  * expansion. The database is updated for reflecting the expansion tree.
  * @param bgg_id Board game geek identifier
  * @param transaction The transaction in the context of which to execute the operation
+ * @param {boolean} shallow Only go one level deep in both direction of the hierarchy if set to true
  * @returns {Promise<int>} The bgc identifier of the board game
  */
-exports.addBoardGameAndExpensions = async function (bgg_id, transaction) {
+exports.addBoardGameAndExpensions = async function (bgg_id, transaction, shallow=true) {
   let to_fetch = new Set([bgg_id]);
   // stores fetched bgg data and bgc models, maps bgg id with game data
   let bg_cache = {};
@@ -136,6 +137,7 @@ exports.addBoardGameAndExpensions = async function (bgg_id, transaction) {
   const logger = require('winston').loggers.get("api");
 
   // if game was added before expansion support was implemented, we need to check that expansions were already downloaded
+  let iter = 0;
   while (to_fetch.size > 0) {
     // fetch data from database and bgg
     to_fetch = Array.from(to_fetch);
@@ -162,6 +164,8 @@ exports.addBoardGameAndExpensions = async function (bgg_id, transaction) {
       bgg_game.expansion_of.filter(i => !cache_has_id(bg_cache, i)).forEach(i => to_fetch.add(i));
       bgg_game.expansions.filter(i => !cache_has_id(bg_cache, i)).forEach(i => to_fetch.add(i));
     }
+
+    if (shallow && iter++ === 1) { break; }
   }
 
   // all data have been fetched, all cache entries have bgg data
@@ -186,7 +190,7 @@ exports.addBoardGameAndExpensions = async function (bgg_id, transaction) {
       fixed: { field: 'id_expanded', id: entry.model.id },
       other: {
         field: 'id_expansion',
-        ids: entry.data.expansions.map(id => bg_cache[id].model.id)
+        ids: entry.data.expansions.filter(id => lodash.has(bg_cache, id)).map(id => bg_cache[id].model.id)
       },
       options: {transaction}
     })
