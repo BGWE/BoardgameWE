@@ -188,11 +188,12 @@ exports.sendCurrUserGames = function(req, res) {
  * Send the current list of games in the library of a given user in the response (or a 500 error)
  * @returns {Promise<Array<Model>>}
  */
-exports.sendUserLibraryGames = function(uid, req, res) {
+exports.sendUserLibraryGames = function(uid, req, res, transaction) {
     return m2m.sendAssociations(res, {
         model_class: db.LibraryGame,
         fixed: { id: uid, field: 'id_user' },
-        other: { includes: [includes.defaultBoardGameIncludeSQ] }
+        other: { includes: [includes.defaultBoardGameIncludeSQ] },
+        options: {transaction}
     });
 };
 
@@ -231,17 +232,19 @@ exports.getUserLibraryGames = function(req, res) {
 };
 
 exports.addBoardGameAndAddToLibrary = function(req, res) {
-    const createFn = (board_game, req, res) => {
+    const createFn = (board_game, req, res, transaction) => {
         return db.LibraryGame.create({
             id_user: userutil.getCurrUserId(req),
             id_board_game: board_game.id
-        }, { ignoreDuplicates: true }).then(l => {
-            return exports.sendCurrUserGames(req, res);
+        }, { ignoreDuplicates: true, transaction, lock: transaction.LOCK.UPDATE }).then(() => {
+            return exports.sendUserLibraryGames(userutil.getCurrUserId(req), req, res, transaction);
         });
     };
     const bggId = parseInt(req.params.id);
     const source = req.params.source;
-    return BoardGameController.executeIfBoardGameExists(bggId, source, req, res, createFn);
+    return db.sequelize.transaction(t => {
+      return BoardGameController.executeIfBoardGameExists(bggId, source, req, res, createFn, t);
+    });
 };
 
 exports.getUserStats = function(req, res) {
@@ -320,11 +323,12 @@ exports.addToWishToPlayBoardGames = function(req, res) {
     })
 };
 
-exports.sendWishToPlayList = function(uid, req, res) {
+exports.sendWishToPlayList = function(uid, req, res, transaction) {
     return m2m.sendAssociations(res, {
         model_class: db.WishToPlayBoardGame,
         fixed: { id: uid, field: 'id_user' },
-        other: {  includes: [includes.defaultBoardGameIncludeSQ] }
+        other: { includes: [includes.defaultBoardGameIncludeSQ] },
+        options: { transaction }
     });
 };
 
@@ -350,17 +354,19 @@ exports.deleteFromWishToPlayList = function(req, res) {
 };
 
 exports.addBoardGameAndAddToWishToPlay = function(req, res) {
-    const createFn = (board_game, req, res) => {
+    const createFn = (board_game, req, res, transaction) => {
         return db.WishToPlayBoardGame.create({
             id_user: userutil.getCurrUserId(req),
             id_board_game: board_game.id
-        }, { ignoreDuplicates: true }).then(l => {
-            return exports.getCurrentUserWishToPlayBoardGames(req, res);
+        }, { ignoreDuplicates: true, transaction, lock: transaction.LOCK.UPDATE }).then(() => {
+            return exports.sendWishToPlayList(userutil.getCurrUserId(req), req, res, transaction);
         });
     };
     const bggId = parseInt(req.params.id);
     const source = req.params.source;
-    return BoardGameController.executeIfBoardGameExists(bggId, source, req, res, createFn);
+    return db.sequelize.transaction(t => {
+      return BoardGameController.executeIfBoardGameExists(bggId, source, req, res, createFn, t);
+    });
 };
 
 // Friends

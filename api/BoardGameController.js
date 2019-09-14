@@ -37,26 +37,25 @@ exports.updateBoardGame = function(req, res) {
     });
 };
 
-const boardGameFromBggResponse = function(gid, body) {
-    const game = bgg.format_get_response(body);
-    return {
-        name: game.name,
-        bgg_id: gid,
-        bgg_score: game.score,
-        gameplay_video_url: null,
-        min_players: parseInt(game.minplayers),
-        max_players: parseInt(game.maxplayers),
-        min_playing_time: parseInt(game.maxplaytime),
-        max_playing_time: parseInt(game.minplaytime),
-        playing_time: parseInt(game.playingtime),
-        thumbnail: game.thumbnail[0],
-        image: game.image[0],
-        description: game.description[0],
-        year_published: parseInt(game.yearpublished),
-        category: util.listToString(game.boardgamecategory),
-        mechanic: util.listToString(game.boardgamemechanic),
-        family: util.listToString(game.boardgamefamily)
-    };
+const formatGameFromBggResponse = function(response) {
+  return {
+    name: response.name,
+    bgg_id: response.id,
+    bgg_score: response.score,
+    gameplay_video_url: null,
+    min_players: parseInt(response.minplayers),
+    max_players: parseInt(response.maxplayers),
+    min_playing_time: parseInt(response.maxplaytime),
+    max_playing_time: parseInt(response.minplaytime),
+    playing_time: parseInt(response.playingtime),
+    thumbnail: response.thumbnail[0],
+    image: response.image[0],
+    description: response.description[0],
+    year_published: parseInt(response.yearpublished),
+    category: util.listToString(response.boardgamecategory),
+    mechanic: util.listToString(response.boardgamemechanic),
+    family: util.listToString(response.boardgamefamily)
+  };
 };
 
 const boardGameFromBggResponse = function(body) {
@@ -70,24 +69,21 @@ const boardGameFromBggResponse = function(body) {
  * @param source Source where to download game data
  * @param req Input request
  * @param res Response
- * @param actionFn The action to perform, should return a promise
+ * @param actionFn The action to perform, should return a promise,
+ * @param transaction A transaction in the context of which this request must be executed
  * @returns {*}
  */
 // TODO use validation to check inputs of this request
-exports.executeIfBoardGameExists = function(gid, source, req, res, actionFn) {
-    if (source !== "bgg") {
-        return util.detailErrorResponse(res, 400, "Invalid source '" + source + "' (only supported are {bgg,}).");
-    }
-    return db.BoardGame.findOne({where: {bgg_id: gid}}).then(board_game => {
-        if (board_game !== null) {
-            return actionFn(board_game, req, res);
-        }
-        return bgg.getBoardGamePromise(gid, res, body => {
-            return db.BoardGame.create(boardGameFromBggResponse(gid, body)).then(board_game => {
-                return actionFn(board_game, req, res);
-            });
-        });
+exports.executeIfBoardGameExists = function(gid, source, req, res, actionFn, transaction) {
+  if (source !== "bgg") {
+      return util.detailErrorResponse(res, 400, "Invalid source '" + source + "' (only supported are {bgg,}).");
+  }
+
+  return exports.addBoardGameAndExpensions(gid, transaction).then(bgid => {
+    return db.BoardGame.findByPk(bgid, {transaction, lock: transaction.LOCK.SHARE}).then(board_game => {
+      return actionFn(board_game, req, res, transaction);
     });
+  });
 };
 
 exports.addBoardGame = function(req, res) {

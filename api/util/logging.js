@@ -1,3 +1,5 @@
+const winston = require("winston");
+
 /**
  * Builds a middleware that filters the body logs
  * @param w Whitelist (an array of fields)
