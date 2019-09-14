@@ -11,3 +11,10 @@ exports.bodyLogFilter = ({w, b}) => {
     next();
   };
 };
+
+
+exports.logError = (logger, err) => {
+  const err_info = winston.exceptions.getAllInfo(err);
+  logger.error(err_info.error);
+  logger.error(err_info.stack);
+};

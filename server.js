@@ -6,6 +6,7 @@ const cors = require('cors');
 const i18n = require("i18n");
 const winston = require('winston');
 const winstonExpress = require('express-winston');
+const logging = require("./api/util/logging");
 
 if (process.env.NODE_ENV !== 'production') {
     require('dotenv').load();
@@ -48,7 +49,7 @@ const express_winston_logger_defaults = {
   requestWhitelist: ["query", "body"]
 };
 
-const LOG_LEVEL = process.VERBOSITY || (process.env.NODE_ENV === "production" ? "info" : "debug");
+const LOG_LEVEL = process.VERBOSITY || (new Set(["test", "development"]).has(process.env.NODE_ENV) ? "debug" : "info");
 const custom_logger_defaults = {
   transports: express_winston_logger_defaults.transports,
   format: express_winston_logger_defaults.format,
@@ -86,8 +87,9 @@ app.use(winstonExpress.logger({
 const server = require('http').createServer(app);
 const sockets = require('./api/sockets');
 const io = require('socket.io')(server);
+io.set('logger', ws_logger);
 io.set('origins', 'boardgamecomponion.com:*');
-sockets(io, ws_logger);
+sockets(io);
 
 /**---------------------*
  *       ROUTES         *
@@ -101,10 +103,7 @@ app.use((err, req, res, next) => {
     console.log("err");
     return next(err);
   }
-  let logger = winston.loggers.get("api");
-  const err_info = winston.exceptions.getAllInfo(err);
-  logger.error(err_info.error);
-  logger.error(err_info.stack);
+  logging.logError(winston.loggers.get("api"), err);
   res.status(500).json({success: false, msg: "error"});
 });
 
