@@ -38,6 +38,7 @@ exports.updateBoardGame = function(req, res) {
 };
 
 const formatGameFromBggResponse = function(response) {
+  const checked_array = (arr, index, dflt) => arr && arr.length > 0 ? arr[index] : dflt;
   return {
     name: response.name,
     bgg_id: response.id,
@@ -48,9 +49,9 @@ const formatGameFromBggResponse = function(response) {
     min_playing_time: parseInt(response.maxplaytime),
     max_playing_time: parseInt(response.minplaytime),
     playing_time: parseInt(response.playingtime),
-    thumbnail: response.thumbnail[0],
-    image: response.image[0],
-    description: response.description[0],
+    thumbnail: checked_array(response.thumbnail, 0, null),
+    image: checked_array(response.image, 0, null),
+    description: checked_array(response.description, 0, null),
     year_published: parseInt(response.yearpublished),
     category: util.listToString(response.boardgamecategory),
     mechanic: util.listToString(response.boardgamemechanic),
@@ -132,11 +133,13 @@ exports.addBoardGameAndExpensions = async function (bgg_id, transaction) {
 
   const create_cache_entry = function (cache, id, model, data, parent) { cache[id] = { parent, model, data }; };
   const cache_has_id = (cache, id) => cache[id] !== undefined;
+  const logger = require('winston').loggers.get("api");
 
   // if game was added before expansion support was implemented, we need to check that expansions were already downloaded
   while (to_fetch.size > 0) {
     // fetch data from database and bgg
     to_fetch = Array.from(to_fetch);
+    logger.debug("fetching board games from bgg: " + JSON.stringify(to_fetch));
     const raw_bgg_items = await bgg.get(to_fetch);
     const bgg_games = bgg.format_get_response(raw_bgg_items);
     const raw_bgc_games = await db.BoardGame.findAll({
