@@ -88,6 +88,7 @@ exports.deleteAssociations = function(req, res, m2m, transform) {
  * @param m2m.other.field str The variable id field
  * @param m2m.attributes Other attributes values
  * @param m2m.options Object options (transaction,...)
+ * TODO optimize only delete the ones that won't be recreated
  */
 exports.diffAssociations = function (m2m) {
   const to_insert = m2m.other.ids.map(id => { return { ... m2m.attributes, [m2m.fixed.field]: m2m.fixed.id, [m2m.other.field]: id }; });
