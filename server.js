@@ -23,7 +23,9 @@ app.options('*', cors());
 // api documentation
 app.use('/doc', express.static(__dirname + '/doc'));
 
-// i18n
+/**---------------------*
+ * INTERNATIONALIZATION *
+ *----------------------*/
 i18n.configure({
   locales: ['en', 'fr'],
   directory: './api/locales/json',
@@ -36,41 +38,80 @@ i18n.configure({
 });
 app.use(i18n.init);
 
-// logging
-const winston_logger_defaults = {
+/**---------------------*
+ *       LOGGING        *
+ *----------------------*/
+const express_winston_logger_defaults = {
   transports: [ new winston.transports.Console() ],
   format: winston.format.combine(winston.format.colorize(), winston.format.simple()),
   headerBlacklist: ["Authentication"],
   requestWhitelist: ["query", "body"]
 };
 
+const LOG_LEVEL = process.VERBOSITY || (process.env.NODE_ENV === "production" ? "info" : "debug");
+const custom_logger_defaults = {
+  transports: express_winston_logger_defaults.transports,
+  format: express_winston_logger_defaults.format,
+  level: LOG_LEVEL
+};
+
+/**
+ * Define two loggers out of express's ones
+ * - db: for database related logging (e.g. dumping queries)
+ * - ws: for websocket related logging
+ * - api: for api errors related logging
+ */
+let ws_logger = winston.loggers.add("ws", custom_logger_defaults);
+let db_logger = winston.loggers.add("db", custom_logger_defaults);  // used in api/config/config.js
+let api_logger = winston.loggers.add("api", custom_logger_defaults);
+
+/**
+ * Define a logger for express middleware for logging request path, response status...
+ */
 app.use(winstonExpress.logger({
-  ... winston_logger_defaults,
+  ... express_winston_logger_defaults,
   msg: "HTTP {{res.statusCode}} {{req.method}} {{req.url}}",
+  level: function (req, res) {
+    let level = "debug";
+    if (res.statusCode >= 100) { level = "info"; }
+    if (res.statusCode >= 400) { level = "warn"; }
+    if (res.statusCode >= 500) { level = "error"; }
+    return level;
+  }
 }));
 
-// websocket
+/**---------------------*
+ *      WEBSOCKET       *
+ *----------------------*/
 const server = require('http').createServer(app);
 const sockets = require('./api/sockets');
 const io = require('socket.io')(server);
 io.set('origins', 'boardgamecomponion.com:*');
-sockets(io);
+sockets(io, ws_logger);
 
-// api
+/**---------------------*
+ *       ROUTES         *
+ *----------------------*/
 let routes = require('./api/routes');
-
-// error logging
-app.use(winstonExpress.errorLogger({
-  ... winston_logger_defaults
-}));
-
 routes(app);
+
+// replacing default express error handler to log errors
+app.use((err, req, res, next) => {
+  if (res.headersSent) {  // the default handler closes the connection in this case
+    console.log("err");
+    return next(err);
+  }
+  let logger = winston.loggers.get("api");
+  const err_info = winston.exceptions.getAllInfo(err);
+  logger.error(err_info.error);
+  logger.error(err_info.stack);
+  res.status(500).json({success: false, msg: "error"});
+});
 
 if(!module.parent) {
     server.listen(port, hostname, () => {
         console.log(`Server running at http://${hostname}:${port}/`);
     });
 }
-
 
 module.exports = server;

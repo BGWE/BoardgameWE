@@ -40,7 +40,7 @@ const genericHandleChangePlayer = function(timer_room, next) {
 
 
 
-module.exports = function(io) {
+module.exports = function(io, logger) {
     // timer namespace
     // vue-socket.io-extended does not support namespaces
     // const timerNamespace = io.of("/timer");
