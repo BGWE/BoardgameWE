@@ -108,9 +108,7 @@ function get_attribute(_json, attribute) {
 
 // Returns list of child tag <tag_name>
 function get_tag(_json, tag_name) {
-    if (_json.hasOwnProperty(tag_name)) return _json[tag_name];
-
-    throw new Error('No ' + tag_name + ' in ' + JSON.stringify(_json))
+    return _json.hasOwnProperty(tag_name) ? _json[tag_name] : null;
 }
 
 function get_attribute_from_tag(_json, tag_name, attribute) {
