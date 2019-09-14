@@ -59,11 +59,6 @@ const formatGameFromBggResponse = function(response) {
   };
 };
 
-const boardGameFromBggResponse = function(body) {
-    const games = bgg.format_get_response(body);
-    return games.map(formatGameFromBggResponse);
-};
-
 /**
  * Executes an action if a given board game has already been fetched and registered in the database
  * @param gid Id of the game (id from the source)
