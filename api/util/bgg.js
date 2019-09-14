@@ -1,24 +1,24 @@
 const util = require("./util.js");
 const rp = require('request-promise');
+const winston = require("winston");
+const logging = require("./logging");
 let parse_string = require('xml2js').parseString;
 
 const BGG_ROOT_PATH = 'https://www.boardgamegeek.com/xmlapi2/';
 const DEFAULT_TYPE = 'boardgame';
 
 function search(boardgame_name) {
-    let url_variables = {query: boardgame_name, type: DEFAULT_TYPE};
-    return rp({uri: BGG_ROOT_PATH + 'search', qs: url_variables});
+    let qs = {query: boardgame_name, type: DEFAULT_TYPE};
+    const uri = BGG_ROOT_PATH + 'search';
+    winston.loggers.get("api").info("bgg search - url:" + uri + " query:" + JSON.stringify(qs));
+    return rp({uri, qs});
 }
 
 function get(ids) {
-    let url_variables = {id: ids.map(s => s.toString()).join(), stats: 1};
-    return rp({uri: BGG_ROOT_PATH + 'thing', qs: url_variables});
-}
-
-function getBoardGamePromise(boardgame_id, res, _then) {
-    return exports.get(boardgame_id).then(_then).catch(err => {
-        return util.detailErrorResponse(res, 404, "could not fetch game from board game geek");
-    });
+    let qs = {id: ids.map(s => s.toString()).join(), stats: 1};
+    const uri = BGG_ROOT_PATH + 'thing';
+    winston.loggers.get("api").info("bgg get - url:" + uri + " query:" + JSON.stringify(qs));
+    return rp({uri, qs});
 }
 
 function format_search_response(body) {
@@ -42,7 +42,7 @@ function format_get_response(body) {
   let games = [];
   parse_string(body, function (err, result) {
     if (err) {
-      console.log(err);
+      winston.loggers.get("api").error(err);
       return;
     }
     const TAGS_WITH_CONTENT = ['thumbnail', 'image', 'description'];
@@ -82,6 +82,8 @@ function format_get_response(body) {
       games.push(game);
     });
   });
+  winston.loggers.get("api").debug("-- formatted board game from bgg --");
+  winston.loggers.get("api").debug(JSON.stringify(games));
   return games;
 }
 
@@ -149,7 +151,6 @@ function get_game_name_from_item(_json) {
 }
 
 exports.get = get;
-exports.getBoardGamePromise = getBoardGamePromise;
 exports.search = search;
 exports.format_get_response = format_get_response;
 exports.format_search_response = format_search_response;
