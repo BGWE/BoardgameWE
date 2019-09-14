@@ -14,12 +14,20 @@ module.exports = function(app) {
     const GameController = require("./GameController");
     const StatsController = require("./StatsController");
     const UserController = require("./UserController");
+    const AchievementsController = require("./AchievementsController");
     const EventController = require("./EventController");
     const EventJoinController = require("./EventJoinController");
     const AdminController = require("./AdminController");
     const TimerController = require("./TimerController");
     const AppWideController = require("./AppWideController");
     const access_checks = require('./util/access_checks');
+    const logging = require('./util/logging');
+
+    const error_wrapper = (controller) => {
+      return (req, res, next) => {
+        return controller(req, res, next).catch(err => { next(err); });
+      };
+    };
 
     // User routes
     /**
@@ -33,7 +41,8 @@ module.exports = function(app) {
      * @apiUse DBDatetimeFields
      */
     app.route("/user")
-        .post([
+        .post(logging.bodyLogFilter({b: ['password']}),
+            [
                 body('password').isString().not().isEmpty().isLength({min: 8}),
                 body('name').isString().not().isEmpty(),
                 body('surname').isString().not().isEmpty(),
@@ -41,7 +50,7 @@ module.exports = function(app) {
                 body('username').isString().not().isEmpty(),
             ],
             validation.validateOrBlock("cannot register user"),
-            UserController.register
+            error_wrapper(UserController.register)
         );
 
     /**
@@ -53,7 +62,7 @@ module.exports = function(app) {
      * @apiSuccess {String} token JSON Web Token
      */
     app.route("/user/login")
-        .post(UserController.signIn);
+        .post(logging.bodyLogFilter({b: ['password']}), error_wrapper(UserController.signIn));
 
     /**
      * @api {post} /user/forgot_password Send password recovery email
@@ -64,7 +73,7 @@ module.exports = function(app) {
      * @apiParam (body) {String} email Email of the user that has forgotten the associated password.
      */
     app.route("/user/forgot_password")
-        .post(UserController.forgotPassword);
+        .post(error_wrapper(UserController.forgotPassword));
 
     /**
      * @api {get} /statistics Get application statistics
@@ -77,7 +86,7 @@ module.exports = function(app) {
      * @apiSuccess {Number} events_count Number of organized events
      */
     app.route("/statistics")
-        .get(AppWideController.getAppStatistics);
+        .get(error_wrapper(AppWideController.getAppStatistics));
 
     /**
      * @api {post} /user/reset_password Reset the password of a user
@@ -90,7 +99,7 @@ module.exports = function(app) {
      * @apiParam (body) {String} password New password.
      */
     app.route("/user/reset_password")
-        .post(UserController.resetPassword);
+        .post(logging.bodyLogFilter({b: ['token', 'password']}), error_wrapper(UserController.resetPassword));
 
     // authentication middleware, applied to all except login and register
     app.use(/^\/(?!user\/register|user\/login|auth\/forgot_password|auth\/reset_password|statistics).*/, asyncMiddleware(async function(req, res, next) {
@@ -105,7 +114,7 @@ module.exports = function(app) {
         try {
             const user = await db.User.findByPk(verified.decoded.id);
             if (!user.validated) {
-                return util.detailErrorResponse(res, 403, UserController.notValidatedErrorMsg);
+                return util.detailErrorResponse(res, 403, error_wrapper(UserController.notValidatedErrorMsg));
             }
             req.decoded = verified.decoded;
             req.is_admin = user.admin;
@@ -134,7 +143,7 @@ module.exports = function(app) {
      * @apiUse DBDatetimeFields
      */
     app.route("/user/current")
-        .get(UserController.getCurrentUser);
+        .get(error_wrapper(UserController.getCurrentUser));
 
     /**
      * @api {get} /user/:id Get user
@@ -161,8 +170,8 @@ module.exports = function(app) {
      * @apiUse DBDatetimeFields
      */
     app.route("/user/:uid")
-        .get(UserController.getUser)
-        .put(user_access.write, UserController.updateUser);
+        .get(error_wrapper(UserController.getUser))
+        .put(user_access.write, error_wrapper(UserController.updateUser));
 
     /**
      * @api {put} /user/:id/games Get user games
@@ -176,7 +185,7 @@ module.exports = function(app) {
      * structure). Note: the returned data is a list (not an actual object).
      */
     app.route("/user/:uid/games")
-        .get(user_access.read, GameController.getUserGames);
+        .get(user_access.read, error_wrapper(GameController.getUserGames));
 
     /**
      * @api {get} /user/:id/stats Get user stats
@@ -194,7 +203,7 @@ module.exports = function(app) {
      * @apiSuccess {Number} play_time Total play time of the user (in minutes)
      */
     app.route("/user/:uid/stats")
-        .get(user_access.read, UserController.getUserStats);
+        .get(user_access.read, error_wrapper(UserController.getUserStats));
 
     /**
      * @api {get} /user/:id/activities Get user activities
@@ -212,7 +221,7 @@ module.exports = function(app) {
      * @apiSuccess {Event} activities.event (only for `user/join_event` activity) Event data (see "Add event game" for Game structure).
      */
     app.route("/user/:uid/activities")
-        .get(user_access.read, UserController.getUserActivities);
+        .get(user_access.read, error_wrapper(UserController.getUserActivities));
 
     // Library
     /**
@@ -245,9 +254,17 @@ module.exports = function(app) {
      * @apiUse LibraryBoardGamesListDescriptor
      */
     app.route("/user/current/library_games")
-        .get(UserController.getCurrentUserLibraryGames)
-        .post([body('board_games').isArray().not().isEmpty()], validation.validateOrBlock('cannot update game library'), UserController.addLibraryGames)
-        .delete([body('board_games').isArray().not().isEmpty()], validation.validateOrBlock('cannot update game library'), UserController.deleteLibraryGames);
+        .get(error_wrapper(UserController.getCurrentUserLibraryGames))
+        .post(
+            [body('board_games').isArray().not().isEmpty()],
+            validation.validateOrBlock('cannot update game library'),
+            error_wrapper(UserController.addLibraryGames)
+        )
+        .delete(
+            [body('board_games').isArray().not().isEmpty()],
+            validation.validateOrBlock('cannot update game library'),
+            error_wrapper(UserController.deleteLibraryGames)
+        );
 
     /**
      * @api {post} /user/current/library_games/:source/:id Add to library from source
@@ -260,7 +277,7 @@ module.exports = function(app) {
      * @apiUse LibraryBoardGamesListDescriptor
      */
     app.route("/user/current/library_game/:source/:id")
-        .post(UserController.addBoardGameAndAddToLibrary);
+        .post(error_wrapper(UserController.addBoardGameAndAddToLibrary));
 
     /**
      * @api {get} /user/:id/library_games Get user library
@@ -272,7 +289,7 @@ module.exports = function(app) {
      * @apiUse LibraryBoardGamesListDescriptor
      */
     app.route("/user/:uid/library_games")
-        .get(user_access.read, UserController.getUserLibraryGames);
+        .get(user_access.read, error_wrapper(UserController.getUserLibraryGames));
 
     // Wish to play list
     /**
@@ -304,9 +321,17 @@ module.exports = function(app) {
      * @apiUse WishToPlayBoardGamesListDescriptor
      */
     app.route("/user/current/wish_to_play")
-        .get(UserController.getCurrentUserWishToPlayBoardGames)
-        .post([body('board_games').isArray().not().isEmpty()], validation.validateOrBlock('cannot update wish to play list'), UserController.addToWishToPlayBoardGames)
-        .delete([body('board_games').isArray().not().isEmpty()], validation.validateOrBlock('cannot update wish to play list'), UserController.deleteFromWishToPlayList);
+        .get(error_wrapper(UserController.getCurrentUserWishToPlayBoardGames))
+        .post(
+            [body('board_games').isArray().not().isEmpty()],
+            validation.validateOrBlock('cannot update wish to play list'),
+            error_wrapper(UserController.addToWishToPlayBoardGames)
+        )
+        .delete(
+            [body('board_games').isArray().not().isEmpty()],
+            validation.validateOrBlock('cannot update wish to play list'),
+            error_wrapper(UserController.deleteFromWishToPlayList)
+        );
 
     /**
      * @api {post} /user/current/wish_to_play/:source/:id Add to wish to play list from source
@@ -319,7 +344,7 @@ module.exports = function(app) {
      * @apiUse WishToPlayBoardGamesListDescriptor
      */
     app.route("/user/current/wish_to_play/:source/:id")
-        .post(UserController.addBoardGameAndAddToWishToPlay);
+        .post(error_wrapper(UserController.addBoardGameAndAddToWishToPlay));
 
     /**
      * @api {get} /user/:id/wish_to_play Get user wish to play list
@@ -331,7 +356,7 @@ module.exports = function(app) {
      * @apiUse WishToPlayBoardGamesListDescriptor
      */
     app.route("/user/:uid/wish_to_play")
-        .get(user_access.read, UserController.getUserWishToPlayBoardGames);
+        .get(user_access.read, error_wrapper(UserController.getUserWishToPlayBoardGames));
 
     /**
      * @api {get} /user/current/friends Get current user friends
@@ -342,7 +367,7 @@ module.exports = function(app) {
      * @apiUse UserListDescriptor
      */
     app.route("/user/current/friends")
-        .get(UserController.getCurrentUserFriends);
+        .get(error_wrapper(UserController.getCurrentUserFriends));
 
     // TODO should return shallow user data
     /**
@@ -355,7 +380,7 @@ module.exports = function(app) {
      * @apiUse UserListDescriptor
      */
     app.route("/user/:uid/friends")
-        .get(user_access.read, UserController.getUserFriends);
+        .get(user_access.read, error_wrapper(UserController.getUserFriends));
 
     /**
      * @api {get} /user/current/event_invites Get current user event invites
@@ -367,7 +392,41 @@ module.exports = function(app) {
      * @apiUse EventInviteListDescriptor
      */
     app.route("/user/current/event_invites")
-        .get(EventJoinController.getCurrentUserEventInvites);
+        .get(error_wrapper(EventJoinController.getCurrentUserEventInvites));
+
+    // Achievements
+    /**
+     * @api {get} /user/:uid/achievements Get user achievements
+     * @apiName GetUserAchievements
+     * @apiGroup Achievement
+     * @apiDescription Get the user achievements of the given user
+     * @apiUse TokenHeaderRequired
+     * @apiUse AchievementsDescriptor
+    */
+    app.route("/user/:uid/achievements")
+        .get(error_wrapper(AchievementsController.getUserAchievements));
+
+  /**
+   * @api {get} /user/current/achievements Get current user achievements
+   * @apiName GetCurrentUserAchievements
+   * @apiGroup Achievement
+   * @apiDescription Get the current user achievements of the given user
+   * @apiUse TokenHeaderRequired
+   * @apiUse AchievementsDescriptor
+   */
+    app.route("/user/current/achievements")
+        .get(error_wrapper(AchievementsController.getCurrentUserAchievements));
+
+  /**
+   * @api {get} /user/current/easteregg Add easter egg achievement
+   * @apiName AddEasterEggAchievement
+   * @apiGroup Achievement
+   * @apiDescription Add the easter egg achievement to the current user
+   * @apiUse TokenHeaderRequired
+   * @apiUse AchievementDescriptor
+   */
+    app.route("/user/current/easteregg")
+        .post(error_wrapper(AchievementsController.addOnionAchievement));
 
     // Friendships
     /**
@@ -379,7 +438,18 @@ module.exports = function(app) {
      * @apiUse FriendRequestListDescriptor
      */
     app.route("/friend_requests")
-        .get(UserController.getFriendshipRequests);
+        .get(error_wrapper(UserController.getFriendshipRequests));
+
+    /**
+     * @api {get} /sent_friend_requests Get sent friend requests
+     * @apiName GetSentFriendRequests
+     * @apiGroup User friends
+     * @apiDescription Get current user sent friend requests
+     * @apiUse TokenHeaderRequired
+     * @apiUse FriendRequestDescriptor
+     */
+    app.route("/sent_friend_requests")
+        .get(error_wrapper(UserController.getSentFriendshipRequest));
 
     /**
      * @api {post} /friend_request Send friend request
@@ -415,17 +485,17 @@ module.exports = function(app) {
         .post(
             [body('id_recipient').isInt()],
             validation.validateOrBlock("cannot add friend request"),
-            UserController.sendFriendshipRequest
+            error_wrapper(UserController.sendFriendshipRequest)
         )
         .put(
             [ body('id_sender').isInt(), body('accept').isBoolean().toBoolean() ],
             validation.validateOrBlock("cannot handle friend request"),
-            UserController.handleFriendshipRequest
+            error_wrapper(UserController.handleFriendshipRequest)
         )
         .delete(
             [ body('id_recipient').isInt() ],
             validation.validateOrBlock("cannot delete friend request"),
-            UserController.deleteFriendshipRequest
+            error_wrapper(UserController.deleteFriendshipRequest)
         );
 
     /**
@@ -438,7 +508,7 @@ module.exports = function(app) {
      * @apiUse SuccessObjDescriptor
      */
     app.route("/friend/:uid")
-        .delete(UserController.deleteFriend);
+        .delete(error_wrapper(UserController.deleteFriend));
 
 
     // Event
@@ -469,7 +539,7 @@ module.exports = function(app) {
         .post(
             validation.getEventValidators(true).concat([ query('auto_join').optional().isBoolean().toBoolean() ]),
             validation.validateOrBlock('cannot create event'),
-            EventController.createEvent
+            error_wrapper(EventController.createEvent)
         );
 
     /**
@@ -516,9 +586,14 @@ module.exports = function(app) {
      * @apiUse ErrorDescriptor
      */
     app.route("/event/:eid")
-        .get(event_access.read, EventController.getFullEvent)
-        .delete(event_access.admin, EventController.deleteEvent)   // only creator
-        .put(event_access.admin, validation.getEventValidators(false), validation.validateOrBlock('cannot update event'), EventController.updateEvent);
+        .get(event_access.read, error_wrapper(EventController.getFullEvent))
+        .delete(event_access.admin, error_wrapper(EventController.deleteEvent))   // only creator
+        .put(
+            event_access.admin,
+            validation.getEventValidators(false),
+            validation.validateOrBlock('cannot update event'),
+            error_wrapper(EventController.updateEvent)
+        );
 
     /**
      * @api {get} /events Get events
@@ -542,7 +617,7 @@ module.exports = function(app) {
             query('visibility').optional().isArray().not().isEmpty().custom(validation.valuesIn([
                 db.Event.VISIBILITY_PUBLIC, db.Event.VISIBILITY_PRIVATE, db.Event.VISIBILITY_SECRET
             ])),
-        ], validation.validateOrBlock("cannot list events"), EventController.getCurrentUserEvents);
+        ], validation.validateOrBlock("cannot list events"), error_wrapper(EventController.getCurrentUserEvents));
 
     /**
      * @api {get} /event/:eid/stats Get event statistics
@@ -563,7 +638,7 @@ module.exports = function(app) {
      * @apiSuccess {Number} most_played.count Number of times played
      */
     app.route("/event/:eid/stats")
-        .get(event_access.read, EventController.getEventStats);
+        .get(event_access.read, error_wrapper(EventController.getEventStats));
 
     /**
      * @api {get} /event/:eid/activities Get event activities
@@ -584,7 +659,7 @@ module.exports = function(app) {
      * 'Get current user' request for user structure).
      */
     app.route("/event/:eid/activities")
-        .get(event_access.read, EventController.getEventActivities);
+        .get(event_access.read, error_wrapper(EventController.getEventActivities));
 
     /**
      * @api {post} /event/:eid/board_game/:source/:id Add to event from source
@@ -599,7 +674,7 @@ module.exports = function(app) {
      * @apiUse ProvidedBoardGamesListDescriptor
      */
     app.route("/event/:eid/board_game/:source/:id")
-        .post(event_access.write, EventController.addBoardGameAndAddToEvent);
+        .post(event_access.write, error_wrapper(EventController.addBoardGameAndAddToEvent));
 
     /**
      * @api {get} /event/:id/board_games Get provided board games
@@ -639,9 +714,9 @@ module.exports = function(app) {
      * @apiUse SuccessObjDescriptor
      */
     app.route("/event/:eid/board_games")
-        .get(event_access.read, EventController.getProvidedBoardGames)
-        .post(event_access.write, EventController.addProvidedBoardGames)
-        .delete(event_access.write, EventController.deleteProvidedBoardGames);
+        .get(event_access.read, error_wrapper(EventController.getProvidedBoardGames))
+        .post(event_access.write, error_wrapper(EventController.addProvidedBoardGames))
+        .delete(event_access.write, error_wrapper(EventController.deleteProvidedBoardGames));
 
     /**
      * @api {post} /event/:id/game Add event game
@@ -673,7 +748,7 @@ module.exports = function(app) {
                 validation.modelExists(check('eid'), db.Event)
             ]),
             validation.validateOrBlock('cannot add game to the event'),
-            GameController.addEventGame
+            error_wrapper(GameController.addEventGame)
         );
 
     /**
@@ -707,7 +782,7 @@ module.exports = function(app) {
                 validation.modelExists(check('eid'), db.Event),
                 validation.modelExists(check('gid'), db.Game)
             ]), validation.validateOrBlock('cannot update event game'),
-            GameController.updateEventGame
+            error_wrapper(GameController.updateEventGame)
         );
 
     /**
@@ -725,7 +800,7 @@ module.exports = function(app) {
      * returned data is a list (not an actual object).
      */
     app.route("/event/:eid/games")
-        .get(event_access.read, GameController.getEventGames);
+        .get(event_access.read, error_wrapper(GameController.getEventGames));
 
     /**
      * @api {get} /event/:id/games/latest Get recent event game
@@ -742,7 +817,7 @@ module.exports = function(app) {
      * returned data is a list (not an actual object).
      */
     app.route("/event/:eid/games/latest")
-        .get(event_access.read, GameController.getRecentEventGames);
+        .get(event_access.read, error_wrapper(GameController.getRecentEventGames));
 
     /**
      * @api {get} /event/:id/attendees Get event attendees
@@ -755,7 +830,7 @@ module.exports = function(app) {
      * @apiUse TokenHeaderRequired
      */
     app.route("/event/:eid/attendees")
-        .get(event_access.read, EventController.getEventAttendees);
+        .get(event_access.read, error_wrapper(EventController.getEventAttendees));
 
     /**
      * @api {delete} /event/:id/attendee/:uid Delete event attendee
@@ -772,7 +847,7 @@ module.exports = function(app) {
     app.route("/event/:eid/attendee/:uid")
         .delete(
             event_access.admin,
-            EventJoinController.deleteEventAttendee
+            error_wrapper(EventJoinController.deleteEventAttendee)
         );
 
     /**
@@ -790,7 +865,7 @@ module.exports = function(app) {
         .post(
             [param('eid').custom(validation.model(db.Event))],
             validation.validateOrBlock("event not found: cannot join"),
-            EventJoinController.joinEvent
+            error_wrapper(EventJoinController.joinEvent)
         );
 
     /**
@@ -804,7 +879,7 @@ module.exports = function(app) {
      * @apiUse TokenHeaderRequired
      */
     app.route("/event/:eid/rankings")
-        .get(event_access.read, StatsController.getEventRankings);
+        .get(event_access.read, error_wrapper(StatsController.getEventRankings));
 
     /**
      * @api {get} /event/:id/ranking/:type Get event ranking
@@ -819,7 +894,7 @@ module.exports = function(app) {
      * @apiUse TokenHeaderRequired
      */
     app.route("/event/:eid/ranking/:type(" + StatsController.availableRankings.join("|") + ")")
-        .get(event_access.read, StatsController.getEventRanking);
+        .get(event_access.read, error_wrapper(StatsController.getEventRanking));
 
 
     /**
@@ -834,7 +909,7 @@ module.exports = function(app) {
      * @apiSuccess {User[]} matchmaking.users List of other users wishing to play the board game
      */
     app.route("/event/:eid/matchmaking")
-        .get(event_access.read, EventController.getEventMatchmaking);
+        .get(event_access.read, error_wrapper(EventController.getEventMatchmaking));
 
     /**
      * @api {get} /event/:id/wish_to_play Get event wish to play
@@ -856,7 +931,7 @@ module.exports = function(app) {
         .get(event_access.read, [
             query('exclude_current').optional().isBoolean().toBoolean(),
             query('provided_games_only').optional().isBoolean().toBoolean()
-        ], validation.validateOrBlock('cannot get user wish to play list'), EventController.getEventWishToPlayGames);
+        ], validation.validateOrBlock('cannot get user wish to play list'), error_wrapper(EventController.getEventWishToPlayGames));
 
     /**
      * @api {get} /event/:eid/timers Get current user event timers
@@ -868,7 +943,7 @@ module.exports = function(app) {
      * @apiUse TimerListDescriptor
      */
     app.route("/event/:eid/timers")
-        .get(event_access.read, TimerController.getCurrentUserEventTimers);
+        .get(event_access.read, error_wrapper(TimerController.getCurrentUserEventTimers));
 
     /**
      * @api {post} /timer Create event timer
@@ -894,7 +969,7 @@ module.exports = function(app) {
             event_access.write,
             validation.getTimerValidators(true),
             validation.validateOrBlock('cannot create event timer'),
-            TimerController.createTimer
+            error_wrapper(TimerController.createTimer)
         );
 
     /**
@@ -914,7 +989,7 @@ module.exports = function(app) {
                 param('eid').custom(validation.model(db.Event)),
                 query('status').optional().isArray().not().isEmpty().custom(validation.valuesIn(db.EventInvite.STATUSES))
             ], validation.validateOrBlock("cannot list event invites"),
-            EventJoinController.listEventInvites
+            error_wrapper(EventJoinController.listEventInvites)
         );
 
     /**
@@ -948,14 +1023,14 @@ module.exports = function(app) {
                 body('id_invitee').custom(validation.model(db.User)),
                 param('eid').custom(validation.model(db.Event))
             ], validation.validateOrBlock("cannot send event invite"),
-            EventJoinController.sendEventInvite
+            error_wrapper(EventJoinController.sendEventInvite)
         )
         .put(
             [
                 body('accept').isBoolean().toBoolean(),
                 param('eid').custom(validation.model(db.Event))
             ], validation.validateOrBlock("cannot handle event invite"),
-            EventJoinController.handleEventInvite
+            error_wrapper(EventJoinController.handleEventInvite)
         );
 
 
@@ -976,7 +1051,7 @@ module.exports = function(app) {
                 param('eid').custom(validation.model(db.Event)),
                 query('status').optional().isArray().not().isEmpty().custom(validation.valuesIn(db.EventInvite.STATUSES))
             ], validation.validateOrBlock("cannot list event join requests"),
-            EventJoinController.listJoinRequests
+            error_wrapper(EventJoinController.listJoinRequests)
         );
 
     /**
@@ -1009,14 +1084,14 @@ module.exports = function(app) {
             [
                 param('eid').custom(validation.model(db.Event))
             ], validation.validateOrBlock("cannot add join request"),
-            EventJoinController.sendJoinRequest
+            error_wrapper(EventJoinController.sendJoinRequest)
         ).put(
             event_access.write, [
                 body('id_requester').isNumeric().toInt(),
                 body('accept').isBoolean().toBoolean(),
                 param('eid').isNumeric().toInt()
             ], validation.validateOrBlock("cannot handle join request"),
-            EventJoinController.handleJoinRequest
+            error_wrapper(EventJoinController.handleJoinRequest)
         );
 
     // Board game
@@ -1032,7 +1107,7 @@ module.exports = function(app) {
      *
      */
     app.route("/board_game/search")
-        .get(BoardGameController.searchBoardGames);
+        .get(error_wrapper(BoardGameController.searchBoardGames));
 
     /**
      * @api {post} /board_game Add board game
@@ -1047,7 +1122,7 @@ module.exports = function(app) {
      * @apiUse DBDatetimeFields
      */
     app.route("/board_game")
-        .post(BoardGameController.addBoardGame);
+        .post(error_wrapper(BoardGameController.addBoardGame));
 
     /**
      * @api {get} /board_game/:id Get board game
@@ -1087,9 +1162,9 @@ module.exports = function(app) {
      * @apiUse SuccessObjDescriptor
      */
     app.route("/board_game/:bgid")
-        .get(BoardGameController.getBoardGame)
-        .put(BoardGameController.updateBoardGame)
-        .delete(BoardGameController.deleteBoardGame);
+        .get(error_wrapper(BoardGameController.getBoardGame))
+        .put(error_wrapper(BoardGameController.updateBoardGame))
+        .delete(error_wrapper(BoardGameController.deleteBoardGame));
 
     /**
      * @api {get} /board_games Get board games
@@ -1100,12 +1175,12 @@ module.exports = function(app) {
      * @apiUse TokenHeaderRequired
      */
     app.route("/board_games")
-        .get(BoardGameController.getBoardGames);
+        .get(error_wrapper(BoardGameController.getBoardGames));
 
     // Game
     // Disabled, games are mostly added through event
     // app.route("/game")
-    //     .post(GameController.addGame);
+    //     .post(error_wrapperameController.addGame));
 
     /**
      * @api {get} /game Get game
@@ -1118,8 +1193,8 @@ module.exports = function(app) {
      * @apiUse TokenHeaderRequired
      */
     app.route("/game/:gid")
-        .get(GameController.getGame)
-        .delete(GameController.deleteGame);
+        .get(error_wrapper(GameController.getGame))
+        .delete(error_wrapper(GameController.deleteGame));
 
     // timer api
     /**
@@ -1142,7 +1217,7 @@ module.exports = function(app) {
      * @apiUse TimerDescriptor
      */
     app.route("/timer")
-        .post(validation.getTimerValidators(true), TimerController.createTimer);
+        .post(validation.getTimerValidators(true), error_wrapper(TimerController.createTimer));
 
     /**
      * @api {post} /timer/:tid Get timer
@@ -1153,7 +1228,7 @@ module.exports = function(app) {
      * @apiUse TimerDescriptor
      */
     app.route("/timer/:tid")
-        .get(TimerController.getTimer);
+        .get(error_wrapper(TimerController.getTimer));
 
     /**
      * @api {get} /timers Get current user timers
@@ -1164,16 +1239,16 @@ module.exports = function(app) {
      * @apiUse TimerListDescriptor
      */
     app.route("/timers")
-        .get(TimerController.getCurrentUserTimers);
+        .get(error_wrapper(TimerController.getCurrentUserTimers));
 
     // Disabled, games are mostly seen through event
     // app.route("/games")
-    //     .get(GameController.getGames);
+    //     .get(error_wrapper(GameController.getGames));
 
     // Statistics
     // Disabled, rankings are mostly seen through event
     // app.route("/stats/rankings")
-    //     .get(StatsController.getRankings);
+    //     .get(error_wrapper(StatsController.getRankings));
 
     // admin middleware
     app.use(/\/admin\/.*/, function(req, res, next) {
@@ -1194,7 +1269,7 @@ module.exports = function(app) {
      * @apiUse TokenHeaderRequired
      */
     app.route("/admin/users")
-        .get(AdminController.getUsers);
+        .get(error_wrapper(AdminController.getUsers));
 
     /**
      * @apiPrivate
@@ -1208,5 +1283,5 @@ module.exports = function(app) {
      * @apiUse TokenHeaderRequired
      */
     app.route("/admin/user")
-        .put(AdminController.updateUserStatus);
+        .put(error_wrapper(AdminController.updateUserStatus));
 };

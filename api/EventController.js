@@ -20,7 +20,7 @@ const eventFullIncludeSQ = [
 exports.createEvent = function(req, res) {
     const visibility = req.body.visibility || db.Event.VISIBILITY_SECRET;
     const is_secret = visibility === db.Event.VISIBILITY_SECRET;
-    return util.sendModelOrError(res, db.Event.create({
+    return util.sendModel(res, db.Event.create({
         name: req.body.name,
         location: req.body.location,
         start: req.body.start.utc(),
@@ -47,6 +47,9 @@ exports.updateEvent = function(req, res) {
     const visibility = req.body.visibility || event.visibility;
     const is_secret = visibility === db.Event.VISIBILITY_SECRET;
     return db.Event.findByPk(parseInt(req.params.eid)).then(event => {
+        if (!event) {
+          return util.detailErrorResponse(res, 404, "no such event");
+        }
         event.description = req.body.description || event.description;
         event.name = req.body.name || event.name;
         event.location = req.body.location || event.location;
@@ -57,14 +60,12 @@ exports.updateEvent = function(req, res) {
         event.attendees_can_edit = util.boolOrDefault(req.body.attendees_can_edit, event.attendees_can_edit);
         event.invite_required = is_secret ? true : util.boolOrDefault(req.body.invite_required, event.invite_required);
         event.user_can_join = util.boolOrDefault(req.body.user_can_join, event.user_can_join);
-        return util.sendModelOrError(res, event.save());
-    }).catch(err => {
-        return util.detailErrorResponse(res, 404, "no such event")
-    })
+        return util.sendModel(res, event.save());
+    });
 };
 
 exports.getEvent = function(req, res) {
-    return util.sendModelOrError(res, db.Event.findByPk(parseInt(req.params.eid)));
+    return util.sendModel(res, db.Event.findByPk(parseInt(req.params.eid)));
 };
 
 exports.getFullEvent = function(req, res) {
@@ -133,7 +134,7 @@ exports.getCurrentUserEvents = function(req, res) {
             ... where,
         };
     }
-    return util.sendModelOrError(res, exports.fetchEventsWithUserAccess(current_uid, where));
+    return util.sendModel(res, exports.fetchEventsWithUserAccess(current_uid, where));
 };
 
 exports.deleteEvent = function(req, res) {
@@ -149,16 +150,16 @@ exports.deleteEvent = function(req, res) {
     });
 };
 
-exports.sendProvidedBoardGames = function (eid, res) {
-  return util.sendModelOrError(res, db.ProvidedBoardGame.findAll({
-    where: {id_event: eid},
-    include: [
-      includes.getUserIncludeSQ("provider"),
-      includes.getBoardGameIncludeSQ("provided_board_game", [
-        BoardGameController.boardGameIncludes
-      ])
-    ]
-  }));
+exports.sendProvidedBoardGames = function(eid, res) {
+    return util.sendModel(res, db.ProvidedBoardGame.findAll({
+        where: { id_event: eid },
+        include: [
+          includes.getUserIncludeSQ("provider"),
+          includes.getBoardGameIncludeSQ("provided_board_game", [
+            BoardGameController.boardGameIncludes
+          ])
+        ]
+    }));
 };
 
 exports.addProvidedBoardGames = function(req, res) {
@@ -167,8 +168,6 @@ exports.addProvidedBoardGames = function(req, res) {
     let board_games = req.body.board_games.map(g => { return { id_user: userId, id_board_game: g, id_event: eid }});
     return db.ProvidedBoardGame.bulkCreate(board_games, { ignoreDuplicates: true }).then(() => {
         return exports.sendProvidedBoardGames(eid, res);
-    }).catch(err => {
-        return util.errorResponse(res);
     });
 };
 
@@ -179,13 +178,15 @@ exports.getProvidedBoardGames = function(req, res) {
 
 exports.deleteProvidedBoardGames = function(req, res) {
     let eid = parseInt(req.params.eid);
-    return util.handleDeletion(res, db.ProvidedBoardGame.destroy({
+    return db.ProvidedBoardGame.destroy({
         where: {
             id_event: eid,
             id_user: userutil.getCurrUserId(req),
             id_board_game: req.body.board_games
         }
-    }));
+    }).then(() => {
+      return util.successResponse(res, exports.successObj);
+    });
 };
 
 exports.sendEventAttendees = function(req, eid, res, options) {
@@ -211,8 +212,6 @@ exports.addBoardGameAndAddToEvent = function(req, res) {
             id_event: idEvent
         }, {ignoreDuplicates: true}).then(l => {
             return exports.sendProvidedBoardGames(idEvent, res);
-        }).catch(err => {
-            return util.errorResponse(res);
         });
     };
     const bggId = parseInt(req.params.id);
@@ -223,7 +222,7 @@ exports.addBoardGameAndAddToEvent = function(req, res) {
 exports.getEventStats = function(req, res) {
     const GameController = require("./GameController");
     const eid = parseInt(req.params.eid);
-    return util.sendModelOrError(res, Promise.all([
+    return util.sendModel(res, Promise.all([
         db.Game.count({where: {id_event: eid}}),
         db.Game.count({
             where: {id_event: eid},
@@ -271,7 +270,7 @@ exports.getEventStats = function(req, res) {
 
 exports.getEventActivities = function(req, res) {
     const eid = parseInt(req.params.eid);
-    return util.sendModelOrError(res, Activity.getEventActivitiesPromise(eid, 10));
+    return util.sendModel(res, Activity.getEventActivitiesPromise(eid, 10));
 };
 
 exports.getEventMatchmaking = function(req, res) {
@@ -290,7 +289,7 @@ exports.getEventMatchmaking = function(req, res) {
          * wish to play list of the current user.
          */
         const attendees_query = db.selectFieldQuery("EventAttendees", "id_user", { id_event: eid });
-        return util.sendModelOrError(res, db.WishToPlayBoardGame.findAll({
+        return util.sendModel(res, db.WishToPlayBoardGame.findAll({
             where: {
                 id_board_game: { [db.Op.in]: data.map(d => d.id_board_game )},
                 id_user: { [db.Op.and]: [
@@ -320,8 +319,6 @@ exports.getEventMatchmaking = function(req, res) {
             });
             return matchmaking;
         });
-    }).catch(err => {
-        return res.status(500).json({['err']: 'err'});
     });
 };
 
@@ -341,7 +338,7 @@ exports.getEventWishToPlayGames = function(req, res) {
         where.id_board_game = {[db.Op.in]: db.sequelize.literal('(' + board_games_filtering_query + ')') };
     }
 
-    return util.sendModelOrError(res, db.WishToPlayBoardGame.findAll({
+    return util.sendModel(res, db.WishToPlayBoardGame.findAll({
         attributes: ['id_board_game', [db.sequelize.fn('count', 'id_user'), 'count']],
         where,
         include: [{ attribute: [], ...includes.defaultBoardGameIncludeSQ }],

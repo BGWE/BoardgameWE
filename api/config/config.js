@@ -6,14 +6,11 @@ let database = {
     host: process.env.DB_HOSTNAME,
     dialect: 'postgres',
     timezone: process.env.TIMEZONE || "UTC",
-    seederStorage: "sequelize"
+    seederStorage: "sequelize",
+    logging: (msg) => {
+      require("winston").loggers.get("db").debug(msg);
+    }
 };
-
-if (process.env.NODE_ENV !== "production") {
-    database.logging = console.log;
-} else {
-    database.logging = false;
-}
 
 if (process.env.USE_SSL) {
     database.dialectOptions = {ssl: true};

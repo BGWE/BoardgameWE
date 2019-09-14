@@ -1,6 +1,6 @@
 'use strict';
 module.exports = (sequelize, DataTypes) => {
-    var Game = sequelize.define('Game', {
+    let Game = sequelize.define('Game', {
         duration: { // in minutes
             type: DataTypes.INTEGER,
             validate: {min: 0},
@@ -51,5 +51,9 @@ module.exports = (sequelize, DataTypes) => {
             as: 'timer'
         });
     };
+
+    Game.RANKING_LOWER_BETTER = "POINTS_LOWER_BETTER";
+    Game.RANKING_HIGHER_BETTER = "POINTS_HIGHER_BETTER";
+    Game.RANKING_WIN_LOSE = "WIN_LOSE";
     return Game;
 };

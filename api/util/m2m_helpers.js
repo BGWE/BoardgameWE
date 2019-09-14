@@ -30,9 +30,6 @@ exports.addAssociations = function(req, res, m2m, transform) {
         }), {ignoreDuplicates: true, ... m2m.options }
     ).then(() => {
         return exports.sendAssociations(res, m2m, transform);
-    }).catch(err => {
-        console.debug(err);
-        return util.errorResponse(res);
     });
 };
 
@@ -48,7 +45,7 @@ exports.addAssociations = function(req, res, m2m, transform) {
  * @returns {*}
  */
 exports.sendAssociations = function(res, m2m, transform) {
-    return util.sendModelOrError(res, m2m.model_class.findAll({
+    return util.sendModel(res, m2m.model_class.findAll({
         where: { [m2m.fixed.field]: m2m.fixed.id },
         include: m2m.other.includes,
         ... m2m.options
@@ -78,9 +75,6 @@ exports.deleteAssociations = function(req, res, m2m, transform) {
         ... m2m.options
     }).then(() => {
         return exports.sendAssociations(res, m2m, transform);
-    }).catch(err => {
-        console.debug(err);
-        return util.errorResponse(res);
     });
 };
 

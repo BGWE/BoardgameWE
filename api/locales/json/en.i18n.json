@@ -1,0 +1,162 @@
+{
+  "achievements": {
+    "GAM_B_WON": {
+      "descr": {
+        "one": "You won your first game",
+        "other": "You won %d games"
+      }
+    },
+    "GAM_B_00_WON": {
+      "title": "One small step for a man"
+    },
+    "GAM_B_01_WON": {
+      "title": "Sergeant"
+    },
+    "GAM_B_02_WON": {
+      "title": "Captain"
+    },
+    "GAM_B_03_WON": {
+      "title": "General"
+    },
+    "GAM_B_04_WON": {
+      "title": "Charles Martel"
+    },
+    "GAM_B_05_WON": {
+      "title": "Alexander the Great"
+    },
+    "GAM_B_06_WON": {
+      "title": "Hannibal Barca"
+    },
+    "GAM_B_07_WON": {
+      "title": "Attila the Hun"
+    },
+    "GAM_B_08_WON": {
+      "title": "Napoléon Bonaparte"
+    },
+    "GAM_B_09_WON": {
+      "title": "Subutai"
+    },
+    "GAM_B_LOST": {
+      "descr": {
+        "one": "You lost your first game",
+        "other": "You lost %d games"
+      }
+    },
+    "GAM_B_00_LOST": {
+      "title": "Perseverance I"
+    },
+    "GAM_B_01_LOST": {
+      "title": "Perseverance II"
+    },
+    "GAM_B_02_LOST": {
+      "title": "Perseverance III"
+    },
+    "EVE_B_ATTENDED": {
+      "descr": {
+        "one": "Attend to your first event",
+        "other": "Attend %d events"
+      }
+    },
+    "EVE_B_00_ATTENDED": {
+      "title": "Novice componion"
+    },
+    "EVE_B_01_ATTENDED": {
+      "title": "Veteran componion"
+    },
+    "EVE_B_02_ATTENDED": {
+      "title": "Componion among componions"
+    },
+    "GAM_B_PLAYED": {
+      "descr": {
+        "one": "You played to your first game",
+        "other": "You played to %d games"
+      }
+    },
+    "GAM_B_00_PLAYED": {
+      "title": "Bachelor"
+    },
+    "GAM_B_01_PLAYED": {
+      "title": "Master I"
+    },
+    "GAM_B_02_PLAYED": {
+      "title": "Master II"
+    },
+    "BGA_B_OWNED": {
+      "descr": {
+        "one": "Own your first board game",
+        "other": "Own %d boardgames"
+      }
+    },
+    "BGA_B_00_OWNED": {
+      "title": "A journey of a thousand miles begins with a single step"
+    },
+    "BGA_B_01_OWNED": {
+      "title": "It's alright mom, I'm not going to get addicted"
+    },
+    "BGA_B_02_OWNED": {
+      "title": "Amateur"
+    },
+    "BGA_B_03_OWNED": {
+      "title": "Initiate"
+    },
+    "BGA_B_04_OWNED": {
+      "title": "Collector"
+    },
+    "BGA_B_05_OWNED": {
+      "title": "Retailer"
+    },
+    "BGA_B_06_OWNED": {
+      "title": "Galerist"
+    },
+    "BGA_B_07_OWNED": {
+      "title": "Curator"
+    },
+    "BGA_B_08_OWNED": {
+      "title": "Warehouse manager"
+    },
+    "BGA_B_09_OWNED": {
+      "title": "Amazon"
+    },
+    "BGA_B_PLAYED": {
+      "descr": "You have played %d discinct board games"
+    },
+    "BGA_B_00_PLAYED": {
+      "title": "Selective"
+    },
+    "BGA_B_01_PLAYED": {
+      "title": "Curious"
+    },
+    "BGA_B_02_PLAYED": {
+      "title": "Eclectic"
+    },
+    "BGA_B_03_PLAYED": {
+      "title": "Explorer"
+    },
+    "BGA_B_04_PLAYED": {
+      "title": "Marco Polo"
+    },
+    "BGA_B_05_PLAYED": {
+      "title": "Magellan"
+    },
+    "BGA_B_06_PLAYED": {
+      "title": "Christopher Columbus"
+    },
+    "BGA_B_07_PLAYED": {
+      "title": "Ibn Battuta"
+    },
+    "BGA_B_08_PLAYED": {
+      "title": "James Cook"
+    },
+    "BGA_B_09_PLAYED": {
+      "title": "Vasco de Gama"
+    },
+    "BGA_A_TASTEFUL": {
+      "descr": "Own 7 wonders, Scythe and Inis",
+      "title": "Good taste"
+    },
+    "INT_A_EASTEREGG-ONION": {
+      "descr": "You found yourself a new componion :)",
+      "title": "Onion Steak Haché!"
+    }
+  }
+}

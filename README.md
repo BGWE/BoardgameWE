@@ -1,6 +1,14 @@
 # BoardgameWE
 
-##
+## Achievement internationalization
+
+When adding new content to "translations.json", the file should be converted to json with 'i18n-csv2json-cli' and
+commited/pushed.
+
+```bash
+# from "api" folder
+../node_modules/i18n-csv2json-cli/bin/main.js --from locales/translations.csv --to locales/json --format
+```
 
 ## Environment variables
 
@@ -17,3 +25,4 @@ variables which are undefined will be read from the `.env` file.
 - PORT: node sever port
 - TIMEZONE: default
 - USE_SSL: whether or not the api should communicate with the database with SSL
+- VERBOSITY: one of `{"debug", "info", "warn", "error", "critical"}`. If missing, determined based on the NODE_ENV env variable.

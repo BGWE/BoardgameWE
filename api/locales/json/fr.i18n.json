@@ -1,0 +1,162 @@
+{
+  "achievements": {
+    "GAM_B_WON": {
+      "descr": {
+        "one": "Tu a gagné ta première partie",
+        "other": "Tu as gagné %d parties"
+      }
+    },
+    "GAM_B_00_WON": {
+      "title": "C'est un petit pas pour l'homme"
+    },
+    "GAM_B_01_WON": {
+      "title": "Sergent"
+    },
+    "GAM_B_02_WON": {
+      "title": "Capitaine"
+    },
+    "GAM_B_03_WON": {
+      "title": "Général"
+    },
+    "GAM_B_04_WON": {
+      "title": "Charles Martel"
+    },
+    "GAM_B_05_WON": {
+      "title": "Alexandre le Grand"
+    },
+    "GAM_B_06_WON": {
+      "title": "Hannibal Barca"
+    },
+    "GAM_B_07_WON": {
+      "title": "Attila le Hun"
+    },
+    "GAM_B_08_WON": {
+      "title": "Napoléon Bonaparte"
+    },
+    "GAM_B_09_WON": {
+      "title": "Subutai"
+    },
+    "GAM_B_LOST": {
+      "descr": {
+        "one": "Tu as perdu ta première partie",
+        "other": "Tu as perdu %d parties"
+      }
+    },
+    "GAM_B_00_LOST": {
+      "title": "Persévérant I"
+    },
+    "GAM_B_01_LOST": {
+      "title": "Persévérant II"
+    },
+    "GAM_B_02_LOST": {
+      "title": "Persévérant III"
+    },
+    "EVE_B_ATTENDED": {
+      "descr": {
+        "one": "Tu as participé à un premier événement",
+        "other": "Tu as participé à %d événements"
+      }
+    },
+    "EVE_B_00_ATTENDED": {
+      "title": "Compognon novice"
+    },
+    "EVE_B_01_ATTENDED": {
+      "title": "Compognon vétéran"
+    },
+    "EVE_B_02_ATTENDED": {
+      "title": "Compognon parmi les compognons"
+    },
+    "GAM_B_PLAYED": {
+      "descr": {
+        "one": "Tu as joué à ta première partie",
+        "other": "Tu as joué à %d parties"
+      }
+    },
+    "GAM_B_00_PLAYED": {
+      "title": "Bachelier"
+    },
+    "GAM_B_01_PLAYED": {
+      "title": "Master I"
+    },
+    "GAM_B_02_PLAYED": {
+      "title": "Master II"
+    },
+    "BGA_B_OWNED": {
+      "descr": {
+        "one": "Tu as acquis ton premier jeu",
+        "other": "Tu possèdes %d jeux"
+      }
+    },
+    "BGA_B_00_OWNED": {
+      "title": "Un voyage d'un millier de kilomètres commence avec un seul pas"
+    },
+    "BGA_B_01_OWNED": {
+      "title": "Tout va bien maman, je ne vais pas devenir accro"
+    },
+    "BGA_B_02_OWNED": {
+      "title": "Amateur"
+    },
+    "BGA_B_03_OWNED": {
+      "title": "Initié"
+    },
+    "BGA_B_04_OWNED": {
+      "title": "Collectionneur"
+    },
+    "BGA_B_05_OWNED": {
+      "title": "Re-vendeur"
+    },
+    "BGA_B_06_OWNED": {
+      "title": "Galeriste"
+    },
+    "BGA_B_07_OWNED": {
+      "title": "Curateur"
+    },
+    "BGA_B_08_OWNED": {
+      "title": "Gestionnaire d'entrepôt"
+    },
+    "BGA_B_09_OWNED": {
+      "title": "Amazon"
+    },
+    "BGA_B_PLAYED": {
+      "descr": "Tu as joué à %d jeux différents"
+    },
+    "BGA_B_00_PLAYED": {
+      "title": "Sélectif"
+    },
+    "BGA_B_01_PLAYED": {
+      "title": "Curieux"
+    },
+    "BGA_B_02_PLAYED": {
+      "title": "Éclectique"
+    },
+    "BGA_B_03_PLAYED": {
+      "title": "Explorateur"
+    },
+    "BGA_B_04_PLAYED": {
+      "title": "Macro Polo"
+    },
+    "BGA_B_05_PLAYED": {
+      "title": "Magellan"
+    },
+    "BGA_B_06_PLAYED": {
+      "title": "Christophe Colomb"
+    },
+    "BGA_B_07_PLAYED": {
+      "title": "Ibn Battuta"
+    },
+    "BGA_B_08_PLAYED": {
+      "title": "James Cook"
+    },
+    "BGA_B_09_PLAYED": {
+      "title": "Vasco de Gama"
+    },
+    "BGA_A_TASTEFUL": {
+      "descr": "Tu possèdes 7 Wonders, Scythe et Inis",
+      "title": "Goût distingué"
+    },
+    "INT_A_EASTEREGG-ONION": {
+      "descr": "Tu t'es trouvé un nouveau compognon :)",
+      "title": "Onion Steak Haché!"
+    }
+  }
+}

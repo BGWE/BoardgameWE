@@ -1,12 +1,13 @@
 const db = require("./models/index");
 const GameController = require("./GameController");
 const util = require("./util/util");
+const lodash = require("lodash");
 
 const AGGREGATE = {
     sum: (array) => array.reduce((acc, curr) => acc + curr),
     freq: (array) => array.reduce((acc, curr) => acc + curr) * 1.0 / array.length,
     count: (array) => array.length,
-    count_unique: (array) => util.unique(array).length
+    count_unique: (array) => lodash.uniq(array).length
 };
 
 const extractPlayerDescriptor = (gamePlayer) => {
@@ -183,18 +184,18 @@ exports.computeGameRankings = function(games) {
 
 exports.getRankings = function (req, res) {
     let filtering = { where: {}, include: GameController.gameFullIncludeSQ};
-    return util.sendModelOrError(res, db.Game.findAll(filtering), games => exports.computeGameRankings(games));
+    return util.sendModel(res, db.Game.findAll(filtering), games => exports.computeGameRankings(games));
 };
 
 exports.getEventRankings = function(req, res) {
-    return util.sendModelOrError(res, db.Game.findAll({
+    return util.sendModel(res, db.Game.findAll({
         where: {id_event: parseInt(req.params.eid)},
         include: GameController.gameFullIncludesSQ
     }), games => exports.computeGameRankings(games));
 };
 
 exports.getEventRanking = function(req, res) {
-    return util.sendModelOrError(res, db.Game.findAll({
+    return util.sendModel(res, db.Game.findAll({
         where: {id_event: parseInt(req.params.eid)},
         include: GameController.gameFullIncludesSQ
     }), games => {
