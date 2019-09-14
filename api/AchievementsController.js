@@ -50,8 +50,6 @@ exports.sendUserAchievements = function (req, res, id_user) {
     where: {id_user}
   }).then(achvmts => {
     return util.successResponse(res, Achievements.format_all(achvmts, req));
-  }).catch(err => {
-    return util.errorResponse(res);
   });
 };
 
@@ -59,10 +57,6 @@ exports.getCurrentUserAchievements = function (req, res) {
   const uid = userutil.getCurrUserId(req);
   return exports.checkAchievements(uid).then(created => {
     return exports.sendUserAchievements(req, res, uid);
-  }).catch(err => {
-    console.log("Error in getCurrentUserAchievements");
-    console.log(err);
-    return util.errorResponse(res);
   });
 };
 
@@ -70,19 +64,12 @@ exports.getUserAchievements = function(req, res) {
   const uid = parseInt(req.params.uid);
   return exports.checkAchievements(uid).then(created => {
     return exports.sendUserAchievements(req, res, uid);
-  }).catch(err => {
-    console.log("Error in getUserAchievements");
-    console.log(err);
-    return util.errorResponse(res);
   });
 };
 
 exports.addOnionAchievement = function(req, res) {
   return addAchievement(userutil.getCurrUserId(req), Achievements.A.EASTER_EGG_ONION).then(achvmt => {
     return util.successResponse(res, Achievements.format(achvmt[0], req));
-  }).catch(err => {
-    console.log(err);
-    return util.errorResponse(res);
   });
 };
 

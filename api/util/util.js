@@ -101,36 +101,20 @@ exports.errorResponse = function(res) {
  * @returns {*}
  */
 exports.detailErrorResponse = function(res, code, msg, errors) {
-    errors = errors === undefined ? [] : errors.array({ onlyFirstError: true });
-    return res.status(code).json({success: false, message: msg, errors});
+  errors = errors === undefined ? [] : errors.array({onlyFirstError: true});
+  return res.status(code).json({success: false, message: msg, errors});
 };
 
-exports.sendModelOrError = function(res, promise, transform) {
-    if (transform === undefined) {
-        transform = (a) => a; // identity by default
+exports.sendModel = function(res, promise, transform) {
+  if (transform === undefined) {
+    transform = (a) => a; // identity by default
+  }
+  return promise.then(obj => {
+    if (!obj) {
+      return exports.detailErrorResponse(res, 404, "not found");
     }
-    return promise
-        .then(obj => {
-            if (!obj) {
-                return exports.detailErrorResponse(res, 404, "not found");
-            }
-            return exports.successResponse(res, transform(obj));
-        })
-        .catch(err => {
-            console.log(err);
-            return exports.errorResponse(res);
-        })
-};
-
-
-exports.handleDeletion = function(res, promise) {
-    return promise
-        .then(obj => {
-            return exports.successResponse(res, exports.successObj);
-        })
-        .catch(err => {
-            return exports.errorResponse(res);
-        })
+    return exports.successResponse(res, transform(obj));
+  });
 };
 
 exports.asyncMiddleware = function(fn) {

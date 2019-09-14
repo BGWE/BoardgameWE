@@ -54,7 +54,7 @@ const getInvites = function(where, req, res) {
             ... where
         }
     }
-    return util.sendModelOrError(res, db.EventInvite.findAll({ where, include: exports.eventInviteIncludes }));
+    return util.sendModel(res, db.EventInvite.findAll({ where, include: exports.eventInviteIncludes }));
 };
 
 exports.listEventInvites = function(req, res) {
@@ -100,14 +100,12 @@ exports.sendEventInvite = function(req, res) {
             }
 
             return Promise.all(queries).then(() => {
-                return util.sendModelOrError(res, db.EventInvite.findOne({
+                return util.sendModel(res, db.EventInvite.findOne({
                     where: invite_pk, transaction,
                     include: exports.eventInviteIncludes
                 }));
             });
         });
-    }).catch(err => {
-        return util.detailErrorResponse(res, 500, err);
     });
 };
 
@@ -132,14 +130,12 @@ exports.handleEventInvite = function(req, res) {
             queries.push(access_state.invite.save({ transaction }));
 
             return Promise.all(queries).then(() => {
-                return util.sendModelOrError(res, db.EventInvite.findOne({ where: {
+                return util.sendModel(res, db.EventInvite.findOne({ where: {
                     id_event: eid,
                     id_invitee: current_uid
                 }, transaction, include: exports.eventInviteIncludes }));
             });
         });
-    }).catch(err => {
-        return util.detailErrorResponse(res, 500, err);
     });
 };
 
@@ -151,7 +147,7 @@ exports.listJoinRequests = function(req, res) {
             ... where
         }
     }
-    return util.sendModelOrError(res, db.EventJoinRequest.findAll({ where, include: exports.eventJoinRequestIncludes }));
+    return util.sendModel(res, db.EventJoinRequest.findAll({ where, include: exports.eventJoinRequestIncludes }));
 };
 
 exports.sendJoinRequest = function(req, res) {
@@ -196,14 +192,12 @@ exports.sendJoinRequest = function(req, res) {
             }
 
             return Promise.all(queries).then(() => {
-                return util.sendModelOrError(res, db.EventJoinRequest.findOne({
+                return util.sendModel(res, db.EventJoinRequest.findOne({
                     where: request_pk, transaction,
                     include: exports.eventJoinRequestIncludes
                 }));
             })
         });
-    }).catch(err => {
-        return util.detailErrorResponse(res, 500, err);
     });
 };
 
@@ -229,14 +223,12 @@ exports.handleJoinRequest = function(req, res) {
             queries.push(access_state.request.save({ transaction }));
 
             return Promise.all(queries).then(() => {
-                return util.sendModelOrError(res, db.EventJoinRequest.findOne({ where: {
+                return util.sendModel(res, db.EventJoinRequest.findOne({ where: {
                     id_requester: req.body.id_requester,
                     id_event: eid
                 }, transaction, include: exports.eventJoinRequestIncludes }));
             });
         });
-    }).catch(err => {
-        return util.detailErrorResponse(res, 500, err);
     });
 };
 
@@ -268,8 +260,6 @@ exports.joinEvent = function(req, res) {
                 return util.sendSuccessObj(res);
             });
         });
-    }).catch(err => {
-        return util.detailErrorResponse(res, 500, err);
     });
 };
 
@@ -292,7 +282,5 @@ exports.deleteEventAttendee = function(req, res) {
                 return EventController.sendEventAttendees(eid, res, { transaction });
             });
         });
-    }).catch(err => {
-        return util.detailErrorResponse(res, 500, err);
     });
 };

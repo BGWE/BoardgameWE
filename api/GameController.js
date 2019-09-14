@@ -45,7 +45,7 @@ exports.fromGamePlayersToRanks = function(game) {
 };
 
 exports.buildFullGame = (gameId, res) => {
-    return util.sendModelOrError(res, db.Game.findOne({
+    return util.sendModel(res, db.Game.findOne({
         where: {id: gameId},
         include: exports.gameFullIncludesSQ
     }), g => exports.fromGamePlayersToRanks(g));
@@ -108,8 +108,6 @@ exports.addGameQuery = function(eid, req, res) {
         })
     }).then(game => {
         return exports.buildFullGame(game.id, res);
-    }).catch(err => {
-        return util.errorResponse(res);
     });
 };
 
@@ -154,9 +152,6 @@ exports.updateEventGame = function(req, res) {
             });
     }).then(game => {
         return exports.buildFullGame(game.id, res);
-    }).catch(err => {
-        console.error(err);
-        return util.errorResponse(res);
     });
 };
 
@@ -172,7 +167,7 @@ exports.sendAllGamesFiltered = function (filtering, res, options) {
     if (!options) {
         options = {};
     }
-    return util.sendModelOrError(res, db.Game.findAll(Object.assign(options, {
+    return util.sendModel(res, db.Game.findAll(Object.assign(options, {
         where: filtering,
         include: exports.gameFullIncludesSQ
     })), games => {
@@ -197,13 +192,15 @@ exports.getGame = function (req, res) {
 
 exports.deleteGame = function (req, res) {
     const gid = parseInt(req.params.gid);
-    return util.handleDeletion(res, db.sequelize.transaction(res, (t) => {
+    return db.sequelize.transaction(res, (t) => {
         return db.GamePlayer.destroy({
             where: {id_game: gid}
         }).then(() => {
             return db.Game.destroy({where: {id: gid}}, {transaction: t});
         });
-    }));
+    }).then(() => {
+      return util.successResponse(res, exports.successObj);
+    });
 };
 
 exports.getEventGames = function(req, res) {
