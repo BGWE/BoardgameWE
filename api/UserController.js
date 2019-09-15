@@ -24,7 +24,7 @@ exports.notValidatedErrorMsg = 'An admin must accept your registration request b
  */
 exports.removeSensitive = function(user) {
     const attributes = includes.userExcludedAttributes;
-    for (var i = 0; i < attributes.length; ++i) {
+    for (let i = 0; i < attributes.length; ++i) {
         user[attributes[i]] = undefined;
     }
     return user;
@@ -34,52 +34,58 @@ const handleUserResponse = function(res, promise) {
     return util.sendModel(res, promise, user => exports.removeSensitive(user));
 };
 
-exports.signIn = function(req, res) {
-    return db.User.findOne({
-        where: { username: {
-                [Sequelize.Op.iLike]: "%" + req.body.username + "%" } }
-    }).then(user => {
-        if (!user) {
-            return util.detailErrorResponse(res, 401, 'Authentication failed. User not found.');
-        } else {
-            let token_payload = {
-                id: user.id,
-                email: user.email,
-                username: user.username,
-                surname: user.surname,
-                name: user.name
-            };
-            return user.validPassword(req.body.password).then(
-                password_ok => {
-                    if (!password_ok) {
-                        return util.detailErrorResponse(res, 401, 'Authentication failed. User not found.');
-                    } else if (!user.validated) {
-                        return util.detailErrorResponse(res, 403, exports.notValidatedErrorMsg);
-                    } else {
-                        return util.successResponse(res, {
-                            token: jwt.sign(token_payload, config.jwt_secret_key, { expiresIn: config.jwt_duration }) // 4 days
-                        });
-                    }
-                }
-            )
-        }
-    })
+exports.signIn = function (req, res) {
+  return db.User.findOne({
+    where: {username: {[Sequelize.Op.iLike]: "%" + req.body.username + "%"}}
+  }).then(user => {
+    if (!user) {
+      return util.detailErrorResponse(res, 401, 'Authentication failed. User not found.');
+    }
+    let token_payload = {
+      id: user.id,
+      email: user.email,
+      username: user.username,
+      surname: user.surname,
+      name: user.name
+    };
+    return user.validPassword(req.body.password).then(password_ok => {
+      if (!password_ok) {
+        return util.detailErrorResponse(res, 401, 'Authentication failed. User not found.');
+      } else if (!user.validated) {
+        return util.detailErrorResponse(res, 403, exports.notValidatedErrorMsg);
+      } else {
+        return util.successResponse(res, {
+          token: jwt.sign(token_payload, config.jwt_secret_key, {expiresIn: config.jwt_duration}) // 4 days
+        });
+      }
+    });
+  });
 };
 
-exports.register = function(req, res) {
-    return bcrypt.hash(req.body.password, 10, function(err, hash) {
+exports.register = function (req, res) {
+  return bcrypt.hash(req.body.password, 10).then(hash => {
+    return db.sequelize.transaction(transaction => {
+      return db.User.findOne({where: { [db.Op.or]: [
+            {email: req.body.email},
+            {username: req.body.username}
+          ]}, transaction}).then(user => {
+        if (user) {
+          return util.detailErrorResponse(res, 403, "user exists");
+        }
         return db.User.create({
-                name: req.body.name,
-                surname: req.body.surname,
-                email: req.body.email,
-                password: hash,
-                username: req.body.username,
-                admin: false, // by default not admin
-                validated: null // by default not accepted nor refused
-            }).then((user) => {
-                return util.successResponse(res, exports.removeSensitive(user));
-            });
+          name: req.body.name,
+          surname: req.body.surname,
+          email: req.body.email,
+          password: hash,
+          username: req.body.username,
+          admin: false, // by default not admin
+          validated: null // by default not accepted nor refused
+        }, {transaction}).then((user) => {
+          return util.successResponse(res, exports.removeSensitive(user));
+        });
+      });
     });
+  });
 };
 
 exports.getCurrentUser = function(req, res) {
