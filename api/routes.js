@@ -800,7 +800,12 @@ module.exports = function(app) {
      * returned data is a list (not an actual object).
      */
     app.route("/event/:eid/games")
-        .get(event_access.read, error_wrapper(GameController.getEventGames));
+        .get(
+            event_access.read,
+            validation.getPaginationValidators(),
+            validation.validateOrBlock("invalid pagination parameters"),
+            error_wrapper(GameController.getEventGames)
+        );
 
     /**
      * @api {get} /event/:id/games/latest Get recent event game
@@ -1171,11 +1176,16 @@ module.exports = function(app) {
      * @apiName GetBoardGames
      * @apiGroup Board game
      * @apiDescription Get all the board games of the application.
-     *
+     * @apiUse PaginationParameters
+     * @apiParam {String} format=expansions One of `{expansions, plain}`
      * @apiUse TokenHeaderRequired
      */
     app.route("/board_games")
-        .get(error_wrapper(BoardGameController.getBoardGames));
+        .get(
+            validation.getPaginationValidators(),
+            validation.validateOrBlock("invalid pagination parameters"),
+            error_wrapper(BoardGameController.getBoardGames)
+        );
 
     // Game
     // Disabled, games are mostly added through event

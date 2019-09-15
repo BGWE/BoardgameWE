@@ -1,5 +1,5 @@
 const moment = require("moment");
-const { body, validationResult } = require('express-validator/check');
+const { query, body, validationResult } = require('express-validator/check');
 const db = require('../models/index');
 const util = require('./util');
 
@@ -172,6 +172,13 @@ exports.getTimerValidators = function(is_create) {
             .optional({nullable: true}).isString().trim().not().isEmpty(),
         body('player_timers.*.color').isString().matches(/^#[a-f0-9]{6}([a-f0-9]{2})?$/i)
     ]
+};
+
+exports.getPaginationValidators = function() {
+    return [
+        query('max_items').optional().isInt({gt: 0}),
+        query('start').optional().isInt({gt: -1})
+    ];
 };
 
 exports.modelExists = (builder, model) => {
