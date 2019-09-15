@@ -81,7 +81,7 @@ module.exports = function(io) {
                     return await access.can_access_timer(access_type, () => this.id_timer, () => getCurrentUser(this.socket).id)
                 }
             } catch (e) {
-                if (e instanceof NotFoundError) {
+                if (e instanceof access.NotFoundError) {
                     return false;
                 } else {
                     throw  e;
@@ -274,8 +274,8 @@ module.exports = function(io) {
                 sendErrorEvent(socket, "cannot follow more than one timer at a time");
             } else {
                 timer_room = new TimerRoom(socket, id_timer);
-                timer_room.setTimer();
-                if (timer_room.can_access_timer(access.ACCESS_READ)) {
+                await timer_room.setTimer();
+                if (await timer_room.can_access_timer(access.ACCESS_READ)) {
                     timer_room.join();
                 } else {
                     timer_room = null;
