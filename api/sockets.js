@@ -379,7 +379,7 @@ module.exports = function(io) {
             });
         });
 
-        socket.on('timer_change_player_turn_order', callbackWithCheck(socket, checks.access_timers("timer_change_player_turn_order", access.ACCESS_WRITE), async function() {
+        socket.on('timer_change_player_turn_order', callbackWithCheck(socket, checks.access_timers("timer_change_player_turn_order", access.ACCESS_WRITE), async function(new_player_turn_order) {
             await db.sequelize.transaction(function(transaction) {
                 return Promise.all([
                     timer_room.updateCurrentPlayer(0, transaction),
