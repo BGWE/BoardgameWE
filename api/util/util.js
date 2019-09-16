@@ -29,6 +29,10 @@ exports.boolOrDefault = function(b, deflt) {
  * @returns {*}
  */
 exports.rank = (data, score_fn, lower_better, write_fn) => {
+    if (data === undefined) {
+        return [];
+    }
+
     write_fn = write_fn || ((o, f, v) => {o[f] = v;});
     let copy = data.slice(0);
     copy.sort((a, b) => (lower_better ? -1 : 1) * (score_fn(b) - score_fn(a)));
@@ -60,7 +64,7 @@ exports.rankPlayersFromData = (dict, aggregate) => {
         scores.push({
             score: dict.points[_key].length === 0 ? 0 : aggregate(dict.points[_key]),
             player: dict.players[_key]
-        })
+        });
     }
     return exports.rank(scores, (player) => player.score, false);
 };
