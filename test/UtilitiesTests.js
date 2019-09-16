@@ -25,6 +25,10 @@ describe('Utilities "api/util" tests:', () => {
     });
 
     it('should rank an array of objects', () => {
+      const undefData;
+      const undefRank = util.rank(undefData, o => o.score, true, (o, f, v) => { o[f] = v; });
+      assert.equal(undefRank, [], "rank() must return an empty array");
+
       const data = [{ score: 1 }, { score: 2 }];
       const ranked = util.rank(data, o => o.score, true, (o, f, v) => { o[f] = v; });
       assert.notEqual(data, ranked, "rank() must return a copy");
