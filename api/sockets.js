@@ -22,6 +22,22 @@ const getCurrentUser = function(socket) {
 };
 
 /**
+ * Generates a callback that first checks an access condition before possibly executing the actual callback
+ * @param socket Socket
+ * @param check_fn A callable that takes a socket and returns a boolean
+ * @param callback The actual callback
+ * @returns {Function}
+ */
+const callbackWithCheck = function(socket, check_fn, callback) {
+  return async (...args) => {
+    const has_access = await check_fn(socket);
+    if (has_access) {
+      await callback(...args);
+    }
+  };
+};
+
+/**
  * Success callback to either TimerRoom.nextPlayer or TimerRoom.prevPlayer
  * @param timer_room
  * @param next
@@ -81,7 +97,7 @@ module.exports = function(io) {
                     return await access.can_access_timer(access_type, () => this.id_timer, () => getCurrentUser(this.socket).id)
                 }
             } catch (e) {
-                if (e instanceof NotFoundError) {
+                if (e instanceof access.NotFoundError) {
                     return false;
                 } else {
                     throw  e;
@@ -216,7 +232,7 @@ module.exports = function(io) {
                 const next_player = (self.timer.current_player + (take_next ? 1 : count - 1)) % count;
                 let results = [await self.updateCurrentPlayer(next_player, transaction)];
                 if (stop_action.success) {
-                    results.push(await self.startTimer(transaction));
+                    results.push(await self.startTimer(next_player, transaction));
                 }
                 return results;
             });
@@ -251,19 +267,19 @@ module.exports = function(io) {
          */
         let timer_room = null;
 
-        let middlewares = {
-            timers(name, access_type) {
-                return (s, next) => {
+        let checks = {
+            access_timers(name, access_type) {
+                return (s) => {
                     if (!timer_room) {
-                        sendErrorEvent(socket, "cannot execute '" + name + "': not following any timer");
-                        return;
+                        sendErrorEvent(s, "cannot execute '" + name + "': not following any timer");
+                        return false;
                     }
                     if (access_type && !timer_room.can_access_timer(access_type)) {
-                        sendErrorEvent(socket, "cannot execute '" + name + "': this timer does not exist or you don't have the authorization to execute a '" + access_type + "' operation.");
-                        return;
+                        sendErrorEvent(s, "cannot execute '" + name + "': this timer does not exist or you don't have the authorization to execute a '" + access_type + "' operation.");
+                        return false;
                     }
                     console.debug(name + ' - ' + timer_room.getRoomName());
-                    next();
+                    return true;
                 }
             }
         };
@@ -274,8 +290,8 @@ module.exports = function(io) {
                 sendErrorEvent(socket, "cannot follow more than one timer at a time");
             } else {
                 timer_room = new TimerRoom(socket, id_timer);
-                timer_room.setTimer();
-                if (timer_room.can_access_timer(access.ACCESS_READ)) {
+                await timer_room.setTimer();
+                if (await timer_room.can_access_timer(access.ACCESS_READ)) {
                     timer_room.join();
                 } else {
                     timer_room = null;
@@ -296,7 +312,7 @@ module.exports = function(io) {
             }
         });
 
-        socket.on('timer_start', middlewares.timers("timer_start", access.ACCESS_WRITE), async function() {
+        socket.on('timer_start', callbackWithCheck(socket, checks.access_timers("timer_start", access.ACCESS_WRITE), async function() {
             try {
                 const action = await db.sequelize.transaction(async (transaction) => {
                     return await timer_room.startTimer(null, transaction);
@@ -309,9 +325,9 @@ module.exports = function(io) {
             } catch (e) {
                 sendErrorEvent(socket, "cannot update timer: " + e.message)
             }
-        });
+        }));
 
-        socket.on('timer_stop', middlewares.timers("timer_stop", access.ACCESS_WRITE), async function() {
+        socket.on('timer_stop', callbackWithCheck(socket, checks.access_timers("timer_stop", access.ACCESS_WRITE), async function() {
             try {
                 const action = await db.sequelize.transaction(async (transaction) => {
                     return await timer_room.stopTimer(transaction);
@@ -324,19 +340,19 @@ module.exports = function(io) {
             } catch (e) {
                 sendErrorEvent(socket, "cannot update timer: " + e.message)
             }
-        });
+        }));
 
-        socket.on('timer_next', middlewares.timers("timer_next", access.ACCESS_WRITE), async function() {
+        socket.on('timer_next', callbackWithCheck(socket, checks.access_timers("timer_next", access.ACCESS_WRITE), async function() {
             timer_room.nextPlayer().then(genericHandleChangePlayer(timer_room, true)).catch(async (e) => {
                 sendErrorEvent(socket, "cannot update timer: " + e.message)
             });
-        });
+        }));
 
-        socket.on('timer_prev', middlewares.timers("timer_prev", access.ACCESS_WRITE), async function() {
+        socket.on('timer_prev', callbackWithCheck(socket, checks.access_timers("timer_prev", access.ACCESS_WRITE), async function() {
             timer_room.prevPlayer().then(genericHandleChangePlayer(timer_room, false)).catch(async (e) => {
                 sendErrorEvent(socket, "cannot update timer: " + e.message)
             });
-        });
+        }));
 
         socket.on('timer_delete', function(id_timer) {
             db.sequelize.transaction(async function (transaction) {
@@ -363,7 +379,7 @@ module.exports = function(io) {
             });
         });
 
-        socket.on('timer_change_player_turn_order', middlewares.timers("timer_change_player_turn_order", access.ACCESS_WRITE), async function() {
+        socket.on('timer_change_player_turn_order', callbackWithCheck(socket, checks.access_timers("timer_change_player_turn_order", access.ACCESS_WRITE), async function() {
             await db.sequelize.transaction(function(transaction) {
                 return Promise.all([
                     timer_room.updateCurrentPlayer(0, transaction),
@@ -376,7 +392,7 @@ module.exports = function(io) {
                 console.debug('timer_change_player_turn_order - Transaction error: ', error);
                 sendErrorEvent(socket, "failed to update player order");
             });
-        });
+        }));
 
         socket.on('error', function(err) {
             console.log(err);

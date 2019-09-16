@@ -20,6 +20,8 @@ class NotFoundError extends Error {
     }
 }
 
+exports.NotFoundError = NotFoundError;
+
 exports.can_access_event = async function(access_type, eid_callback, uid_callback) {
     const eid = eid_callback();
     const uid = uid_callback();

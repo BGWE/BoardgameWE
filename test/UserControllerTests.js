@@ -199,7 +199,7 @@ describe('User Controller Tests:', () => {
                     .end((err, res) => {
                         expect(err).to.be.null;
                         
-                        expect(res).to.have.status(403);
+                        expect(res).to.have.status(400);
                         expect(res.body).to.be.a('object');
                         expect(res.body).to.have.property('success');
                         expect(res.body.success).to.be.false;
