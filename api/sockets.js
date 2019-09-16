@@ -6,7 +6,7 @@ const TimerController = require('./TimerController');
 const db = require('./models/index');
 const moment = require('moment');
 const includes = require('./util/db_include');
-
+const logging = require('./util/logging');
 
 const sendErrorEvent = function(socket, message, event) {
     event = event || 'error';
@@ -278,14 +278,14 @@ module.exports = function(io) {
                         sendErrorEvent(s, "cannot execute '" + name + "': this timer does not exist or you don't have the authorization to execute a '" + access_type + "' operation.");
                         return false;
                     }
-                    console.debug(name + ' - ' + timer_room.getRoomName());
+                    io.logger.debug(name + ' - ' + timer_room.getRoomName());
                     return true;
                 }
             }
         };
 
         socket.on('timer_follow', async function(id_timer) {
-            console.debug('timer_follow - ' + id_timer);
+            io.logger.debug('timer_follow - ' + id_timer);
             if (timer_room !== null) {
                 sendErrorEvent(socket, "cannot follow more than one timer at a time");
             } else {
@@ -305,7 +305,7 @@ module.exports = function(io) {
                 sendErrorEvent(socket, "not following any timer: cannot unfollow");
                 return;
             }
-            console.debug('timer_unfollow - ' + timer_room.getRoomName());
+            io.logger.debug('timer_unfollow - ' + timer_room.getRoomName());
             if (timer_room !== null) {
                 timer_room.leave();
                 timer_room = null;
@@ -323,7 +323,8 @@ module.exports = function(io) {
                     sendErrorEvent(socket, 'cannot start timer: ' + action.error);
                 }
             } catch (e) {
-                sendErrorEvent(socket, "cannot update timer: " + e.message)
+                logging.logError(io.logger, e);
+                sendErrorEvent(socket);
             }
         }));
 
@@ -338,19 +339,22 @@ module.exports = function(io) {
                     sendErrorEvent(socket, 'cannot stop timer: ' + action.error);
                 }
             } catch (e) {
-                sendErrorEvent(socket, "cannot update timer: " + e.message)
+                logging.logError(io.logger, e);
+                sendErrorEvent(socket);
             }
         }));
 
         socket.on('timer_next', callbackWithCheck(socket, checks.access_timers("timer_next", access.ACCESS_WRITE), async function() {
             timer_room.nextPlayer().then(genericHandleChangePlayer(timer_room, true)).catch(async (e) => {
-                sendErrorEvent(socket, "cannot update timer: " + e.message)
+              logging.logError(io.logger, e);
+                sendErrorEvent(socket);
             });
         }));
 
         socket.on('timer_prev', callbackWithCheck(socket, checks.access_timers("timer_prev", access.ACCESS_WRITE), async function() {
             timer_room.prevPlayer().then(genericHandleChangePlayer(timer_room, false)).catch(async (e) => {
-                sendErrorEvent(socket, "cannot update timer: " + e.message)
+                logging.logError(io.logger, e);
+                sendErrorEvent(socket);
             });
         }));
 
@@ -375,22 +379,23 @@ module.exports = function(io) {
                 }
                 io.to(TimerRoom.buildRoomName(id_timer)).emit('timer_delete');
             }).catch(err => {
-                sendErrorEvent(socket, err.message)
+                logging.logError(io.logger, err);
+                sendErrorEvent(socket)
             });
         });
 
-        socket.on('timer_change_player_turn_order', callbackWithCheck(socket, checks.access_timers("timer_change_player_turn_order", access.ACCESS_WRITE), async function() {
+        socket.on('timer_change_player_turn_order', callbackWithCheck(socket, checks.access_timers("timer_change_player_turn_order", access.ACCESS_WRITE), async function(new_player_turn_order) {
             await db.sequelize.transaction(function(transaction) {
                 return Promise.all([
                     timer_room.updateCurrentPlayer(0, transaction),
                     ...new_player_turn_order.map(player => timer_room.changePlayerTurnOrder(player.id, player.turn_order, transaction))
                 ])
             }).then(async values => {
-                console.debug('timer_change_player_turn_order - Transaction completed with values: ', values);
+                io.logger.debug('timer_change_player_turn_order - Transaction completed with values: ', values);
                 await timer_room.emitWithState('timer_change_player_turn_order');
             }).catch(error => {
-                console.debug('timer_change_player_turn_order - Transaction error: ', error);
-                sendErrorEvent(socket, "failed to update player order");
+                logging.logError(io.logger, error);
+                sendErrorEvent(socket);
             });
         }));
 
@@ -399,10 +404,12 @@ module.exports = function(io) {
         });
 
         socket.on('disconnect', () => {
+            let message = "disconnect " + getCurrentUser(socket).id;
             if (timer_room !== null) {
+                message += " (leaving room " + timer_room.getRoomName() + ")";
                 socket.leave(timer_room);
             }
-            console.log('disconnect');
+            io.logger.info(message);
         });
     });
 

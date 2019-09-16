@@ -25,3 +25,4 @@ variables which are undefined will be read from the `.env` file.
 - PORT: node sever port
 - TIMEZONE: default
 - USE_SSL: whether or not the api should communicate with the database with SSL
+- VERBOSITY: one of `{"debug", "info", "warn", "error", "critical"}`. If missing, determined based on the NODE_ENV env variable.
