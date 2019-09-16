@@ -54,13 +54,13 @@ exports.rank = (data, score_fn, lower_better, write_fn) => {
 };
 
 exports.rankPlayersFromData = (dict, aggregate) => {
-    let scores = lodash.obj
+    let scores = [];
     for (let _key in dict.players) {
         if (!dict.players.hasOwnProperty(_key)) { continue; }
         scores.push({
             score: dict.points[_key].length === 0 ? 0 : aggregate(dict.points[_key]),
             player: dict.players[_key]
-        })
+        });
     }
     return exports.rank(scores, (player) => player.score, false);
 };
