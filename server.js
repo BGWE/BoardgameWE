@@ -87,8 +87,8 @@ app.use(winstonExpress.logger({
 const server = require('http').createServer(app);
 const sockets = require('./api/sockets');
 const io = require('socket.io')(server);
-io.set('logger', ws_logger);
-io.set('origins', 'boardgamecomponion.com:*');
+io.logger = ws_logger;
+io.set('origins', '*:*');
 sockets(io);
 
 /**---------------------*
