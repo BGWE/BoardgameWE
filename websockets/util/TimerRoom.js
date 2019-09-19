@@ -63,26 +63,23 @@ class TimerRoom {
         this.socket.leave(this.getRoomName());
     }
 
-    emit(context, action, data) {
-        context.to(this.getRoomName()).emit(action, data);
+    emit(sckt, action, data) {
+        sckt.to(this.getRoomName()).emit(action, data);
     }
 
     /**
      * Broadcast the action to the timer room, and sends the current state of the timer as message (fetches is from the database
+     * @param sckt The socket where to emit
      * @param action str
-     * @returns {Promise<void>}
+     * @returns {Promise<Model>}
      */
-    async emitWithState(context, action) {
+    async emitWithState(sckt, action) {
         const timer = await db.GameTimer.findOne({
             where: {id: this.id_timer},
             include: TimerController.getFullTimerIncludes()
         });
-        this.emit(context, action, timer);
+        this.emit(sckt, action, timer);
         return timer;
-    }
-
-    async timerCanBeAccessed(access_type) {
-
     }
 
     async getTimer(options) {
