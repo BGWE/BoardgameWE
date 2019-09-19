@@ -100,7 +100,7 @@ app.use(winstonExpress.logger({
  *      WEBSOCKET       *
  *----------------------*/
 const server = require('http').createServer(app);
-const sockets = require('./api/sockets');
+const sockets = require('./websockets/sockets');
 const io = require('socket.io')(server);
 io.logger = ws_logger;
 io.set('origins', '*:*');
