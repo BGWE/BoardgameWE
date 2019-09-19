@@ -13,6 +13,8 @@ module.exports = function(io) {
     })).on('authenticated', (socket) => {
         socket.logger = io.logger;
         timers(io, socket);
+
+
     });
 
 };

@@ -33,8 +33,8 @@ exports.callbackWithCheck = function(socket, check_fn, callback) {
  * Wraps a call to socket.on to handle logging and conditional access
  * @param sckt The socket. Should have a `logger` associated to it.
  * @param event The event name
- * @param callback An asynchronous callback
- * @param cond_fn {Promise<bool>} An asynchronous function for checking access to the callback. If cond_fn eventually
+ * @param callback  An asynchronous callback
+ * @param cond_fn An asynchronous function for checking access to the callback. If cond_fn eventually
  * returns false, the callback is not executed.
  */
 exports.on = (sckt, event, callback, cond_fn) => {
@@ -42,11 +42,11 @@ exports.on = (sckt, event, callback, cond_fn) => {
     const user = exports.getCurrentUser(sckt);
     sckt.logger.info('WS' + (user ? ` (user:${user.id}) ` : ' ') + `'${event}' ` + JSON.stringify(args));
     try {
-      const checked = cond_fn ? (await cond_fn(socket)) : true;
+      const checked = cond_fn ? (await cond_fn(sckt)) : true;
       if (checked) {
         await callback(...args);
       } else {
-        sckt.logger.debug(`condition for event '${event}' returns false`);
+        sckt.logger.warn(`condition for event '${event}' returns false`);
       }
     } catch (err) {
       logging.logError(sckt.logger, err);
