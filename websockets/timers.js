@@ -97,7 +97,7 @@ exports.attachHandlers = (glob_sckt, auth_sckt) => {
 
   /** Event 'timer_prev' */
   util.on(auth_sckt, 'timer_prev', async function() {
-    const values = await timer_room.nextPlayer();
+    const values = await timer_room.prevPlayer();
     await timer_room.emitWithState(glob_sckt, "timer_prev");
     // if timer was running, need to check result of prev player's timer start promise
     if (values.length === 2 && !values[1].success) {
