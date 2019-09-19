@@ -6,25 +6,11 @@ const {TimerRoom} = require("./util/TimerRoom");
 const access = require("../api//util/access_checks");
 
 /**
- * Success callback to either TimerRoom.nextPlayer or TimerRoom.prevPlayer
- * @param sckt
- * @param timer_room
- * @param next
- * @returns {Function}
- */
-const genericHandleChangePlayer = function(sckt, timer_room, next) {
-    const which = next ? "next" : "prev";
-    return async (values) => {
-
-    }
-};
-
-
-/**
  * @param glob_sckt The global socket
  * @param auth_sckt The authenticated socket
+ * @returns {Function|Promise} A handler for disconnect event, this should be executed when
  */
-module.exports = (glob_sckt, auth_sckt) => {
+exports.attachHandlers = (glob_sckt, auth_sckt) => {
   /**
    * stores the timer room the user is currently in
    */
@@ -154,12 +140,12 @@ module.exports = (glob_sckt, auth_sckt) => {
     await timer_room.emitWithState(glob_sckt, 'timer_change_player_turn_order');
   }, checks.access_timers(access.ACCESS_WRITE));
 
-    auth_sckt.on('disconnect', () => {
-        let message = "disconnect " + util.getCurrentUser(auth_sckt).id;
-        if (timer_room !== null) {
-            message += " (leaving room " + timer_room.getRoomName() + ")";
-            auth_sckt.leave(timer_room);
-        }
-        auth_sckt.logger.info(message);
-    });
+  /** Disconnect handler */
+  return async (auth_sckt, glob_sckt) => {
+    if (timer_room !== null) {
+      auth_sckt.logger.info(`timer disconnect - leaving room ${timer_room.getRoomName()}`);
+      timer_room.leave();
+      timer_room = null;
+    }
+  };
 };
