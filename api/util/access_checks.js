@@ -1,6 +1,7 @@
 const userutil = require("./user");
 const db = require("../models/index");
 const util = require("./util");
+const includes = require("./db_include");
 
 /**
  * Functions for checking accesses to resources
@@ -19,31 +20,25 @@ class NotFoundError extends Error {
     }
 }
 
+exports.NotFoundError = NotFoundError;
+
 exports.can_access_event = async function(access_type, eid_callback, uid_callback) {
     const eid = eid_callback();
     const uid = uid_callback();
-    const event = await db.Event.findByPk(eid);
+    let event = await db.Event.findByPk(eid, { include: includes.getEventUserAccessIncludes(uid) });
     if (!event) {
         throw new NotFoundError("event not found");
     }
-    const is_attendee = (await db.EventAttendee.count({ where: { id_user: uid, id_event: eid } })) === 1;
-    const is_creator = event.id_creator === uid;
-    const is_invited = (await db.EventInvite.count({ where: { id_event: eid, id_invitee: uid, status: db.EventInvite.STATUS_PENDING } })) === 1;
-    const is_in_event = is_attendee || is_creator || is_invited;
+    const current = includes.formatRawEventWithUserAccess(uid, event).dataValues.current;
+    const is_in_event = current.is_attendee || current.is_creator || current.is_invitee;
 
     // check write access
-    if (access_type === exports.ACCESS_ADMIN) {
-        if (is_creator) {
-            return true;
-        }
-    } else if (access_type === exports.ACCESS_WRITE) {
-        if (is_creator || (event.attendees_can_edit && is_attendee)) {
-            return true;
-        }
-    } else if (access_type === exports.ACCESS_READ) {
-        if (event.visibility === db.Event.VISIBILITY_PUBLIC || is_in_event) {
-            return true;
-        }
+    if (access_type === exports.ACCESS_ADMIN && current.is_creator) {
+        return true;
+    } else if (access_type === exports.ACCESS_WRITE && current.can_write) {
+        return true;
+    } else if (access_type === exports.ACCESS_READ && current.can_read) {
+        return true;
     } else if (access_type === exports.ACCESS_LIST) {
         if (event.visibility === db.Event.VISIBILITY_PRIVATE && !is_in_event) {
             return true;
@@ -53,26 +48,29 @@ exports.can_access_event = async function(access_type, eid_callback, uid_callbac
     return false;
 };
 
-exports.get_event_access_callback = (access_type, eid_callback, uid_callback) => {
+exports.get_event_access_callback = (access_type) => {
     return util.asyncMiddleware(async (req, res, next) => {
-        eid_callback = eid_callback || (() => parseInt(req.params.eid));
-        uid_callback = uid_callback || (() => userutil.getCurrUserId(req));
+        const eid_callback = () => parseInt(req.params.eid);
+        const uid_callback = () => userutil.getCurrUserId(req);
         try {
-            if (await can_access_event(access_type, eid_callback)) {
+            if (await exports.can_access_event(access_type, eid_callback, uid_callback)) {
                 next();
             } else {
                 return util.detailErrorResponse(res, 403, "you don't have the rights for executing this operation against this event ('" + access_type + "').");
             }
-        } catch (e if e instanceof NotFoundError) {
-            return util.detailErrorResponse(res, 404, "event not found");
+        } catch (e) {
+            if (e instanceof NotFoundError) {
+                return util.detailErrorResponse(res, 404, "event not found");
+            } else {
+                throw e;
+            }
         }
     });
 };
 
-exports.get_user_access_callback = (access_type, uid_callback) => {
-    uid_callback = uid_callback || ((req) => parseInt(req.params.uid));
+exports.get_user_access_callback = (access_type) => {
     return util.asyncMiddleware(async (req, res, next) => {
-        const uid = uid_callback(req);
+        const uid = parseInt(req.params.uid);
         const current_uid = userutil.getCurrUserId(req);
 
         // check write access

@@ -2,7 +2,7 @@ const util = require('./util/util');
 const db = require("./models/index");
 
 exports.getAppStatistics = function(req, res) {
-    return util.sendModelOrError(res, Promise.all([
+    return util.sendModel(res, Promise.all([
         db.Game.count(),
         db.User.count(),
         db.LibraryGame.count(),

@@ -1,10 +1,9 @@
-
 const db = require("./models/index");
 const bgg = require("./util/bgg");
 const util = require("./util/util");
 
 exports.getBoardGame = function(req, res) {
-    return util.sendModelOrError(res, db.BoardGame.findByPk(parseInt(req.params.bgid)));
+    return util.sendModel(res, db.BoardGame.findByPk(parseInt(req.params.bgid)));
 };
 
 exports.updateBoardGame = function(req, res) {
@@ -19,9 +18,7 @@ exports.updateBoardGame = function(req, res) {
         where: {id: bgid},
         fields: ["gameplay_video_url"]
     }).then(() => {
-        return util.sendModelOrError(res, db.BoardGame.findByPk(bgid));
-    }).catch(err => {
-        return util.errorResponse(res);
+        return util.sendModel(res, db.BoardGame.findByPk(bgid));
     });
 };
 
@@ -56,6 +53,7 @@ const boardGameFromBggResponse = function(gid, body) {
  * @param actionFn The action to perform, should return a promise
  * @returns {*}
  */
+// TODO use validation to check inputs of this request
 exports.executeIfBoardGameExists = function(gid, source, req, res, actionFn) {
     if (source !== "bgg") {
         return util.detailErrorResponse(res, 400, "Invalid source '" + source + "' (only supported are {bgg,}).");
@@ -63,15 +61,12 @@ exports.executeIfBoardGameExists = function(gid, source, req, res, actionFn) {
     return db.BoardGame.findOne({where: {bgg_id: gid}}).then(board_game => {
         if (board_game !== null) {
             return actionFn(board_game, req, res);
-        } else {
-            return bgg.getBoardGamePromise(gid, res, body => {
-                return db.BoardGame.create(boardGameFromBggResponse(gid, body)).then(board_game => {
-                    return actionFn(board_game, req, res);
-                }).catch(err => {
-                    return util.errorResponse(res);
-                });
-            });
         }
+        return bgg.getBoardGamePromise(gid, res, body => {
+            return db.BoardGame.create(boardGameFromBggResponse(gid, body)).then(board_game => {
+                return actionFn(board_game, req, res);
+            });
+        });
     });
 };
 
@@ -79,28 +74,28 @@ exports.addBoardGame = function(req, res) {
     // load info from board game geek
     const bggId = parseInt(req.body.bgg_id);
     return bgg.getBoardGamePromise(bggId, res, body => {
-        return util.sendModelOrError(res, db.BoardGame.create(boardGameFromBggResponse(bggId, body)));
+        return util.sendModel(res, db.BoardGame.create(boardGameFromBggResponse(bggId, body)));
     });
 };
 
 exports.getBoardGames = function(req, res) {
-    return util.sendModelOrError(res, db.BoardGame.findAll());
+    return util.sendModel(res, db.BoardGame.findAll());
 };
 
+// TODO use validation to check those fields
 exports.searchBoardGames = function(req, res) {
     const searchQuery = req.query.q;
     if (searchQuery == null || searchQuery.length === 0) {
         return util.detailErrorResponse(res, 400, "Invalid search query " + searchQuery + ".");
     }
-    return bgg.search(searchQuery)
-        .then(body => {
-            return util.successResponse(res, bgg.format_search_response(body));
-        }).catch(err => {
-            return util.errorResponse(res);
-        });
+    return bgg.search(searchQuery).then(body => {
+        return util.successResponse(res, bgg.format_search_response(body));
+    });
 };
 
 exports.deleteBoardGame = function(req, res) {
     const bgid = parseInt(req.params.bgid);
-    return util.handleDeletion(res, db.BoardGame.destroy({ where: {id: bgid} }));
+    return db.BoardGame.destroy({ where: {id: bgid} }).then(() => {
+        return exports.successResponse(res, exports.successObj);
+    });
 };

@@ -1,7 +1,7 @@
 const db = require("./models/index");
 const util = require("./util/util");
 const includes = require("./util/db_include");
-const { validationResult } = require('express-validator/check');
+const userutil = require("./util/user");
 
 exports.gameFullIncludesSQ = [
     includes.defaultBoardGameIncludeSQ,
@@ -45,7 +45,7 @@ exports.fromGamePlayersToRanks = function(game) {
 };
 
 exports.buildFullGame = (gameId, res) => {
-    return util.sendModelOrError(res, db.Game.findOne({
+    return util.sendModel(res, db.Game.findOne({
         where: {id: gameId},
         include: exports.gameFullIncludesSQ
     }), g => exports.fromGamePlayersToRanks(g));
@@ -108,8 +108,6 @@ exports.addGameQuery = function(eid, req, res) {
         })
     }).then(game => {
         return exports.buildFullGame(game.id, res);
-    }).catch(err => {
-        return util.errorResponse(res);
     });
 };
 
@@ -154,21 +152,22 @@ exports.updateEventGame = function(req, res) {
             });
     }).then(game => {
         return exports.buildFullGame(game.id, res);
-    }).catch(err => {
-        console.error(err);
-        return util.errorResponse(res);
     });
 };
 
 exports.rankForGame = function(game) {
-    return util.rank(game.game_players, (player) => player.score, game.ranking_method === "POINTS_LOWER_BETTER");
+    return util.rank(
+        game.game_players,
+        (player) => player.score, game.ranking_method === "POINTS_LOWER_BETTER",
+        (o, f, v) => { o.dataValues[f] = v; }  // write in dataValues not to lose values on the way
+    );
 };
 
 exports.sendAllGamesFiltered = function (filtering, res, options) {
     if (!options) {
         options = {};
     }
-    return util.sendModelOrError(res, db.Game.findAll(Object.assign(options, {
+    return util.sendModel(res, db.Game.findAll(Object.assign(options, {
         where: filtering,
         include: exports.gameFullIncludesSQ
     })), games => {
@@ -181,19 +180,27 @@ exports.getGames = function (req, res) {
     return exports.sendAllGamesFiltered(undefined, res);
 };
 
+exports.getUserGames = function(req, res) {
+    const current_uid = userutil.getCurrUserId(req);
+    const player_query = db.selectFieldQuery("GamePlayers", "id_game", {id_user: current_uid});
+    return exports.sendAllGamesFiltered({id: {[db.Op.in]: db.sequelize.literal('(' + player_query + ')')}}, res);
+};
+
 exports.getGame = function (req, res) {
     return exports.buildFullGame(parseInt(req.params.gid), res);
 };
 
 exports.deleteGame = function (req, res) {
     const gid = parseInt(req.params.gid);
-    return util.handleDeletion(res, db.sequelize.transaction(res, (t) => {
+    return db.sequelize.transaction(res, (t) => {
         return db.GamePlayer.destroy({
             where: {id_game: gid}
         }).then(() => {
             return db.Game.destroy({where: {id: gid}}, {transaction: t});
         });
-    }));
+    }).then(() => {
+      return util.successResponse(res, exports.successObj);
+    });
 };
 
 exports.getEventGames = function(req, res) {

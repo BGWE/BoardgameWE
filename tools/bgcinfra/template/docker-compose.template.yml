@@ -1,0 +1,34 @@
+version: '3'
+services:
+  db:
+    container_name: "{{ CONTAINER_DB_NAME }}"
+    image: postgres:9.6
+    restart: always
+    environment:
+      POSTGRES_USER: "{{ DB_USER }}"
+      POSTGRES_PASSWORD: "{{ DB_PASSWORD }}"
+      POSTGRES_DB: "{{ DB_NAME }}"
+    ports:
+      - "{{ CONTAINER_DB_HOST_PORT }}:5432"
+
+  apiserver:
+    container_name: "{{ CONTAINER_APISERVER_NAME }}"
+    depends_on:
+      - "db"
+    build:
+      context: ../..
+      dockerfile: tools/bgcinfra/configs/Dockerfile
+    restart: always
+    environment:
+      PORT: 3000
+      JWT_SECRET_KEY: "{{ JTW_SECRET }}"
+      DB_HOSTNAME: "{{ CONTAINER_DB_NAME }}"
+      DB_NAME: "{{ DB_NAME }}"
+      DB_PASSWORD: "{{ DB_PASSWORD }}"
+      DB_USERNAME: "{{ DB_USER }}"
+      NODE_ENV: "{{ APISERVER_ENV }}"
+      TEST_HOST: "{{ TEST_HOST }}"
+      TEST_PORT: "{{ TEST_PORT }}"
+      TEST_PROTOCOL: "{{ TEST_PROTOCOL }}"
+    ports:
+      - "{{ CONTAINER_APISERVER_HOST_PORT }}:3000"
