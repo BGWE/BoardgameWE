@@ -150,13 +150,16 @@ exports.deleteEvent = function(req, res) {
     });
 };
 
-exports.sendProvidedBoardGames = function(eid, res) {
+exports.sendProvidedBoardGames = function(eid, res, transaction) {
     return util.sendModel(res, db.ProvidedBoardGame.findAll({
         where: { id_event: eid },
         include: [
-            includes.getUserIncludeSQ("provider"),
-            includes.getBoardGameIncludeSQ("provided_board_game")
-        ]
+          includes.getUserIncludeSQ("provider"),
+          includes.getBoardGameIncludeSQ("provided_board_game", [
+            BoardGameController.boardGameIncludes
+          ])
+        ],
+        transaction
     }));
 };
 
@@ -203,18 +206,20 @@ exports.getEventAttendees = function(req, res) {
 
 exports.addBoardGameAndAddToEvent = function(req, res) {
     const idEvent = parseInt(req.params.eid);
-    const createFn = (board_game, req, res) => {
+    const createFn = (board_game, req, res, transaction) => {
         return db.ProvidedBoardGame.create({
             id_user: userutil.getCurrUserId(req),
             id_board_game: board_game.id,
             id_event: idEvent
-        }, {ignoreDuplicates: true}).then(l => {
-            return exports.sendProvidedBoardGames(idEvent, res);
+        }, {ignoreDuplicates: true, transaction, lock: transaction.LOCK.UPDATE}).then(() => {
+            return exports.sendProvidedBoardGames(idEvent, res, transaction);
         });
     };
     const bggId = parseInt(req.params.id);
     const source = req.params.source;
-    return BoardGameController.executeIfBoardGameExists(bggId, source, req, res, createFn);
+    return db.sequelize.transaction(t => {
+        return BoardGameController.executeIfBoardGameExists(bggId, source, req, res, createFn, t);
+    });
 };
 
 exports.getEventStats = function(req, res) {
