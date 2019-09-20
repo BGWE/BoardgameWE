@@ -194,3 +194,34 @@ exports.addBoardGameAndExpensions = async function (bgg_id, transaction, shallow
   await Promise.all(lodash.flatten(queries));
   return bg_cache[bgg_id].model.id;
 };
+
+/**
+ * Get the expansion structure and identifiers for a given board game.
+ * @param bgid_root The game at the root of the expansion tree
+ * @param transaction A database transaction
+ * @returns {Promise<{tree, expansions: any[], root: *}>} `tree` is an Object mapping each board game id to the ids of
+ * its expansions, expansions contains the identifiers of the expansions (does not contain the root id), root is
+ * bgid_root (root key in the tree).
+ */
+exports.getExpansionsFromDB = async (bgid_root, transaction) => {
+  let fetched = new Set();
+  let to_fetch = [bgid_root];
+  let tree = {};
+  // fetch all games in the tree
+  while (to_fetch.length > 0) {
+    const expansions = db.BoardGameExpansion.findAll({
+      where: {id_expanded: {[db.Op.in]: to_fetch}},
+      transaction, lock: transaction.LOCK.SHARE
+    });
+    // indicate as fetched, prepare and fill tree array, refresh to_fetch list
+    to_fetch.forEach(id => {
+      fetched.add(id);
+      tree[id] = [];
+    });
+    expansions.forEach(exp => tree[exp.id_expanded].push(exp.id_expansion));
+    to_fetch = expansions.filter(exp => !fetched.has(exp.id_expansion)).map(exp => exp.id_expansion);
+  }
+  // remove root from list
+  fetched.delete(bgid_root);
+  return {tree: tree, expansions: new Array(fetched), root: bgid_root};
+};
