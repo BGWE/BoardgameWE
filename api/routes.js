@@ -1178,9 +1178,8 @@ module.exports = function(app) {
         .get(error_wrapper(BoardGameController.getBoardGames));
 
     // Game
-    // Disabled, games are mostly added through event
-    // app.route("/game")
-    //     .post(error_wrapperameController.addGame));
+    app.route("/game")
+        .post(error_wrapper(GameController.addGame));
 
     /**
      * @api {get} /game Get game
