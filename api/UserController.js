@@ -204,7 +204,7 @@ exports.sendUserLibraryGames = function(uid, req, res, transaction) {
 };
 
 exports.addLibraryGames = function(req, res) {
-    return m2m.addAssociations(req, res, {
+    return m2m.addAndSendAssociations(req, res, {
         model_class: db.LibraryGame,
         fixed: { id: userutil.getCurrUserId(req), field: 'id_user' },
         other: {
@@ -317,7 +317,7 @@ exports.getUserActivities = function(req, res) {
 
 // Wish-to-play list
 exports.addToWishToPlayBoardGames = function(req, res) {
-    return m2m.addAssociations(req, res, {
+    return m2m.addAndSendAssociations(req, res, {
         model_class: db.WishToPlayBoardGame,
         fixed: { id: userutil.getCurrUserId(req), field: 'id_user' },
         other: {

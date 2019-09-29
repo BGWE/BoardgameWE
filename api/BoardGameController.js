@@ -199,10 +199,9 @@ exports.addBoardGameAndExpensions = async function (bgg_id, transaction, shallow
   });
 
   // minimize the number of sql requests -> bulk update
-  // update BoardGameExpension table so that registered expansions are exactly those
-  // fetched from bgg
+  // create entries for the expansions that were missing in the table
   let queries = lodash.values(bg_cache).map(entry => {
-    return m2m.diffAssociations({
+    return m2m.addAssociations({
       model_class: db.BoardGameExpansion,
       fixed: { field: 'id_expanded', id: entry.model.id },
       other: {
