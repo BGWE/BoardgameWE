@@ -14,12 +14,14 @@ module.exports = (sequelize, DataTypes) => {
     models.BoardGameExpansion.belongsTo(models.BoardGame, {
       onDelete: "CASCADE",
       foreignKey: "id_expanded",
+      targetKey: "id",
       as: "expanded"
     });
 
     models.BoardGameExpansion.belongsTo(models.BoardGame, {
       onDelete: "CASCADE",
       foreignKey: "id_expansion",
+      targetKey: "id",
       as: "expansion"
     });
   };

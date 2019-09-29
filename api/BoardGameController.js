@@ -13,28 +13,48 @@ exports.boardGameIncludes = [{
   }])
 }];
 
+/**
+ * Augment the board_game object with a list containing all expansions of the board game
+ * @param board_game_promise {Promise<BoardGame>} The board game to augment
+ * @param transaction An optional database transaction
+ * @returns {Promise<*>} The augmented board game object
+ */
+exports.augmentWithExpansions = async (board_game_promise, transaction) => {
+  let board_game = await board_game_promise;
+  const expansion_data = await exports.getBoardGameExpansionsFromDB(board_game.id, transaction);
+  board_game.dataValues.expansions = await db.BoardGame.findAll({ where: {id: {[db.Op.in]: expansion_data.expansions}}, transaction });
+  return board_game;
+};
+
 exports.getBoardGame = function(req, res) {
-    return util.sendModel(res, db.BoardGame.findByPk(parseInt(req.params.bgid), {
-      include: exports.boardGameIncludes
-    }));
+  return util.sendModel(res, db.sequelize.transaction(async transaction => {
+    return await exports.augmentWithExpansions(
+      db.BoardGame.findByPk(parseInt(req.params.bgid), { transaction }),
+      transaction
+    );
+  }));
 };
 
 exports.updateBoardGame = function(req, res) {
-    const url = req.body.gameplay_video_url;
-    if (url == null || url.length === 0) {
-        return util.detailErrorResponse(res, 400, "Invalid url");
-    }
-    const bgid = parseInt(req.params.bgid);
+  const url = req.body.gameplay_video_url;
+  if (url == null || url.length === 0) {
+      return util.detailErrorResponse(res, 400, "Invalid url");
+  }
+  const bgid = parseInt(req.params.bgid);
+  return db.sequelize.transaction(transaction => {
     return db.BoardGame.update({
-        gameplay_video_url: url
+      gameplay_video_url: url
     }, {
-        where: {id: bgid},
-        fields: ["gameplay_video_url"]
+      where: {id: bgid},
+      fields: ["gameplay_video_url"],
+      transaction, lock: transaction.LOCK.UPDATE
     }).then(() => {
-        return util.sendModel(res, db.BoardGame.findByPk(bgid, {
-          include: exports.boardGameIncludes
-        }));
+      return util.sendModel(res, exports.augmentWithExpansions(
+        db.BoardGame.findByPk(bgid, { transaction }),
+        transaction
+      ));
     });
+  });
 };
 
 const formatGameFromBggResponse = function(response) {
@@ -146,9 +166,11 @@ exports.addBoardGameAndExpensions = async function (bgg_id, transaction, shallow
     const bgc_games = lodash.zipObject(raw_bgc_games.map(bg => bg.bgg_id), raw_bgc_games);
 
     // update cache
+    logger.debug("fetched games");
     for (let i = 0; i < bgg_games.length; ++i) {
       const bgg_game = bgg_games[i];
       const id = bgg_game.id;
+      logger.debug(`\t${id}\t${bgg_game.name}`);
       create_cache_entry(bg_cache, id, bgc_games[id] ? bgc_games[id] : null, bgg_game);
     }
 
@@ -179,7 +201,7 @@ exports.addBoardGameAndExpensions = async function (bgg_id, transaction, shallow
   // minimize the number of sql requests -> bulk update
   // update BoardGameExpension table so that registered expansions are exactly those
   // fetched from bgg
-  let queries = lodash.valuesIn(bg_cache).map(entry => {
+  let queries = lodash.values(bg_cache).map(entry => {
     return m2m.diffAssociations({
       model_class: db.BoardGameExpansion,
       fixed: { field: 'id_expanded', id: entry.model.id },
@@ -203,16 +225,13 @@ exports.addBoardGameAndExpensions = async function (bgg_id, transaction, shallow
  * its expansions, expansions contains the identifiers of the expansions (does not contain the root id), root is
  * bgid_root (root key in the tree).
  */
-exports.getExpansionsFromDB = async (bgid_root, transaction) => {
+exports.getBoardGameExpansionsFromDB = async (bgid, transaction) => {
   let fetched = new Set();
-  let to_fetch = [bgid_root];
+  let to_fetch = [bgid];
   let tree = {};
   // fetch all games in the tree
   while (to_fetch.length > 0) {
-    const expansions = db.BoardGameExpansion.findAll({
-      where: {id_expanded: {[db.Op.in]: to_fetch}},
-      transaction, lock: transaction.LOCK.SHARE
-    });
+    const expansions = await db.BoardGameExpansion.findAll({ where: {id_expanded: {[db.Op.in]: to_fetch}}, transaction });
     // indicate as fetched, prepare and fill tree array, refresh to_fetch list
     to_fetch.forEach(id => {
       fetched.add(id);
@@ -220,8 +239,15 @@ exports.getExpansionsFromDB = async (bgid_root, transaction) => {
     });
     expansions.forEach(exp => tree[exp.id_expanded].push(exp.id_expansion));
     to_fetch = expansions.filter(exp => !fetched.has(exp.id_expansion)).map(exp => exp.id_expansion);
+
+    console.log("fetched");
+    console.log(fetched);
+    console.log("to_fetch");
+    console.log(to_fetch);
+    console.log("tree");
+    console.log(tree);
   }
   // remove root from list
-  fetched.delete(bgid_root);
-  return {tree: tree, expansions: new Array(fetched), root: bgid_root};
+  fetched.delete(bgid);
+  return {tree: tree, expansions: Array.from(fetched), root: bgid};
 };

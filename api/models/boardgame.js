@@ -63,7 +63,7 @@ module.exports = (sequelize, DataTypes) => {
             onDelete: "CASCADE",
             foreignKey: 'id_expansion',
             sourceKey: 'id',
-            as: 'expanded'
+            as: 'parent_board_games'
         });
 
         models.BoardGame.hasMany(models.BoardGameExpansion,  {

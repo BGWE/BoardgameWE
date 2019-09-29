@@ -155,9 +155,7 @@ exports.sendProvidedBoardGames = function(eid, res, transaction) {
         where: { id_event: eid },
         include: [
           includes.getUserIncludeSQ("provider"),
-          includes.getBoardGameIncludeSQ("provided_board_game", [
-            BoardGameController.boardGameIncludes
-          ])
+          includes.getBoardGameIncludeSQ("provided_board_game")
         ],
         transaction
     }));
