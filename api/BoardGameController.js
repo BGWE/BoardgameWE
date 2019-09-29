@@ -23,6 +23,7 @@ exports.augmentWithExpansions = async (board_game_promise, transaction) => {
   let board_game = await board_game_promise;
   const expansion_data = await exports.getBoardGameExpansionsFromDB(board_game.id, transaction);
   board_game.dataValues.expansions = await db.BoardGame.findAll({ where: {id: {[db.Op.in]: expansion_data.expansions}}, transaction });
+  board_game.dataValues.expansion_tree = expansion_data.tree;
   return board_game;
 };
 
