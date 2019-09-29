@@ -752,40 +752,6 @@ module.exports = function(app) {
         );
 
     /**
-     * @api {put} /event/:eid/game/:gid Update event game
-     * @apiName UpdateEventGame
-     * @apiGroup Event game
-     * @apiDescription Update a game of the specified event. If a list of players is provided, it replaces the old list of players completely .
-     * Note: only the creator or an attendee can use this endpoint.
-     *
-     * @apiParam {Number} eid Event identifier.
-     * @apiParam {Number} gid Game identifier.
-     *
-     * @apiParam (body) {Number} id_board_game (Optional) Board game identifier
-     * @apiParam (body) {Number} duration (Optional) Duration of the board game, or `null`.
-     * @apiParam (body) {String} ranking_method (Optional) The ranking method for the game. One of: `{WIN_LOSE, POINTS_LOWER_BETTER, POINTS_HIGHER_BETTER}`.
-     * @apiParam (body) {GamePlayer[]} players (Optional) List of players involved with the game. If the list is empty
-     * or missing, the list of players (and their scores) is not updated.
-     * @apiParam (body) {Number} players.score Player score
-     * @apiParam (body) {String} players.name Player name if not registered on the platform (mutually exclusive with
-     * 'user') or `null`.
-     * @apiParam (body) {Number} players.id_user Player user identifier (mutually exclusive with 'name') or `null`.
-     *
-     * @apiUse TokenHeaderRequired
-     * @apiUse FullGameDescriptor
-     * @apiUse DBDatetimeFields
-     */
-    app.route("/event/:eid/game/:gid")
-        .put(
-            event_access.write,
-            validation.getGameValidators(false).concat([
-                validation.modelExists(check('eid'), db.Event),
-                validation.modelExists(check('gid'), db.Game)
-            ]), validation.validateOrBlock('cannot update event game'),
-            error_wrapper(GameController.updateGame)
-        );
-
-    /**
      * @api {get} /event/:id/games Get event games
      * @apiName GetEventGames
      * @apiGroup Event game
@@ -1258,15 +1224,17 @@ module.exports = function(app) {
      * @apiUse FullGameDescriptor
      * @apiUse DBDatetimeFields
      */
-      app.route("/game/:gid")
-          .get(game_access.read, error_wrapper(GameController.getGame))
-          .delete(game_access.write, error_wrapper(GameController.deleteGame))
-          .put(
-             game_access.write,
-             validation.getGameValidators(true),
-             validation.validateOrBlock('cannot edit game'),
-             error_wrapper(GameController.updateGame)
-          );
+    app.route("/game/:gid")
+        .get(game_access.read, error_wrapper(GameController.getGame))
+        .delete(game_access.write, error_wrapper(GameController.deleteGame))
+        .put(
+           game_access.write,
+           validation.getGameValidators(true).concat([
+             validation.modelExists(param('gid'), db.Game)
+           ]),
+           validation.validateOrBlock('cannot edit game'),
+           error_wrapper(GameController.updateGame)
+        );
 
     // timer api
     /**
