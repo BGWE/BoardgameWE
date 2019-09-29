@@ -238,13 +238,6 @@ exports.getBoardGameExpansionsFromDB = async (bgid, transaction) => {
     });
     expansions.forEach(exp => tree[exp.id_expanded].push(exp.id_expansion));
     to_fetch = expansions.filter(exp => !fetched.has(exp.id_expansion)).map(exp => exp.id_expansion);
-
-    console.log("fetched");
-    console.log(fetched);
-    console.log("to_fetch");
-    console.log(to_fetch);
-    console.log("tree");
-    console.log(tree);
   }
   // remove root from list
   fetched.delete(bgid);
