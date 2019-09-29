@@ -39,3 +39,11 @@ exports.get_default_format = (label) => {
       log_format
   );
 };
+
+/**
+ * Extracts app log level from environment
+ * @returns {*|string}
+ */
+exports.get_log_level = () => {
+  return process.VERBOSITY || (new Set(["test", "development"]).has(process.env.NODE_ENV) ? "debug" : "info");
+};

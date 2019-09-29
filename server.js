@@ -13,7 +13,6 @@ const winstonExpress = require('express-winston');
 const logging = require("./api/util/logging");
 const hostname = '0.0.0.0';
 const port = process.env.PORT || 3000;
-const config = require("./api/config/config");
 
 app.use(bodyParser.json()); // support json encoded bodies
 app.use(bodyParser.urlencoded({ extended: true })); // support encoded bodies
@@ -52,7 +51,7 @@ const express_winston_logger_defaults = {
 
 const custom_logger_defaults = {
   transports: log_transports,
-  level: config.log_level
+  level: logging.get_log_level()
 };
 
 /**

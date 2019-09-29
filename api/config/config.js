@@ -1,10 +1,9 @@
 let winston = require('winston');
 let logging = require('../util/logging');
 
-const log_level = process.VERBOSITY || (new Set(["test", "development"]).has(process.env.NODE_ENV) ? "debug" : "info");
 let db_logger = winston.loggers.add("db", {
   transports: [ new winston.transports.Console() ],
-  level: log_level,
+  level: logging.get_log_level(),
   format: logging.get_default_format("DB")
 });
 
@@ -35,10 +34,6 @@ module.exports = {
     email_settings: {
         sender_name: 'BoardGameComponion',
         email_address: 'info@boardgamecomponion.com'
-    },
-    log_level,
-    loggers: {
-      db: db_logger
     },
     sendgrid_api_key: process.env.SENDGRID_API_KEY,
     [process.env.NODE_ENV]: database
