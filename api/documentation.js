@@ -317,3 +317,11 @@
  * @apiParam (query) { Number} [max_items] Maximum number of items to return
  * @apiParam (query) {Number} [start] Pagination offset (resources are sorted by decreasing creation time)
  */
+
+/**
+ * @apiDefine BoardGameExpansionsFields
+ * @apiSuccess {Object} expansions Object mapping board game identifier with board game descriptor for all expansions
+ * of the fetched games (recursive, that is expansions of expansions etc, are all listed).
+ * @apiSuccess {Object} expansion_tree Each entry maps a board game identifier with a list of identifier
+ * corresponding to this board game expansions. Each entry of `expansions` has its counterpart in `expansion_tree`.
+ */

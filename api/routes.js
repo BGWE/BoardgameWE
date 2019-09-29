@@ -1139,6 +1139,7 @@ module.exports = function(app) {
      *
      * @apiUse TokenHeaderRequired
      * @apiUse BoardGameDescriptor
+     * @apiUse BoardGameExpansionsFields
      * @apiUse DBDatetimeFields
      */
 
@@ -1152,6 +1153,7 @@ module.exports = function(app) {
      *
      * @apiUse TokenHeaderRequired
      * @apiUse BoardGameDescriptor
+     * @apiUse BoardGameExpansionsFields
      * @apiUse DBDatetimeFields
      */
 

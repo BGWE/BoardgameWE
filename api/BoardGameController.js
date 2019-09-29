@@ -14,7 +14,9 @@ exports.boardGameIncludes = [{
 }];
 
 /**
- * Augment the board_game object with a list containing all expansions of the board game
+ * Augment the board_game object with an object containing all expansions of the board game (mapping bg.id -> bg).
+ * It also adds a field for the expansion tree as an object which maps bg.id -> list of expansions bg.id. All
+ * identifiers if the expansions object have an entry in the expansion tree field.
  * @param board_game_promise {Promise<BoardGame>} The board game to augment
  * @param transaction An optional database transaction
  * @returns {Promise<*>} The augmented board game object
@@ -22,7 +24,8 @@ exports.boardGameIncludes = [{
 exports.augmentWithExpansions = async (board_game_promise, transaction) => {
   let board_game = await board_game_promise;
   const expansion_data = await exports.getBoardGameExpansionsFromDB(board_game.id, transaction);
-  board_game.dataValues.expansions = await db.BoardGame.findAll({ where: {id: {[db.Op.in]: expansion_data.expansions}}, transaction });
+  const expansions = await db.BoardGame.findAll({ where: {id: {[db.Op.in]: expansion_data.expansions}}, transaction });
+  board_game.dataValues.expansions = util.array2mapping(expansions, bg => bg.id);
   board_game.dataValues.expansion_tree = expansion_data.tree;
   return board_game;
 };
