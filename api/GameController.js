@@ -112,47 +112,49 @@ exports.addGameQuery = function(eid, req, res) {
 };
 
 exports.addGame = function (req, res) {
-    return exports.addGameQuery(req.body.id_event || null, req, res);
+    return exports.addGameQuery(null, req, res);
 };
 
 exports.addEventGame = function(req, res) {
     return exports.addGameQuery(req.params.eid, req, res);
 };
 
-exports.updateEventGame = function(req, res) {
-    return db.sequelize.transaction(t => {
-        return db.Game.findByPk(req.params.gid, {transaction: t})
-            .then(game => {
-                if (req.body.ranking_method !== game.ranking_method && !req.body.players) {
-                    return util.detailErrorResponse(res, 400, "'players' list should be provided when 'ranking_method' changes");
-                }
-                return db.Game.update({
-                    id_board_game: req.body.id_board_game || game.id_board_game,
-                    duration: req.body.duration || game.duration,
-                    ranking_method: req.body.ranking_method || game.ranking_method,
-                    id_event: req.body.id_event || req.params.eid
-                }, {
-                    where: {id: game.id, id_event: req.params.eid},
-                    transaction: t
-                }).then(updated => {
-                    if (req.body.players) {
-                        return db.GamePlayer.destroy({
-                            transaction: t,
-                            where: {id_game: game.id}
-                        }).then(deleted => {
-                            const playersData = getGamePlayerData(game, req.body.players);
-                            return db.GamePlayer.bulkCreate(playersData, {
-                                transaction: t
-                            }).then(players => { return game; });
-                        });
-                    } else {
-                        return game;
-                    }
-                });
-            });
-    }).then(game => {
-        return exports.buildFullGame(game.id, res);
+exports.updateGameQuery = function(gid, req, res) {
+  return db.sequelize.transaction(async t => {
+    let game = await db.Game.findByPk(req.params.gid, {transaction: t});
+    if (!game) {
+      return util.detailErrorResponse(res, 404, "game not found");
+    }
+    if (req.body.ranking_method !== game.ranking_method && !req.body.players) {
+      return util.detailErrorResponse(res, 400, "'players' list should be provided when 'ranking_method' changes");
+    }
+
+    // For security: cannot change event id of an existing event (could break event access policies)
+    game = await game.update({
+      id_board_game: req.body.id_board_game || game.id_board_game,
+      duration: req.body.duration || game.duration,
+      ranking_method: req.body.ranking_method || game.ranking_method
+    }, {
+      where: { id: game.id },
+      transaction: t, lock: t.LOCK.UPDATE
     });
+
+    if (!req.body.players) {
+      return game;
+    }
+
+    // delete old players
+    await db.GamePlayer.destroy({ transaction: t, where: {id_game: game.id} });
+    const playersData = getGamePlayerData(game, req.body.players);
+    await db.GamePlayer.bulkCreate(playersData, { transaction: t });
+    return game;
+  }).then(game => {
+    return exports.buildFullGame(game.id, res);
+  });
+};
+
+exports.updateGame = function(req, res) {
+  return exports.updateGameQuery(req.params.gid, req, res);
 };
 
 exports.rankForGame = function(game) {
