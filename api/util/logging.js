@@ -45,5 +45,5 @@ exports.get_default_format = (label) => {
  * @returns {*|string}
  */
 exports.get_log_level = () => {
-  return process.VERBOSITY || (new Set(["test", "development"]).has(process.env.NODE_ENV) ? "debug" : "info");
+  return process.env.VERBOSITY || (new Set(["test", "development"]).has(process.env.NODE_ENV) ? "debug" : "info");
 };
