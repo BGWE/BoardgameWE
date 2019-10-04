@@ -1,7 +1,6 @@
 const db = require("./models/index");
 const util = require("./util/util");
 const includes = require("./util/db_include");
-const userutil = require("./util/user");
 
 exports.gameFullIncludesSQ = [
     includes.defaultBoardGameIncludeSQ,
@@ -121,7 +120,7 @@ exports.addEventGame = function(req, res) {
 
 exports.updateGameQuery = function(gid, req, res) {
   return db.sequelize.transaction(async t => {
-    let game = await db.Game.findByPk(req.params.gid, {transaction: t});
+    let game = await db.Game.findByPk(gid, {transaction: t});
     if (!game) {
       return util.detailErrorResponse(res, 404, "game not found");
     }
