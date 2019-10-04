@@ -717,6 +717,39 @@ module.exports = function(app) {
         .get(event_access.read, error_wrapper(EventController.getProvidedBoardGames))
         .post(event_access.write, error_wrapper(EventController.addProvidedBoardGames))
         .delete(event_access.write, error_wrapper(EventController.deleteProvidedBoardGames));
+    
+    /**
+     * @api {post} /event/:id/game Add event game
+     * @apiName AddEventGame
+     * @apiGroup Event game
+     * @apiDescription Add a game at the specified event.
+     * Note: only the creator or an attendee can use this endpoint.
+     *
+     * @apiParam {Number} id Event identifier.
+     *
+     * @apiParam (body) {Number} id_board_game Board game identifier
+     * @apiParam (body) {Number} [duration] Duration of the board game, or `null`.
+     * @apiParam (body) {String} ranking_method The ranking method for the game. One of: `{WIN_LOSE, POINTS_LOWER_BETTER, POINTS_HIGHER_BETTER}`.
+     * @apiPAram (body) {Number} [id_timer] Add a timer identifier
+     * @apiParam (body) {GamePlayer[]} players List of players involved with the game.
+     * @apiParam (body) {Number} players.score Player score
+     * @apiParam (body) {String} players.name Player name if not registered on the platform (mutually exclusive with
+     * 'user') or `null`.
+     * @apiParam (body) {Number} players.id_user Player user identifier (mutually exclusive with 'name') or `null`.
+     * @apiUse TokenHeaderRequired
+     *
+     * @apiUse FullGameDescriptor
+     * @apiUse DBDatetimeFields
+     */
+    app.route("/event/:eid/game")
+    .post(
+        event_access.write,
+        validation.getGameValidators(true).concat([
+            validation.modelExists(check('eid'), db.Event)
+        ]),
+        validation.validateOrBlock('cannot add game to the event'),
+        error_wrapper(GameController.addGame)
+    );
 
     /**
      * @api {get} /event/:id/games Get event games
