@@ -742,14 +742,14 @@ module.exports = function(app) {
      * @apiUse DBDatetimeFields
      */
     app.route("/event/:eid/game")
-    .post(
-        event_access.write,
-        validation.getGameValidators(true).concat([
-            validation.modelExists(check('eid'), db.Event)
-        ]),
-        validation.validateOrBlock('cannot add game to the event'),
-        error_wrapper(GameController.addGame)
-    );
+        .post(
+            event_access.write,
+            validation.getGameValidators(true).concat([
+                validation.modelExists(check('eid'), db.Event)
+            ]),
+            validation.validateOrBlock('cannot add game to the event'),
+            error_wrapper(GameController.addGame)
+        );
 
     /**
      * @api {get} /event/:id/games Get event games
