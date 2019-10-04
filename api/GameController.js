@@ -112,10 +112,6 @@ exports.addGameQuery = function(eid, req, res) {
 };
 
 exports.addGame = function (req, res) {
-    return exports.addGameQuery(null, req, res);
-};
-
-exports.addEventGame = function(req, res) {
     return exports.addGameQuery(req.params.eid, req, res);
 };
 
