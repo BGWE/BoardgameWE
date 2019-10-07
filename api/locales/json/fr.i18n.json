@@ -7,7 +7,7 @@
       }
     },
     "GAM_B_00_WON": {
-      "title": "C'est un petit pas pour l'homme"
+      "title": "Ecuyer"
     },
     "GAM_B_01_WON": {
       "title": "Sergent"
@@ -53,7 +53,7 @@
     },
     "EVE_B_ATTENDED": {
       "descr": {
-        "one": "Tu as participé à un premier événement",
+        "one": "Tu as participé à ton premier événement",
         "other": "Tu as participé à %d événements"
       }
     },
@@ -73,13 +73,13 @@
       }
     },
     "GAM_B_00_PLAYED": {
-      "title": "Bachelier"
+      "title": "Apprenti"
     },
     "GAM_B_01_PLAYED": {
-      "title": "Master I"
+      "title": "Compagnon"
     },
     "GAM_B_02_PLAYED": {
-      "title": "Master II"
+      "title": "Maître"
     },
     "BGA_B_OWNED": {
       "descr": {
@@ -88,33 +88,21 @@
       }
     },
     "BGA_B_00_OWNED": {
-      "title": "Un voyage d'un millier de kilomètres commence avec un seul pas"
-    },
-    "BGA_B_01_OWNED": {
-      "title": "Tout va bien maman, je ne vais pas devenir accro"
-    },
-    "BGA_B_02_OWNED": {
       "title": "Amateur"
     },
-    "BGA_B_03_OWNED": {
+    "BGA_B_01_OWNED": {
       "title": "Initié"
     },
-    "BGA_B_04_OWNED": {
+    "BGA_B_02_OWNED": {
       "title": "Collectionneur"
     },
-    "BGA_B_05_OWNED": {
+    "BGA_B_03_OWNED": {
       "title": "Re-vendeur"
     },
-    "BGA_B_06_OWNED": {
-      "title": "Galeriste"
-    },
-    "BGA_B_07_OWNED": {
-      "title": "Curateur"
-    },
-    "BGA_B_08_OWNED": {
+    "BGA_B_04_OWNED": {
       "title": "Gestionnaire d'entrepôt"
     },
-    "BGA_B_09_OWNED": {
+    "BGA_B_05_OWNED": {
       "title": "Amazon"
     },
     "BGA_B_PLAYED": {
@@ -133,7 +121,7 @@
       "title": "Explorateur"
     },
     "BGA_B_04_PLAYED": {
-      "title": "Macro Polo"
+      "title": "Marco Polo"
     },
     "BGA_B_05_PLAYED": {
       "title": "Magellan"
