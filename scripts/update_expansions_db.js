@@ -7,7 +7,7 @@ process.env.VERBOSITY = process.env.VERBOSITY || "info";
 const db = require("../api/models/index");
 const winston = require("winston");
 const logging = require("../api/util/logging");
-const {addBoardGameAndExpensions} = require("../api/BoardGameController");
+const {addBoardGameAndExpansions} = require("../api/BoardGameController");
 const {boolOrDefault} = require("../api/util/util");
 
 
@@ -34,7 +34,7 @@ const main = async (shallow=false) => {
     }
 
     logger.info(`(2) Starts to fetch expansions for ${board_games.length} board games.`);
-    await addBoardGameAndExpensions(board_games.map(bg => bg.bgg_id), transaction, shallow);
+    await addBoardGameAndExpansions(board_games.map(bg => bg.bgg_id), transaction, shallow);
     return await db.BoardGame.count({transaction});
   });
 };

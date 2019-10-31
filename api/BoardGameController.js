@@ -99,7 +99,7 @@ exports.executeIfBoardGameExists = function(gid, source, req, res, actionFn, tra
       return util.detailErrorResponse(res, 400, "Invalid source '" + source + "' (only supported are {bgg,}).");
   }
 
-  return exports.addBoardGameAndExpensions(gid, transaction).then(bgid => {
+  return exports.addBoardGameAndExpansions(gid, transaction).then(bgid => {
     return db.BoardGame.findByPk(bgid, {transaction, lock: transaction.LOCK.SHARE}).then(board_game => {
       return actionFn(board_game, req, res, transaction);
     });
@@ -109,7 +109,7 @@ exports.executeIfBoardGameExists = function(gid, source, req, res, actionFn, tra
 exports.addBoardGame = function(req, res) {
     // load info from board game geek
   return db.sequelize.transaction(transaction => {
-    return exports.addBoardGameAndExpensions(req.body.bgg_id, transaction).then(id => {
+    return exports.addBoardGameAndExpansions(req.body.bgg_id, transaction).then(id => {
       return util.sendModelOrError(res, db.BoardGame.findByPk(id, {transaction, include: exports.boardGameIncludes}));
     });
   });
@@ -137,6 +137,29 @@ exports.deleteBoardGame = function(req, res) {
     });
 };
 
+exports.getBoardGameExpansions = function(req, res) {
+  return util.sendModel(res, db.sequelize.transaction(async transaction => {
+    return await exports.augmentWithExpansions(
+        db.BoardGame.findByPk(parseInt(req.params.bgid), { transaction }),
+        transaction
+    );
+  }), (board_game) => { return {
+    expansion: board_game.dataValues.expansions,
+    expansion_tree: board_game.dataValues.expansion_tree
+  }; });
+};
+
+exports.updateBoardGameExpansions = function(req, res) {
+  return util.sendModel(res, db.sequelize.transaction(async transaction => {
+    let bg = await db.BoardGame.findByPk(req.params.bgid, {transaction});
+    await exports.addBoardGameAndExpansions(bg.bgg_id, transaction, false);
+    return await exports.augmentWithExpansions(new Promise(() => bg), transaction);
+  }), (board_game) => { return {
+    expansion: board_game.dataValues.expansions,
+    expansion_tree: board_game.dataValues.expansion_tree
+  }; });
+};
+
 /**
  * Add a board game from bgg. Are also added to the database all board games which are either expansions of this board
  * game, or of which this game is an expansion, or which are expansions of the board game of which this game is an
@@ -147,7 +170,7 @@ exports.deleteBoardGame = function(req, res) {
  * @param {int} wait Wait time when a too many request error is raised (in ms)
  * @returns {Promise<int>} The bgc identifier of the board game
  */
-exports.addBoardGameAndExpensions = async function (bgg_id, transaction, shallow=true, wait=5000) {
+exports.addBoardGameAndExpansions = async function (bgg_id, transaction, shallow=true, wait=5000) {
   let to_fetch = new Set(bgg_id.length === undefined ? [bgg_id] : bgg_id);
   // stores fetched bgg data and bgc models, maps bgg id with game data
   let bg_cache = {};
