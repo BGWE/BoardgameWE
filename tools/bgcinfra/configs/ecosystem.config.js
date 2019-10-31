@@ -47,7 +47,7 @@ module.exports = {
         production : {
             user: 'ec2-user',
             key: '~/.ssh/BGCProd.pem',
-            host : 'apiredirect.boardgamecomponion.com',
+            host : 'api-v3.boardgamecomponion.com',
             ref  : 'master',
             repo : 'https://github.com/BGWE/BoardgameWE.git',
             path : '/home/ec2-user/BoardgameWE',
@@ -55,7 +55,7 @@ module.exports = {
                 npm install && \
                 cp /home/ec2-user/BoardgameWE/source/tools/bgcinfra/configs/secret_env.sh /home/ec2-user/BoardgameWE/source/.env && \
                 pm2 start npm -- run envstart && \
-                sudo certbot certonly --debug --nginx --non-interactive --agree-tos --domains apiredirect.boardgamecomponion.com --email fabrice.servais@gmail.com && \
+                sudo certbot certonly --debug --nginx --non-interactive --agree-tos --domains api-v3.boardgamecomponion.com --email fabrice.servais@gmail.com && \
                 sudo cp /tmp/https.conf /etc/nginx/conf.d/https.conf && \
                 sudo nginx -s reload'
         }
