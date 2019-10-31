@@ -25,6 +25,10 @@ exports.array2mapping = (arr, key_fn) => {
   return obj;
 };
 
+exports.sleep = (ms) => {
+  return new Promise(resolve => setTimeout(resolve, ms));
+};
+
 /**
  *
  * @param data
