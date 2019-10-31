@@ -19,7 +19,7 @@ function sleep(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
 
-const main = async (shallow, wait) => {
+const main = async (shallow=false) => {
   return db.sequelize.transaction(async transaction => {
     logger.info("|----------------------------|");
     logger.info("| Expansion import from BGG. |");
@@ -29,23 +29,18 @@ const main = async (shallow, wait) => {
     const board_games = await db.BoardGame.findAll({attributes: ['bgg_id', 'name'], transaction});
     logger.info(`   > Fetched ${board_games.length} board game(s).`);
 
-    let prev_total = board_games.length;
-    for (let i = 0; i < board_games.length; ++i) {
-      const board_game = board_games[i];
-      logger.info(`(2) Fetching for ${i+1}th board game: ${board_game.name} (${Math.floor(100 * i / board_games.length)}%)`);
-      await addBoardGameAndExpensions(board_game.bgg_id, transaction, boolOrDefault(shallow, true));
-      let new_total = await db.BoardGame.count({transaction});
-      logger.info(`   > done... ${new_total - prev_total} new board game(s) added.`);
-      prev_total = new_total;
-      await sleep(wait || 1000);
+    if (board_games.length === 0) {
+      return 0;
     }
 
-    return prev_total;
+    logger.info(`(2) Starts to fetch expansions for ${board_games.length} board games.`);
+    await addBoardGameAndExpensions(board_games.map(bg => bg.bgg_id), transaction, shallow);
+    return await db.BoardGame.count({transaction});
   });
 };
 
-Promise.resolve(main(true, 5000)).then(total => {
-  logger.info(`Finished (${total} board games in the database.`);
+Promise.resolve(main()).then(total => {
+  logger.info(`Finished (${total} board games in the database).`);
 }).catch(err => {
   logging.logError(logger, err);
 });
