@@ -15,10 +15,55 @@ function search(boardgame_name) {
 }
 
 function get(ids) {
-    let qs = {id: ids.map(s => s.toString()).join(), stats: 1};
-    const uri = BGG_ROOT_PATH + 'thing';
-    winston.loggers.get("api").info("bgg get - url:" + uri + " query:" + JSON.stringify(qs));
-    return rp({uri, qs});
+  let qs = {id: ids.map(s => s.toString()).join(), stats: 1};
+  const uri = BGG_ROOT_PATH + 'thing';
+  winston.loggers.get("api").info("bgg get - url:" + uri + " query:" + JSON.stringify(qs));
+  return rp({uri, qs, resolveWithFullResponse: true});
+}
+
+/**
+ * Send a get request and adapt to http errors when some occurs
+ * @param ids Bgg ids to fetch
+ * @param wait_time Wait time when limited rate of bgg api is reached
+ * @returns {Promise<Array>} List of parsed fetched games
+ */
+async function get_parse_retry(ids, wait_time=5000) {
+  let fetched = [];
+  let chunks = [ids];
+  while (chunks.length > 0) {
+    try {
+      console.log(chunks.map(c => c.length));
+      let res = await get(chunks[0]);
+      chunks = chunks.slice(1);
+      fetched = fetched.concat(format_get_response(res.body));
+    } catch (error) {
+      const statusCode = error.statusCode;
+      if (statusCode === 413 || statusCode === 414) { // request entity too large || request uri too long
+        winston.loggers.get("api").info(`too large from bgg ${statusCode}`);
+        let new_chunks = [], too_large = chunks[0].length;
+        console.log(too_large);
+        chunks.forEach(chunk => {
+          if (chunk.length > Math.max(Math.floor(too_large / 2), 1)) {
+            const half = Math.floor(chunk.length / 2); // split those which are too large in two
+            console.log(`split ${chunk.length} ${half}`);
+            new_chunks.push(chunk.slice(0, half));
+            new_chunks.push(chunk.slice(half + 1));
+          } else {
+            console.log(`don't split ${chunk.length}`);
+            new_chunks.push(chunk);
+          }
+        });
+        console.log(new_chunks.map(c => c.length));
+        chunks = new_chunks;
+        util.sleep(1000);
+      } else if (statusCode === 429) { // too many requests
+        util.sleep(wait_time); // just wait and retry
+      } else { // unhandled
+        throw new Error(`unhandled error when fetching from BGG ${statusCode}`);
+      }
+    }
+  }
+  return fetched;
 }
 
 function format_search_response(body) {
@@ -154,6 +199,7 @@ exports.format_get_response = format_get_response;
 exports.format_search_response = format_search_response;
 exports.get_attribute = get_attribute;
 exports.get_tag = get_tag;
+exports.get_parse_retry = get_parse_retry;
 exports.get_attribute_from_tag = get_attribute_from_tag;
 exports.get_tags_for_attribute = get_tags_for_attribute;
 exports.get_game_name_from_item = get_game_name_from_item;

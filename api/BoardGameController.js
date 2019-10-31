@@ -144,9 +144,10 @@ exports.deleteBoardGame = function(req, res) {
  * @param bgg_id int|array Board game geek identifier
  * @param transaction The transaction in the context of which to execute the operation
  * @param {boolean} shallow Only go one level deep in both direction of the hierarchy if set to true
+ * @param {int} wait Wait time when a too many request error is raised (in ms)
  * @returns {Promise<int>} The bgc identifier of the board game
  */
-exports.addBoardGameAndExpensions = async function (bgg_id, transaction, shallow=true) {
+exports.addBoardGameAndExpensions = async function (bgg_id, transaction, shallow=true, wait=5000) {
   let to_fetch = new Set(bgg_id.length === undefined ? [bgg_id] : bgg_id);
   // stores fetched bgg data and bgc models, maps bgg id with game data
   let bg_cache = {};
@@ -161,8 +162,7 @@ exports.addBoardGameAndExpensions = async function (bgg_id, transaction, shallow
     // fetch data from database and bgg
     to_fetch = Array.from(to_fetch);
     logger.debug("fetching board games from bgg: " + JSON.stringify(to_fetch));
-    const raw_bgg_items = await bgg.get(to_fetch);
-    const bgg_games = bgg.format_get_response(raw_bgg_items);
+    const bgg_games = await bgg.get_parse_retry(to_fetch, wait);
     const raw_bgc_games = await db.BoardGame.findAll({
       where: {bgg_id: { [db.Op.in]: to_fetch }}, transaction,
       lock: transaction.LOCK.SHARE
@@ -217,7 +217,11 @@ exports.addBoardGameAndExpensions = async function (bgg_id, transaction, shallow
   });
 
   await Promise.all(lodash.flatten(queries));
-  return bgg_id === undefined ? bg_cache[bgg_id].model.id : bgg_id.map(id => bg_cache[id].model.id);
+  if (bgg_id.length === undefined) {
+    return bg_cache[bgg_id].model.id;
+  } else {
+    return bgg_id.map(id => bg_cache[id].model.id);
+  }
 };
 
 /**
