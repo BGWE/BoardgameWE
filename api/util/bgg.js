@@ -32,7 +32,6 @@ async function get_parse_retry(ids, wait_time=5000) {
   let chunks = [ids];
   while (chunks.length > 0) {
     try {
-      console.log(chunks.map(c => c.length));
       let res = await get(chunks[0]);
       chunks = chunks.slice(1);
       fetched = fetched.concat(format_get_response(res.body));
@@ -41,19 +40,15 @@ async function get_parse_retry(ids, wait_time=5000) {
       if (statusCode === 413 || statusCode === 414) { // request entity too large || request uri too long
         winston.loggers.get("api").info(`too large from bgg ${statusCode}`);
         let new_chunks = [], too_large = chunks[0].length;
-        console.log(too_large);
         chunks.forEach(chunk => {
           if (chunk.length > Math.max(Math.floor(too_large / 2), 1)) {
             const half = Math.floor(chunk.length / 2); // split those which are too large in two
-            console.log(`split ${chunk.length} ${half}`);
             new_chunks.push(chunk.slice(0, half));
             new_chunks.push(chunk.slice(half + 1));
           } else {
-            console.log(`don't split ${chunk.length}`);
             new_chunks.push(chunk);
           }
         });
-        console.log(new_chunks.map(c => c.length));
         chunks = new_chunks;
         util.sleep(1000);
       } else if (statusCode === 429) { // too many requests
