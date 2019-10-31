@@ -144,7 +144,7 @@ exports.getBoardGameExpansions = function(req, res) {
         transaction
     );
   }), (board_game) => { return {
-    expansion: board_game.dataValues.expansions,
+    expansions: board_game.dataValues.expansions,
     expansion_tree: board_game.dataValues.expansion_tree
   }; });
 };
@@ -155,7 +155,7 @@ exports.updateBoardGameExpansions = function(req, res) {
     await exports.addBoardGameAndExpansions(bg.bgg_id, transaction, false);
     return await exports.augmentWithExpansions(new Promise(() => bg), transaction);
   }), (board_game) => { return {
-    expansion: board_game.dataValues.expansions,
+    expansions: board_game.dataValues.expansions,
     expansion_tree: board_game.dataValues.expansion_tree
   }; });
 };
