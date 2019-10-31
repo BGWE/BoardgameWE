@@ -37,9 +37,7 @@ exports.addAndSendAssociations = function(req, res, m2m, transform) {
  * @param m2m.fixed.field str
  * @param m2m.other.ids Array Array of identifier for the second field
  * @param m2m.other.field str The variable id field
- * @param m2m.other.includes The includes for generating the response
  * @param m2m.attributes Other attributes values (undefined)
- * @param m2m.error_message str Validation error message
  * @param m2m.options Object options (transaction,...)
  * @returns {Promise<Model[]>}
  */
