@@ -1173,6 +1173,30 @@ module.exports = function(app) {
         .put(error_wrapper(BoardGameController.updateBoardGame))
         .delete(error_wrapper(BoardGameController.deleteBoardGame));
 
+
+    /**
+     * @api {get} /board_game/:bgid/expansions
+     * @apiName GetBoardGameExpansions
+     * @apiGroup Board game
+     * @apiDescription Get all expansions of a given board game
+
+     * @apiUse BoardGameExpansionsFields
+     * @apiUse TokenHeaderRequired
+     */
+
+    /**
+     * @api {put} /board_game/:bgid/expansions
+     * @apiName UpdateBoardGameExpansions
+     * @apiGroup Board game
+     * @apiDescription Update the list of expansions for a given board game from bgg. The updated list is returned.
+     *
+     * @apiUse BoardGameExpansionsFields
+     * @apiUse TokenHeaderRequired
+     */
+    app.route("/board_game/:bgid/expansions")
+        .get(error_wrapper(BoardGameController.getBoardGameExpansions))
+        .put(error_wrapper(BoardGameController.updateBoardGameExpansions));
+
     /**
      * @api {get} /board_games Get board games
      * @apiName GetBoardGames
