@@ -141,13 +141,13 @@ exports.deleteBoardGame = function(req, res) {
  * Add a board game from bgg. Are also added to the database all board games which are either expansions of this board
  * game, or of which this game is an expansion, or which are expansions of the board game of which this game is an
  * expansion. The database is updated for reflecting the expansion tree.
- * @param bgg_id Board game geek identifier
+ * @param bgg_id int|array Board game geek identifier
  * @param transaction The transaction in the context of which to execute the operation
  * @param {boolean} shallow Only go one level deep in both direction of the hierarchy if set to true
  * @returns {Promise<int>} The bgc identifier of the board game
  */
 exports.addBoardGameAndExpensions = async function (bgg_id, transaction, shallow=true) {
-  let to_fetch = new Set([bgg_id]);
+  let to_fetch = new Set(bgg_id.length === undefined ? [bgg_id] : bgg_id);
   // stores fetched bgg data and bgc models, maps bgg id with game data
   let bg_cache = {};
 
@@ -217,7 +217,7 @@ exports.addBoardGameAndExpensions = async function (bgg_id, transaction, shallow
   });
 
   await Promise.all(lodash.flatten(queries));
-  return bg_cache[bgg_id].model.id;
+  return bgg_id === undefined ? bg_cache[bgg_id].model.id : bgg_id.map(id => bg_cache[id].model.id);
 };
 
 /**
