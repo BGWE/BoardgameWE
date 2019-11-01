@@ -87,7 +87,7 @@ exports.addGameQuery = function(eid, req, res) {
             const player_data = getGamePlayerData(game, req.body.players);
             return Promise.all([
               db.GamePlayer.bulkCreate(player_data, { returning: true, transaction: t}),
-              ... m2m.addAssociations({
+              m2m.addAssociations({
                 model_class: db.PlayedExpansion,
                 fixed: {id: game.id, field: "id_game"},
                 other: {ids: req.body.expansions, field: "id_board_game"},
@@ -110,9 +110,11 @@ exports.addEventGame = function(req, res) {
     return exports.addGameQuery(req.params.eid, req, res);
 };
 
-exports.updateEventGame = function(req, res) {
+exports.updateGameQuery = function(gid, req, res) {
   return db.sequelize.transaction(async t => {
-    let game = await db.Game.findByPk(req.params.gid, {transaction: t, lock: t.LOCK.UPDATE});
+    let game = await db.Game.findByPk(gid, {transaction: t, lock: t.LOCK.UPDATE});
+    console.log(gid);
+    console.log(game);
     if (!game) {
       return util.detailErrorResponse(res, 404, "game not found");
     }
@@ -152,6 +154,7 @@ exports.updateEventGame = function(req, res) {
 };
 
 exports.updateGame = function(req, res) {
+  console.log(req.params);
   return exports.updateGameQuery(req.params.gid, req, res);
 };
 
