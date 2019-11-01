@@ -5,13 +5,11 @@ module.exports = {
     return queryInterface.createTable("PlayedExpansions", {
       id_board_game: {
         type: Sequelize.INTEGER,
-        primaryKey: true,
         references: {model: 'BoardGames', key: 'id'},
-        onDelete: 'cascade'
+        onDelete: 'restrict'
       },
       id_game: {
         type: Sequelize.INTEGER,
-        primaryKey: true,
         references: {model: 'Games', key: 'id'},
         onDelete: 'cascade'
       },
@@ -23,10 +21,15 @@ module.exports = {
         allowNull: false,
         type: Sequelize.DATE
       }
+    }).then(() => {
+      return queryInterface.addConstraint('PlayedExpansions', ['id_game', 'id_board_game'], {
+        type: 'primary key',
+        name: 'played_expansions_pkey'
+      });
     });
   },
 
   down: (queryInterface, Sequelize) => {
-    return queryInterface.dropTable("BoardGameExpansions");
+    return queryInterface.dropTable("PlayedExpansions");
   }
 };
