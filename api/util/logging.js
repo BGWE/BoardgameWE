@@ -20,3 +20,30 @@ exports.logError = (logger, err) => {
   logger.error(err_info.error);
   logger.error(err_info.stack);
 };
+
+// define general log format
+const log_format = winston.format.printf((options) => {
+  return `[${options.timestamp}] [${options.level}] [${options.label}] ${options.message}`;
+});
+
+/**
+ * Create a general format winston object for logs
+ * @param label A logger identifier to be printed in the string
+ * @returns {Format}
+ */
+exports.get_default_format = (label) => {
+  return winston.format.combine(
+      winston.format.label({label}),
+      winston.format.colorize(),
+      winston.format.timestamp(),
+      log_format
+  );
+};
+
+/**
+ * Extracts app log level from environment
+ * @returns {*|string}
+ */
+exports.get_log_level = () => {
+  return process.env.VERBOSITY || (new Set(["test", "development"]).has(process.env.NODE_ENV) ? "debug" : "info");
+};

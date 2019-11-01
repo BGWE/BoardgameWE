@@ -19,6 +19,24 @@ exports.boolOrDefault = function(b, deflt) {
     return b !== undefined ? b : deflt;
 };
 
+exports.array2mapping = (arr, key_fn) => {
+  let obj = {};
+  arr.forEach(v => obj[key_fn(v)] = v);
+  return obj;
+};
+
+exports.sleep = (ms) => {
+  return new Promise(resolve => setTimeout(resolve, ms));
+};
+
+exports.maskObject = (obj, fields) => {
+  let out = {};
+  fields.forEach(field => {
+    out[field] = obj[field];
+  });
+  return out;
+};
+
 /**
  *
  * @param data

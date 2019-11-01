@@ -1,10 +1,12 @@
 const db = require("./models/index");
 const util = require("./util/util");
 const includes = require("./util/db_include");
+const m2m = require("./util/m2m_helpers");
 
 exports.gameFullIncludesSQ = [
     includes.defaultBoardGameIncludeSQ,
-    includes.genericIncludeSQ(db.GamePlayer, "game_players", [includes.getShallowUserIncludeSQ("user")])
+    includes.genericIncludeSQ(db.GamePlayer, "game_players", [includes.getShallowUserIncludeSQ("user")]),
+    includes.genericIncludeSQ(db.PlayedExpansion, "expansions", [includes.getBoardGameIncludeSQ("board_game")])
 ];
 
 /**
@@ -37,9 +39,14 @@ exports.validateGamePlayers = (players) => {
     return {valid: true};
 };
 
-exports.fromGamePlayersToRanks = function(game) {
+exports.formatGameRanks = function(game) {
     game.dataValues.players = exports.rankForGame(game);
     game.dataValues.game_players = undefined; // to keep the more intuitive "players" label in json
+    return game;
+};
+
+exports.formatPlayedExpansions = function(game) {
+    game.dataValues.expansions = game.dataValues.expansions.map(bg => bg.board_game);
     return game;
 };
 
@@ -47,27 +54,7 @@ exports.buildFullGame = (gameId, res) => {
     return util.sendModel(res, db.Game.findOne({
         where: {id: gameId},
         include: exports.gameFullIncludesSQ
-    }), g => exports.fromGamePlayersToRanks(g));
-};
-
-const preprocessGameData = function(body) {
-    let data = {
-        players: body.players,
-        id_board_game: body.id_board_game,
-        ranking_method: body.ranking_method,
-        duration: body.duration || null,
-        has_players: body.players !== undefined && body.players.length > 0
-    };
-
-    if (data.has_players) {
-        data.ranking_validation = exports.validateRanks(
-            body.ranking_method,
-            body.players.map((item) => { return item.score; })
-        );
-        data.players_validation = exports.validateGamePlayers(body.players);
-    }
-
-    return data;
+    }), g => exports.formatPlayedExpansions(exports.formatGameRanks(g)));
 };
 
 const getGamePlayerData = function(game, validated_players) {
@@ -98,13 +85,18 @@ exports.addGameQuery = function(eid, req, res) {
             id_timer: req.body.id_timer || null,
         }, {transaction: t}).then((game) => {
             const player_data = getGamePlayerData(game, req.body.players);
-            return db.GamePlayer.bulkCreate(player_data, {
-                returning: true,
-                transaction: t
-            }).then(players => {
+            return Promise.all([
+              db.GamePlayer.bulkCreate(player_data, { returning: true, transaction: t}),
+              m2m.addAssociations({
+                model_class: db.PlayedExpansion,
+                fixed: {id: game.id, field: "id_game"},
+                other: {ids: req.body.expansions, field: "id_board_game"},
+                options: {transaction: t}
+              })
+            ]).then(() => {
                 return game;
             });
-        })
+        });
     }).then(game => {
         return exports.buildFullGame(game.id, res);
     });
@@ -120,7 +112,9 @@ exports.addEventGame = function(req, res) {
 
 exports.updateGameQuery = function(gid, req, res) {
   return db.sequelize.transaction(async t => {
-    let game = await db.Game.findByPk(gid, {transaction: t});
+    let game = await db.Game.findByPk(gid, {transaction: t, lock: t.LOCK.UPDATE});
+    console.log(gid);
+    console.log(game);
     if (!game) {
       return util.detailErrorResponse(res, 404, "game not found");
     }
@@ -129,23 +123,30 @@ exports.updateGameQuery = function(gid, req, res) {
     }
 
     // For security: cannot change event id of an existing event (could break event access policies)
-    game = await game.update({
+    await db.Game.update({
       id_board_game: req.body.id_board_game || game.id_board_game,
       duration: req.body.duration || game.duration,
-      ranking_method: req.body.ranking_method || game.ranking_method
+      ranking_method: req.body.ranking_method || game.ranking_method,
     }, {
       where: { id: game.id },
       transaction: t, lock: t.LOCK.UPDATE
     });
 
-    if (!req.body.players) {
-      return game;
+    if (req.body.players) {
+      await db.GamePlayer.destroy({transaction: t, where: {id_game: game.id}});
+      const playersData = getGamePlayerData(game, req.body.players);
+      await db.GamePlayer.bulkCreate(playersData, {transaction: t});
     }
 
-    // delete old players
-    await db.GamePlayer.destroy({ transaction: t, where: {id_game: game.id} });
-    const playersData = getGamePlayerData(game, req.body.players);
-    await db.GamePlayer.bulkCreate(playersData, { transaction: t });
+    if (req.body.expansions) {
+      await Promise.all(m2m.diffAssociations({
+        model_class: db.PlayedExpansion,
+        fixed: {field: "id_game", id: game.id},
+        other: {field: "id_board_game", ids: req.body.expansions},
+        options: {transaction: t}
+      }));
+    }
+
     return game;
   }).then(game => {
     return exports.buildFullGame(game.id, res);
@@ -153,6 +154,7 @@ exports.updateGameQuery = function(gid, req, res) {
 };
 
 exports.updateGame = function(req, res) {
+  console.log(req.params);
   return exports.updateGameQuery(req.params.gid, req, res);
 };
 
@@ -172,7 +174,7 @@ exports.sendAllGamesFiltered = function (filtering, res, options) {
         where: filtering,
         include: exports.gameFullIncludesSQ
     })), games => {
-        return games.map(g => exports.fromGamePlayersToRanks(g));
+        return games.map(exports.formatPlayedExpansions).map(exports.formatGameRanks);
     });
 };
 

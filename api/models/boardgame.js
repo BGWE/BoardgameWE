@@ -52,11 +52,32 @@ module.exports = (sequelize, DataTypes) => {
             foreignKey: "id_board_game"
         });
 
+        models.BoardGame.hasMany(models.PlayedExpansion, {
+          onDelete: "RESTRICT",
+          foreignKey: 'id_board_game',
+          sourceKey: 'id',
+          as: 'played_as_expansion'
+        });
+
         models.BoardGame.hasMany(models.LibraryGame, {
             onDelete: "CASCADE",
             foreignKey: 'id_board_game',
             sourceKey: 'id',
             as: 'library_games'
+        });
+
+        models.BoardGame.hasMany(models.BoardGameExpansion, {
+            onDelete: "CASCADE",
+            foreignKey: 'id_expansion',
+            sourceKey: 'id',
+            as: 'parent_board_games'
+        });
+
+        models.BoardGame.hasMany(models.BoardGameExpansion,  {
+            onDelete: "CASCADE",
+            foreignKey: 'id_expanded',
+            sourceKey: 'id',
+            as: 'expansions'
         });
     };
     return BoardGame;

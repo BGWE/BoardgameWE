@@ -1,3 +1,7 @@
+if (process.env.NODE_ENV !== 'production') {
+  require('dotenv').load();
+}
+
 const express = require('express');
 const app = express();
 const bodyParser = require('body-parser');
@@ -7,11 +11,6 @@ const i18n = require("i18n");
 const winston = require('winston');
 const winstonExpress = require('express-winston');
 const logging = require("./api/util/logging");
-
-if (process.env.NODE_ENV !== 'production') {
-    require('dotenv').load();
-}
-
 const hostname = '0.0.0.0';
 const port = process.env.PORT || 3000;
 
@@ -43,19 +42,6 @@ app.use(i18n.init);
  *       LOGGING        *
  *----------------------*/
 
-const log_format = winston.format.printf((options) => {
-  return `[${options.timestamp}] [${options.level}] [${options.label}] ${options.message}`;
-});
-
-const get_default_format = (label) => {
-  return winston.format.combine(
-      winston.format.label({label}),
-      winston.format.colorize(),
-      winston.format.timestamp(),
-      log_format
-  );
-};
-
 const log_transports = [ new winston.transports.Console() ];
 
 const express_winston_logger_defaults = {
@@ -63,10 +49,9 @@ const express_winston_logger_defaults = {
   requestWhitelist: ["query", "body"]
 };
 
-const LOG_LEVEL = process.VERBOSITY || (new Set(["test", "development"]).has(process.env.NODE_ENV) ? "debug" : "info");
 const custom_logger_defaults = {
   transports: log_transports,
-  level: LOG_LEVEL
+  level: logging.get_log_level()
 };
 
 /**
@@ -75,9 +60,8 @@ const custom_logger_defaults = {
  * - ws: for websocket related logging
  * - api: for api errors related logging
  */
-let ws_logger = winston.loggers.add("ws", { ... custom_logger_defaults, format: get_default_format("WS") });
-let db_logger = winston.loggers.add("db", { ... custom_logger_defaults, format: get_default_format("DB") });  // used in api/config/config.js
-let api_logger = winston.loggers.add("api", { ... custom_logger_defaults, format: get_default_format("API") });
+let ws_logger = winston.loggers.add("ws", { ... custom_logger_defaults, format: logging.get_default_format("WS") });
+let api_logger = winston.loggers.add("api", { ... custom_logger_defaults, format: logging.get_default_format("API") });
 
 /**
  * Define a logger for express middleware for logging request path, response status...
@@ -85,7 +69,7 @@ let api_logger = winston.loggers.add("api", { ... custom_logger_defaults, format
 app.use(winstonExpress.logger({
   ... express_winston_logger_defaults,
   transports: log_transports,
-  format: get_default_format("API"),
+  format: logging.get_default_format("API"),
   msg: "HTTP {{res.statusCode}} {{req.method}} {{req.url}}",
   level: function (req, res) {
     let level = "debug";
@@ -115,10 +99,11 @@ routes(app);
 // replacing default express error handler to log errors
 app.use((err, req, res, next) => {
   if (res.headersSent) {  // the default handler closes the connection in this case
-    console.log("err");
+    api_logger.crit("An unhandled error was caught by the global error handler, but headers were already sent.");
+    logging.logError(api_logger, err);
     return next(err);
   }
-  logging.logError(winston.loggers.get("api"), err);
+  logging.logError(api_logger, err);
   res.status(500).json({success: false, msg: "error"});
 });
 

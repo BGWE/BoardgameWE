@@ -1,3 +1,11 @@
+let winston = require('winston');
+let logging = require('../util/logging');
+
+let db_logger = winston.loggers.add("db", {
+  transports: [ new winston.transports.Console() ],
+  level: logging.get_log_level(),
+  format: logging.get_default_format("DB")
+});
 
 let database = {
     username: process.env.DB_USERNAME,
@@ -8,7 +16,7 @@ let database = {
     timezone: process.env.TIMEZONE || "UTC",
     seederStorage: "sequelize",
     logging: (msg) => {
-      require("winston").loggers.get("db").debug(msg);
+      db_logger.debug(msg);
     }
 };
 

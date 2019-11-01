@@ -731,6 +731,7 @@ module.exports = function(app) {
      * @apiParam (body) {Number} [duration] Duration of the board game, or `null`.
      * @apiParam (body) {String} ranking_method The ranking method for the game. One of: `{WIN_LOSE, POINTS_LOWER_BETTER, POINTS_HIGHER_BETTER}`.
      * @apiPAram (body) {Number} [id_timer] Add a timer identifier
+     * @apiParam (body) {Number[]} expansions The identifiers of the board games expansion played with the board game
      * @apiParam (body) {GamePlayer[]} players List of players involved with the game.
      * @apiParam (body) {Number} players.score Player score
      * @apiParam (body) {String} players.name Player name if not registered on the platform (mutually exclusive with
@@ -766,7 +767,12 @@ module.exports = function(app) {
      * returned data is a list (not an actual object).
      */
     app.route("/event/:eid/games")
-        .get(event_access.read, error_wrapper(GameController.getEventGames));
+        .get(
+            event_access.read,
+            validation.getPaginationValidators(),
+            validation.validateOrBlock("invalid pagination parameters"),
+            error_wrapper(GameController.getEventGames)
+        );
 
     /**
      * @api {get} /event/:id/games/latest Get recent event game
@@ -1100,6 +1106,7 @@ module.exports = function(app) {
      *
      * @apiUse TokenHeaderRequired
      * @apiUse BoardGameDescriptor
+     * @apiUse BoardGameExpansionsFields
      * @apiUse DBDatetimeFields
      */
 
@@ -1113,6 +1120,7 @@ module.exports = function(app) {
      *
      * @apiUse TokenHeaderRequired
      * @apiUse BoardGameDescriptor
+     * @apiUse BoardGameExpansionsFields
      * @apiUse DBDatetimeFields
      */
 
@@ -1132,16 +1140,45 @@ module.exports = function(app) {
         .put(error_wrapper(BoardGameController.updateBoardGame))
         .delete(error_wrapper(BoardGameController.deleteBoardGame));
 
+
+    /**
+     * @api {get} /board_game/:bgid/expansions Get board game expansions
+     * @apiName GetBoardGameExpansions
+     * @apiGroup Board game
+     * @apiDescription Get all expansions of a given board game
+
+     * @apiUse BoardGameExpansionsFields
+     * @apiUse TokenHeaderRequired
+     */
+
+    /**
+     * @api {put} /board_game/:bgid/expansions Update board game expansions
+     * @apiName UpdateBoardGameExpansions
+     * @apiGroup Board game
+     * @apiDescription Update the list of expansions for a given board game from bgg. The updated list is returned.
+     *
+     * @apiUse BoardGameExpansionsFields
+     * @apiUse TokenHeaderRequired
+     */
+    app.route("/board_game/:bgid/expansions")
+        .get(error_wrapper(BoardGameController.getBoardGameExpansions))
+        .put(error_wrapper(BoardGameController.updateBoardGameExpansions));
+
     /**
      * @api {get} /board_games Get board games
      * @apiName GetBoardGames
      * @apiGroup Board game
      * @apiDescription Get all the board games of the application.
-     *
+     * @apiUse PaginationParameters
+     * @apiParam {String} format=expansions One of `{expansions, plain}`
      * @apiUse TokenHeaderRequired
      */
     app.route("/board_games")
-        .get(error_wrapper(BoardGameController.getBoardGames));
+        .get(
+            validation.getPaginationValidators(),
+            validation.validateOrBlock("invalid pagination parameters"),
+            error_wrapper(BoardGameController.getBoardGames)
+        );
 
     // Game
     const game_access = {

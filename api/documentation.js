@@ -144,6 +144,7 @@
  * @apiSuccess {String} ranking_method The ranking method for the game. One of: `{WIN_LOSE, POINTS_LOWER_BETTER, POINTS_HIGHER_BETTER}`.
  * @apiSuccess {Number} id_timer Timer identifier, or `null`.
  * @apiSuccess {BoardGame} board_game Board game data (see "Add board game" request for structure).
+ * @apiSuccess {BoardGame[]} expansions Expansions of the selected board game that were played with the board game.
  * @apiSuccess {Player[]} players List of players involved in the game.
  * @apiSuccess {Number} players.id Game player identifier
  * @apiSuccess {Number} players.score Player score
@@ -316,4 +317,12 @@
  * @apiDefine PaginationParameters
  * @apiParam (query) { Number} [max_items] Maximum number of items to return
  * @apiParam (query) {Number} [start] Pagination offset (resources are sorted by decreasing creation time)
+ */
+
+/**
+ * @apiDefine BoardGameExpansionsFields
+ * @apiSuccess {Object} expansions Object mapping board game identifier with board game descriptor for all expansions
+ * of the fetched games (recursive, that is expansions of expansions etc, are all listed).
+ * @apiSuccess {Object} expansion_tree Each entry maps a board game identifier with a list of identifier
+ * corresponding to this board game expansions. Each entry of `expansions` has its counterpart in `expansion_tree`.
  */
