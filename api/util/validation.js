@@ -104,6 +104,24 @@ exports.checkScore = ranking_method_field => {
     };
 };
 
+/** CHecks whether the parameters is an array of extension of a given board game */
+exports.areExpansions = id_board_game_field => {
+  return async (value, { req, location }) => {
+    const id_board_game = req[location][id_board_game_field];
+    if (!id_board_game) {
+      throw new Error(`Missing board game information. Cannot determine if expansions are correct.`)
+    }
+    const expansions = await db.BoardGameExpansion.findAll({where: {id_expanded: id_board_game}});
+    const real_expansions = new Set(expansions.map(exp => exp.id_expansion));
+    value.forEach(exp => {
+      if (!real_expansions.has(exp)) {
+        throw new Error(`Invalid expansions. Board game ${exp} is not an expansion of board game ${id_board_game}.`);
+      }
+    });
+    return true;
+  };
+};
+
 exports.mutuallyExclusive = function(other) {
     return (value, { req, location, path}) => {
         if(!!value ^ !!valueByPath(req[location], replacePathLast(path, other))) {
@@ -132,6 +150,7 @@ exports.getGameValidators = function(is_create) {
         body('players.*.name')
             .custom(exports.mutuallyExclusive("id_user"))
             .optional({nullable: true}).isString().trim().not().isEmpty(),
+        co(body('expansions'), !is_create).isArray().custom(exports.areExpansions('id_board_game')),
         body('duration').optional({nullable: true}).isInt().custom(exports.isPositive),
         exports.modelExists(co(body('id_board_game'), !is_create), db.BoardGame),
         co(body('ranking_method'), !is_create).isIn(["WIN_LOSE", "POINTS_HIGHER_BETTER", "POINTS_LOWER_BETTER"])
