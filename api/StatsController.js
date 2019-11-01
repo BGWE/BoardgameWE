@@ -147,7 +147,6 @@ exports.getGCBGBRankings = function (games) {
         if (game.duration === null) { // skip games with
             continue;
         }
-        const players = game.game_players;
         const game_ranks = util.rank(game.game_players, player => player.score, game.ranking_method === "POINTS_LOWER_BETTER");
         const n_groups = AGGREGATE.count_unique(game_ranks.map(gr => gr.rank));
         for (let playerIndex = 0; playerIndex < game_ranks.length; ++playerIndex) {

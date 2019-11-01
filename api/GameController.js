@@ -1,7 +1,6 @@
 const db = require("./models/index");
 const util = require("./util/util");
 const includes = require("./util/db_include");
-const userutil = require("./util/user");
 const m2m = require("./util/m2m_helpers");
 
 exports.gameFullIncludesSQ = [
@@ -10,7 +9,7 @@ exports.gameFullIncludesSQ = [
     includes.genericIncludeSQ(db.PlayedExpansion, "expansions", [includes.getBoardGameIncludeSQ("board_game")])
 ];
 
-/**r
+/**
  * Validate ranks from the list
  */
 exports.validateRanks = (ranking_method, ranks) => {
@@ -104,7 +103,7 @@ exports.addGameQuery = function(eid, req, res) {
 };
 
 exports.addGame = function (req, res) {
-    return exports.addGameQuery(req.body.id_event || null, req, res);
+    return exports.addGameQuery(null, req, res);
 };
 
 exports.addEventGame = function(req, res) {
@@ -114,17 +113,20 @@ exports.addEventGame = function(req, res) {
 exports.updateEventGame = function(req, res) {
   return db.sequelize.transaction(async t => {
     let game = await db.Game.findByPk(req.params.gid, {transaction: t, lock: t.LOCK.UPDATE});
+    if (!game) {
+      return util.detailErrorResponse(res, 404, "game not found");
+    }
     if (req.body.ranking_method !== game.ranking_method && !req.body.players) {
       return util.detailErrorResponse(res, 400, "'players' list should be provided when 'ranking_method' changes");
     }
 
+    // For security: cannot change event id of an existing event (could break event access policies)
     await db.Game.update({
       id_board_game: req.body.id_board_game || game.id_board_game,
       duration: req.body.duration || game.duration,
       ranking_method: req.body.ranking_method || game.ranking_method,
-      id_event: req.body.id_event || req.params.eid
     }, {
-      where: {id: game.id, id_event: req.params.eid},
+      where: { id: game.id },
       transaction: t, lock: t.LOCK.UPDATE
     });
 
@@ -147,6 +149,10 @@ exports.updateEventGame = function(req, res) {
   }).then(game => {
     return exports.buildFullGame(game.id, res);
   });
+};
+
+exports.updateGame = function(req, res) {
+  return exports.updateGameQuery(req.params.gid, req, res);
 };
 
 exports.rankForGame = function(game) {
@@ -175,8 +181,8 @@ exports.getGames = function (req, res) {
 };
 
 exports.getUserGames = function(req, res) {
-    const current_uid = userutil.getCurrUserId(req);
-    const player_query = db.selectFieldQuery("GamePlayers", "id_game", {id_user: current_uid});
+    const uid = parseInt(req.params.uid);
+    const player_query = db.selectFieldQuery("GamePlayers", "id_game", {id_user: uid});
     return exports.sendAllGamesFiltered({id: {[db.Op.in]: db.sequelize.literal('(' + player_query + ')')}}, res);
 };
 

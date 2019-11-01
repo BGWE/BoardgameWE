@@ -108,3 +108,42 @@ exports.can_access_timer = async (access_type, tid_callback, uid_callback) => {
                  || access_type === exports.ACCESS_LIST)
                 && (is_creator || is_timer_player));
 };
+
+
+
+exports.can_access_game = async (access_type, gid_callback, uid_callback) => {
+  const gid = gid_callback();
+  const uid = uid_callback();
+  const game = await db.Game.findByPk(gid);
+  if (!game) {
+    throw new NotFoundError("game not found");
+  }
+  if (game.id_event !== null) { // must fall back to event access policy if game is linked to an event
+    return await exports.can_access_event(access_type, () => game.id_event, () => uid);
+  }
+  const players = await db.GamePlayer.findAll({ where: {id_game: gid, id_user: {[db.Op.ne]: null}}, attributes: ['id_user']});
+  const player_ids = new Set(players.map(p => p.id_user));
+  const friends = new Set(await db.Friendship.getFriendIds([...player_ids]));
+  return (friends.has(uid) && access_type === exports.ACCESS_READ) || player_ids.has(uid);
+};
+
+
+exports.get_game_access_callback = (access_type) => {
+  return util.asyncMiddleware(async (req, res, next) => {
+    const gid_callback = () => parseInt(req.params.gid);
+    const uid_callback = () => userutil.getCurrUserId(req);
+    try {
+      if (await exports.can_access_game(access_type, gid_callback, uid_callback)) {
+        next();
+      } else {
+        return util.detailErrorResponse(res, 403, "you don't have the rights for executing this operation against this game ('" + access_type + "').");
+      }
+    } catch (e) {
+      if (e instanceof NotFoundError) {
+        return util.detailErrorResponse(res, 404, "game not found");
+      } else {
+        throw e;
+      }
+    }
+  });
+};

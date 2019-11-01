@@ -42,5 +42,29 @@ module.exports = (sequelize, DataTypes) => {
         });
     };
 
+  Friendship.getFriendIds = async (users) => {
+    const fetched = await Friendship.findAll({
+      where: {
+        [sequelize.Sequelize.Op.or]: [
+          {id_user1: {[sequelize.Sequelize.Op.in]: users}},
+          {id_user2: {[sequelize.Sequelize.Op.in]: users}}
+        ]
+      }
+    });
+
+    const base_users = new Set(users);
+    const friends = [];
+    fetched.forEach(f => {
+      if (!base_users.has(f.id_user1)) {
+        friends.push(f.id_user1);
+      }
+      if (!base_users.has(f.id_user2)) {
+        friends.push(f.id_user2);
+      }
+    });
+
+    return friends;
+  };
+
     return Friendship;
 };
