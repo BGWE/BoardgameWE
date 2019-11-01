@@ -17,12 +17,11 @@ exports.boardGameIncludes = [{
  * Augment the board_game object with an object containing all expansions of the board game (mapping bg.id -> bg).
  * It also adds a field for the expansion tree as an object which maps bg.id -> list of expansions bg.id. All
  * identifiers if the expansions object have an entry in the expansion tree field.
- * @param board_game_promise {Promise<BoardGame>} The board game to augment
+ * @param board_game {Model|BoardGame} The board game to augment
  * @param transaction An optional database transaction
  * @returns {Promise<*>} The augmented board game object
  */
-exports.augmentWithExpansions = async (board_game_promise, transaction) => {
-  let board_game = await board_game_promise;
+exports.augmentWithExpansions = async (board_game, transaction) => {
   const expansion_data = await exports.getBoardGameExpansionsFromDB(board_game.id, transaction);
   const expansions = await db.BoardGame.findAll({ where: {id: {[db.Op.in]: expansion_data.expansions}}, transaction });
   board_game.dataValues.expansions = util.array2mapping(expansions, bg => bg.id);
@@ -33,7 +32,7 @@ exports.augmentWithExpansions = async (board_game_promise, transaction) => {
 exports.getBoardGame = function(req, res) {
   return util.sendModel(res, db.sequelize.transaction(async transaction => {
     return await exports.augmentWithExpansions(
-      db.BoardGame.findByPk(parseInt(req.params.bgid), { transaction }),
+      await db.BoardGame.findByPk(parseInt(req.params.bgid), { transaction }),
       transaction
     );
   }));
@@ -52,9 +51,9 @@ exports.updateBoardGame = function(req, res) {
       where: {id: bgid},
       fields: ["gameplay_video_url"],
       transaction, lock: transaction.LOCK.UPDATE
-    }).then(() => {
+    }).then(async () => {
       return util.sendModel(res, exports.augmentWithExpansions(
-        db.BoardGame.findByPk(bgid, { transaction }),
+        await db.BoardGame.findByPk(bgid, { transaction }),
         transaction
       ));
     });
@@ -140,24 +139,18 @@ exports.deleteBoardGame = function(req, res) {
 exports.getBoardGameExpansions = function(req, res) {
   return util.sendModel(res, db.sequelize.transaction(async transaction => {
     return await exports.augmentWithExpansions(
-        db.BoardGame.findByPk(parseInt(req.params.bgid), { transaction }),
+        await db.BoardGame.findByPk(parseInt(req.params.bgid), { transaction }),
         transaction
     );
-  }), (board_game) => { return {
-    expansions: board_game.dataValues.expansions,
-    expansion_tree: board_game.dataValues.expansion_tree
-  }; });
+  }), (board_game) => util.maskObject(board_game.dataValues, ["expansions", "expansion_tree"]));
 };
 
 exports.updateBoardGameExpansions = function(req, res) {
   return util.sendModel(res, db.sequelize.transaction(async transaction => {
     let bg = await db.BoardGame.findByPk(req.params.bgid, {transaction});
     await exports.addBoardGameAndExpansions(bg.bgg_id, transaction, false);
-    return await exports.augmentWithExpansions(new Promise(() => bg), transaction);
-  }), (board_game) => { return {
-    expansions: board_game.dataValues.expansions,
-    expansion_tree: board_game.dataValues.expansion_tree
-  }; });
+    return await exports.augmentWithExpansions(bg, transaction);
+  }), (board_game) => util.maskObject(board_game.dataValues, ["expansions", "expansion_tree"]));
 };
 
 /**

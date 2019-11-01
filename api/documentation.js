@@ -144,6 +144,7 @@
  * @apiSuccess {String} ranking_method The ranking method for the game. One of: `{WIN_LOSE, POINTS_LOWER_BETTER, POINTS_HIGHER_BETTER}`.
  * @apiSuccess {Number} id_timer Timer identifier, or `null`.
  * @apiSuccess {BoardGame} board_game Board game data (see "Add board game" request for structure).
+ * @apiSuccess {BoardGame[]} expansions Expansions of the selected board game that were played with the board game.
  * @apiSuccess {Player[]} players List of players involved in the game.
  * @apiSuccess {Number} players.id Game player identifier
  * @apiSuccess {Number} players.score Player score

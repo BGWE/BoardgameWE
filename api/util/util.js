@@ -29,6 +29,14 @@ exports.sleep = (ms) => {
   return new Promise(resolve => setTimeout(resolve, ms));
 };
 
+exports.maskObject = (obj, fields) => {
+  let out = {};
+  fields.forEach(field => {
+    out[field] = obj[field];
+  });
+  return out;
+};
+
 /**
  *
  * @param data

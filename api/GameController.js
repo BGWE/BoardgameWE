@@ -2,13 +2,15 @@ const db = require("./models/index");
 const util = require("./util/util");
 const includes = require("./util/db_include");
 const userutil = require("./util/user");
+const m2m = require("./util/m2m_helpers");
 
 exports.gameFullIncludesSQ = [
     includes.defaultBoardGameIncludeSQ,
-    includes.genericIncludeSQ(db.GamePlayer, "game_players", [includes.getShallowUserIncludeSQ("user")])
+    includes.genericIncludeSQ(db.GamePlayer, "game_players", [includes.getShallowUserIncludeSQ("user")]),
+    includes.genericIncludeSQ(db.PlayedExpansion, "expansions", [includes.getBoardGameIncludeSQ("board_game")])
 ];
 
-/**
+/**r
  * Validate ranks from the list
  */
 exports.validateRanks = (ranking_method, ranks) => {
@@ -38,9 +40,14 @@ exports.validateGamePlayers = (players) => {
     return {valid: true};
 };
 
-exports.fromGamePlayersToRanks = function(game) {
+exports.formatGameRanks = function(game) {
     game.dataValues.players = exports.rankForGame(game);
     game.dataValues.game_players = undefined; // to keep the more intuitive "players" label in json
+    return game;
+};
+
+exports.formatPlayedExpansions = function(game) {
+    game.dataValues.expansions = game.dataValues.expansions.map(bg => bg.board_game);
     return game;
 };
 
@@ -48,27 +55,7 @@ exports.buildFullGame = (gameId, res) => {
     return util.sendModel(res, db.Game.findOne({
         where: {id: gameId},
         include: exports.gameFullIncludesSQ
-    }), g => exports.fromGamePlayersToRanks(g));
-};
-
-const preprocessGameData = function(body) {
-    let data = {
-        players: body.players,
-        id_board_game: body.id_board_game,
-        ranking_method: body.ranking_method,
-        duration: body.duration || null,
-        has_players: body.players !== undefined && body.players.length > 0
-    };
-
-    if (data.has_players) {
-        data.ranking_validation = exports.validateRanks(
-            body.ranking_method,
-            body.players.map((item) => { return item.score; })
-        );
-        data.players_validation = exports.validateGamePlayers(body.players);
-    }
-
-    return data;
+    }), g => exports.formatPlayedExpansions(exports.formatGameRanks(g)));
 };
 
 const getGamePlayerData = function(game, validated_players) {
@@ -99,13 +86,18 @@ exports.addGameQuery = function(eid, req, res) {
             id_timer: req.body.id_timer || null,
         }, {transaction: t}).then((game) => {
             const player_data = getGamePlayerData(game, req.body.players);
-            return db.GamePlayer.bulkCreate(player_data, {
-                returning: true,
-                transaction: t
-            }).then(players => {
+            return Promise.all([
+              db.GamePlayer.bulkCreate(player_data, { returning: true, transaction: t}),
+              ... m2m.addAssociations({
+                model_class: db.PlayedExpansion,
+                fixed: {id: game.id, field: "id_game"},
+                other: {ids: req.body.expansions, field: "id_board_game"},
+                options: {transaction: t}
+              })
+            ]).then(() => {
                 return game;
             });
-        })
+        });
     }).then(game => {
         return exports.buildFullGame(game.id, res);
     });
@@ -120,39 +112,41 @@ exports.addEventGame = function(req, res) {
 };
 
 exports.updateEventGame = function(req, res) {
-    return db.sequelize.transaction(t => {
-        return db.Game.findByPk(req.params.gid, {transaction: t})
-            .then(game => {
-                if (req.body.ranking_method !== game.ranking_method && !req.body.players) {
-                    return util.detailErrorResponse(res, 400, "'players' list should be provided when 'ranking_method' changes");
-                }
-                return db.Game.update({
-                    id_board_game: req.body.id_board_game || game.id_board_game,
-                    duration: req.body.duration || game.duration,
-                    ranking_method: req.body.ranking_method || game.ranking_method,
-                    id_event: req.body.id_event || req.params.eid
-                }, {
-                    where: {id: game.id, id_event: req.params.eid},
-                    transaction: t
-                }).then(updated => {
-                    if (req.body.players) {
-                        return db.GamePlayer.destroy({
-                            transaction: t,
-                            where: {id_game: game.id}
-                        }).then(deleted => {
-                            const playersData = getGamePlayerData(game, req.body.players);
-                            return db.GamePlayer.bulkCreate(playersData, {
-                                transaction: t
-                            }).then(players => { return game; });
-                        });
-                    } else {
-                        return game;
-                    }
-                });
-            });
-    }).then(game => {
-        return exports.buildFullGame(game.id, res);
+  return db.sequelize.transaction(async t => {
+    let game = await db.Game.findByPk(req.params.gid, {transaction: t, lock: t.LOCK.UPDATE});
+    if (req.body.ranking_method !== game.ranking_method && !req.body.players) {
+      return util.detailErrorResponse(res, 400, "'players' list should be provided when 'ranking_method' changes");
+    }
+
+    await db.Game.update({
+      id_board_game: req.body.id_board_game || game.id_board_game,
+      duration: req.body.duration || game.duration,
+      ranking_method: req.body.ranking_method || game.ranking_method,
+      id_event: req.body.id_event || req.params.eid
+    }, {
+      where: {id: game.id, id_event: req.params.eid},
+      transaction: t, lock: t.LOCK.UPDATE
     });
+
+    if (req.body.players) {
+      await db.GamePlayer.destroy({transaction: t, where: {id_game: game.id}});
+      const playersData = getGamePlayerData(game, req.body.players);
+      await db.GamePlayer.bulkCreate(playersData, {transaction: t});
+    }
+
+    if (req.body.expansions) {
+      await Promise.all(m2m.diffAssociations({
+        model_class: db.PlayedExpansion,
+        fixed: {field: "id_game", id: game.id},
+        other: {field: "id_board_game", ids: req.body.expansions},
+        options: {transaction: t}
+      }));
+    }
+
+    return game;
+  }).then(game => {
+    return exports.buildFullGame(game.id, res);
+  });
 };
 
 exports.rankForGame = function(game) {
@@ -171,7 +165,7 @@ exports.sendAllGamesFiltered = function (filtering, res, options) {
         where: filtering,
         include: exports.gameFullIncludesSQ
     })), games => {
-        return games.map(g => exports.fromGamePlayersToRanks(g));
+        return games.map(exports.formatPlayedExpansions).map(exports.formatGameRanks);
     });
 };
 

@@ -731,6 +731,7 @@ module.exports = function(app) {
      * @apiParam (body) {Number} [duration] Duration of the board game, or `null`.
      * @apiParam (body) {String} ranking_method The ranking method for the game. One of: `{WIN_LOSE, POINTS_LOWER_BETTER, POINTS_HIGHER_BETTER}`.
      * @apiPAram (body) {Number} [id_timer] Add a timer identifier
+     * @apiParam (body) {Number[]} expansions The identifiers of the board games expansion played with the board game
      * @apiParam (body) {GamePlayer[]} players List of players involved with the game.
      * @apiParam (body) {Number} players.score Player score
      * @apiParam (body) {String} players.name Player name if not registered on the platform (mutually exclusive with
@@ -1175,7 +1176,7 @@ module.exports = function(app) {
 
 
     /**
-     * @api {get} /board_game/:bgid/expansions
+     * @api {get} /board_game/:bgid/expansions Get board game expansions
      * @apiName GetBoardGameExpansions
      * @apiGroup Board game
      * @apiDescription Get all expansions of a given board game
@@ -1185,7 +1186,7 @@ module.exports = function(app) {
      */
 
     /**
-     * @api {put} /board_game/:bgid/expansions
+     * @api {put} /board_game/:bgid/expansions Update board game expansions
      * @apiName UpdateBoardGameExpansions
      * @apiGroup Board game
      * @apiDescription Update the list of expansions for a given board game from bgg. The updated list is returned.

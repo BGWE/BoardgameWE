@@ -32,7 +32,7 @@ exports.makeActivity = (type, data) => {
         });
     } else if (type === exports.ACTIVITY_EVENT_GAME_PLAY) {
         const GameController = require("../GameController");
-        return Object.assign(activity, {game: GameController.fromGamePlayersToRanks(data)});
+        return Object.assign(activity, {game: GameController.formatGameRanks(data)});
     } else {
         throw new Error("unknown activity type '" + type + "'");
     }
