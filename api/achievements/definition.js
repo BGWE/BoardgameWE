@@ -217,14 +217,13 @@ exports.ACHIEVEMENTS = A;
 
 // each field is an array of achievements (sorted by increasing difficulty)
 const B = {};
-B.BOARD_GAME_PLAYED = new Badge(S.BGA, N.BOARD_GAME_PLAYED, [2, 5, 15, 30], checks.bga_played_count);
-B.BOARD_GAME_OWNED = new Badge(S.BGA, N.BOARD_GAME_OWNED, [1, 5, 25, 50, 100], checks.bga_owned_count);
-B.GAME_PLAYED = new Badge(S.GAM, N.GAME_PLAYED, [1, 15, 30], checks.game_played_count);
-B.EVENT_ATTENDED = new Badge(S.EVE, N.EVENT_ATTENDED, [1, 5, 15], checks.event_attended_count);
-B.GAME_LOST = new Badge(S.GAM, N.GAME_LOST, [1, 5, 15], checks.game_lost_count);
-B.GAME_WON = new Badge(S.GAM, N.GAME_WON, [1, 5, 15], checks.game_won_count);
+B.BOARD_GAME_PLAYED = new Badge(S.BGA, N.BOARD_GAME_PLAYED, [2, 5, 10, 25, 50, 75, 100, 150, 200, 500], checks.bga_played_count);
+B.BOARD_GAME_OWNED = new Badge(S.BGA, N.BOARD_GAME_OWNED, [1, 5, 10, 25, 50, 75, 100, 200, 400, 600], checks.bga_owned_count);
+B.GAME_PLAYED = new Badge(S.GAM, N.GAME_PLAYED, [1, 10, 25, 50, 75, 100, 150, 200, 300, 400, 500, 600, 700, 800, 900, 1000, 1250], checks.game_played_count);
+B.EVENT_ATTENDED = new Badge(S.EVE, N.EVENT_ATTENDED, [0, 1, 3, 5, 7, 10, 15, 20, 50], checks.event_attended_count);
+B.GAME_LOST = new Badge(S.GAM, N.GAME_LOST, [1, 5, 10, 25, 50, 75, 100, 200, 400, 600], checks.game_lost_count);
+B.GAME_WON = new Badge(S.GAM, N.GAME_WON, [1, 5, 10, 25, 50, 75, 100, 200, 400, 600], checks.game_won_count);
 deepfreeze(B);
-
 exports.B = B;
 exports.BADGES = B;
 

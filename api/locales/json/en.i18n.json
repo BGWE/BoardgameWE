@@ -36,20 +36,41 @@
     "GAM_B_09_WON": {
       "title": "Subutai"
     },
+    "GAM_B_00_LOST": {
+      "title": "Mishap"
+    },
+    "GAM_B_01_LOST": {
+      "title": "Luckless"
+    },
+    "GAM_B_02_LOST": {
+      "title": "Persevering"
+    },
+    "GAM_B_03_LOST": {
+      "title": "Cursed"
+    },
+    "GAM_B_04_LOST": {
+      "title": "Sigurd Eysteinsson"
+    },
+    "GAM_B_05_LOST": {
+      "title": "Violet Jessop"
+    },
+    "GAM_B_06_LOST": {
+      "title": "Yang Kyoungjoing"
+    },
+    "GAM_B_07_LOST": {
+      "title": "Tsutomu Yamaguchi"
+    },
+    "GAM_B_08_LOST": {
+      "title": "Frane Selak"
+    },
+    "GAM_B_09_LOST": {
+      "title": "Murphy"
+    },
     "GAM_B_LOST": {
       "descr": {
         "one": "You lost your first game",
         "other": "You lost %d games"
       }
-    },
-    "GAM_B_00_LOST": {
-      "title": "Perseverance I"
-    },
-    "GAM_B_01_LOST": {
-      "title": "Perseverance II"
-    },
-    "GAM_B_02_LOST": {
-      "title": "Perseverance III"
     },
     "EVE_B_ATTENDED": {
       "descr": {
@@ -58,13 +79,31 @@
       }
     },
     "EVE_B_00_ATTENDED": {
-      "title": "Novice componion"
+      "title": "Hermit"
     },
     "EVE_B_01_ATTENDED": {
-      "title": "Veteran componion"
+      "title": "Shy in remission"
     },
     "EVE_B_02_ATTENDED": {
-      "title": "Componion among componions"
+      "title": "Sociable"
+    },
+    "EVE_B_03_ATTENDED": {
+      "title": "Extrovert"
+    },
+    "EVE_B_04_ATTENDED": {
+      "title": "Gregarious"
+    },
+    "EVE_B_05_ATTENDED": {
+      "title": "Accustomed"
+    },
+    "EVE_B_06_ATTENDED": {
+      "title": "Worldly"
+    },
+    "EVE_B_07_ATTENDED": {
+      "title": "Influencer"
+    },
+    "EVE_B_08_ATTENDED": {
+      "title": "Mark Zuckerberg"
     },
     "GAM_B_PLAYED": {
       "descr": {
@@ -73,13 +112,55 @@
       }
     },
     "GAM_B_00_PLAYED": {
-      "title": "Apprentice"
+      "title": "First game "
     },
     "GAM_B_01_PLAYED": {
-      "title": "Journeyman"
+      "title": "Beginner"
     },
     "GAM_B_02_PLAYED": {
-      "title": "Master"
+      "title": "Amateur"
+    },
+    "GAM_B_03_PLAYED": {
+      "title": "Initiate"
+    },
+    "GAM_B_04_PLAYED": {
+      "title": "Enthusiastic"
+    },
+    "GAM_B_05_PLAYED": {
+      "title": "Passionate"
+    },
+    "GAM_B_06_PLAYED": {
+      "title": "Enamored"
+    },
+    "GAM_B_07_PLAYED": {
+      "title": "Assiduous"
+    },
+    "GAM_B_08_PLAYED": {
+      "title": "Keen"
+    },
+    "GAM_B_09_PLAYED": {
+      "title": "Overzealous"
+    },
+    "GAM_B_10_PLAYED": {
+      "title": "Bewitched"
+    },
+    "GAM_B_11_PLAYED": {
+      "title": "Fanatic"
+    },
+    "GAM_B_12_PLAYED": {
+      "title": "Frantic"
+    },
+    "GAM_B_13_PLAYED": {
+      "title": "Addict"
+    },
+    "GAM_B_14_PLAYED": {
+      "title": "Boardgamaholic"
+    },
+    "GAM_B_15_PLAYED": {
+      "title": "Infected"
+    },
+    "GAM_B_16_PLAYED": {
+      "title": "Exalted"
     },
     "BGA_B_OWNED": {
       "descr": {
@@ -88,22 +169,31 @@
       }
     },
     "BGA_B_00_OWNED": {
-      "title": "Amateur"
+      "title": "First board game"
     },
     "BGA_B_01_OWNED": {
-      "title": "Initiate"
+      "title": "First stack"
     },
     "BGA_B_02_OWNED": {
-      "title": "Collector"
+      "title": "First shelf"
     },
     "BGA_B_03_OWNED": {
-      "title": "Retailer"
+      "title": "First kallax"
     },
     "BGA_B_04_OWNED": {
-      "title": "Warehouse manager"
+      "title": "Collector"
     },
     "BGA_B_05_OWNED": {
-      "title": "Amazon"
+      "title": "Gallerist"
+    },
+    "BGA_B_06_OWNED": {
+      "title": "Curator"
+    },
+    "BGA_B_07_OWNED": {
+      "title": "Warehouse manager"
+    },
+    "BGA_B_08_OWNED": {
+      "title": "Amazon\tAmazon\r"
     },
     "BGA_B_PLAYED": {
       "descr": "You have played to %d distinct board games"
