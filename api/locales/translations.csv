@@ -36,22 +36,22 @@ achievements.EVE_B_07_ATTENDED.title,Influencer,Influencer
 achievements.EVE_B_08_ATTENDED.title,Mark Zuckerberg,Mark Zuckerberg
 achievements.GAM_B_PLAYED.descr.one,You played to your first game,Tu as joué à ta première partie
 achievements.GAM_B_PLAYED.descr.other,You played to %d games,Tu as joué à %d parties
-achievements.GAM_B_00_PLAYED.title,First game ,Première partie
+achievements.GAM_B_00_PLAYED.title,First game,Première partie
 achievements.GAM_B_01_PLAYED.title,Beginner,Débutant
 achievements.GAM_B_02_PLAYED.title,Amateur,Amateur
 achievements.GAM_B_03_PLAYED.title,Initiate,Initié
 achievements.GAM_B_04_PLAYED.title,Enthusiastic,Enthousiaste
-achievements.GAM_B_05_PLAYED.title,Passionate,Passionné
-achievements.GAM_B_06_PLAYED.title,Enamored,Amoureux
-achievements.GAM_B_07_PLAYED.title,Assiduous,Assidu
-achievements.GAM_B_08_PLAYED.title,Keen,Féru
-achievements.GAM_B_09_PLAYED.title,Overzealous,Excès de zèle
-achievements.GAM_B_10_PLAYED.title,Bewitched,Ensorcelé
-achievements.GAM_B_11_PLAYED.title,Fanatic,Fanatique
-achievements.GAM_B_12_PLAYED.title,Frantic,Frénétique
-achievements.GAM_B_13_PLAYED.title,Addict,Accro
-achievements.GAM_B_14_PLAYED.title,Boardgamaholic,Mordu
-achievements.GAM_B_15_PLAYED.title,Infected,Contaminé
+achievements.GAM_B_05_PLAYED.title,Assiduous,Assidu
+achievements.GAM_B_06_PLAYED.title,Keen,Féru
+achievements.GAM_B_07_PLAYED.title,Overzealous,Excès de zèle
+achievements.GAM_B_08_PLAYED.title,Fascinated,Mordu
+achievements.GAM_B_09_PLAYED.title,Enamored,Amoureux
+achievements.GAM_B_10_PLAYED.title,Passionate,Passionné
+achievements.GAM_B_11_PLAYED.title,Infected,Contaminé
+achievements.GAM_B_12_PLAYED.title,Bewitched,Ensorcelé
+achievements.GAM_B_13_PLAYED.title,Frantic,Frénétique
+achievements.GAM_B_14_PLAYED.title,Fanatic,Fanatique
+achievements.GAM_B_15_PLAYED.title,Boardgamaholic,Accro
 achievements.GAM_B_16_PLAYED.title,Exalted,Exalté
 achievements.BGA_B_OWNED.descr.one,Own your first board game,Tu as acquis ton premier jeu
 achievements.BGA_B_OWNED.descr.other,Own %d boardgames,Tu possèdes %d jeux

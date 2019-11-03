@@ -112,7 +112,7 @@
       }
     },
     "GAM_B_00_PLAYED": {
-      "title": "First game "
+      "title": "First game"
     },
     "GAM_B_01_PLAYED": {
       "title": "Beginner"
@@ -127,37 +127,37 @@
       "title": "Enthusiastic"
     },
     "GAM_B_05_PLAYED": {
-      "title": "Passionate"
-    },
-    "GAM_B_06_PLAYED": {
-      "title": "Enamored"
-    },
-    "GAM_B_07_PLAYED": {
       "title": "Assiduous"
     },
-    "GAM_B_08_PLAYED": {
+    "GAM_B_06_PLAYED": {
       "title": "Keen"
     },
-    "GAM_B_09_PLAYED": {
+    "GAM_B_07_PLAYED": {
       "title": "Overzealous"
     },
+    "GAM_B_08_PLAYED": {
+      "title": "Fascinated"
+    },
+    "GAM_B_09_PLAYED": {
+      "title": "Enamored"
+    },
     "GAM_B_10_PLAYED": {
-      "title": "Bewitched"
+      "title": "Passionate"
     },
     "GAM_B_11_PLAYED": {
-      "title": "Fanatic"
+      "title": "Infected"
     },
     "GAM_B_12_PLAYED": {
-      "title": "Frantic"
+      "title": "Bewitched"
     },
     "GAM_B_13_PLAYED": {
-      "title": "Addict"
+      "title": "Frantic"
     },
     "GAM_B_14_PLAYED": {
-      "title": "Boardgamaholic"
+      "title": "Fanatic"
     },
     "GAM_B_15_PLAYED": {
-      "title": "Infected"
+      "title": "Boardgamaholic"
     },
     "GAM_B_16_PLAYED": {
       "title": "Exalted"
