@@ -36,20 +36,41 @@
     "GAM_B_09_WON": {
       "title": "Subutai"
     },
+    "GAM_B_00_LOST": {
+      "title": "Accident de parcours"
+    },
+    "GAM_B_01_LOST": {
+      "title": "Malchanceux"
+    },
+    "GAM_B_02_LOST": {
+      "title": "Persévérant"
+    },
+    "GAM_B_03_LOST": {
+      "title": "Maudit"
+    },
+    "GAM_B_04_LOST": {
+      "title": "Sigurd Eysteinsson"
+    },
+    "GAM_B_05_LOST": {
+      "title": "Violet Jessop"
+    },
+    "GAM_B_06_LOST": {
+      "title": "Yang Kyoungjoing"
+    },
+    "GAM_B_07_LOST": {
+      "title": "Tsutomu Yamaguchi"
+    },
+    "GAM_B_08_LOST": {
+      "title": "Frane Selak"
+    },
+    "GAM_B_09_LOST": {
+      "title": "Murphy"
+    },
     "GAM_B_LOST": {
       "descr": {
         "one": "Tu as perdu ta première partie",
         "other": "Tu as perdu %d parties"
       }
-    },
-    "GAM_B_00_LOST": {
-      "title": "Persévérant I"
-    },
-    "GAM_B_01_LOST": {
-      "title": "Persévérant II"
-    },
-    "GAM_B_02_LOST": {
-      "title": "Persévérant III"
     },
     "EVE_B_ATTENDED": {
       "descr": {
@@ -58,13 +79,31 @@
       }
     },
     "EVE_B_00_ATTENDED": {
-      "title": "Compognon novice"
+      "title": "Ermite"
     },
     "EVE_B_01_ATTENDED": {
-      "title": "Compognon vétéran"
+      "title": "Timide en rémission"
     },
     "EVE_B_02_ATTENDED": {
-      "title": "Compognon parmi les compognons"
+      "title": "Sociable"
+    },
+    "EVE_B_03_ATTENDED": {
+      "title": "Extraverti"
+    },
+    "EVE_B_04_ATTENDED": {
+      "title": "Grégaire"
+    },
+    "EVE_B_05_ATTENDED": {
+      "title": "Habitué"
+    },
+    "EVE_B_06_ATTENDED": {
+      "title": "Mondain"
+    },
+    "EVE_B_07_ATTENDED": {
+      "title": "Influencer"
+    },
+    "EVE_B_08_ATTENDED": {
+      "title": "Mark Zuckerberg"
     },
     "GAM_B_PLAYED": {
       "descr": {
@@ -73,13 +112,55 @@
       }
     },
     "GAM_B_00_PLAYED": {
-      "title": "Apprenti"
+      "title": "Première partie"
     },
     "GAM_B_01_PLAYED": {
-      "title": "Compagnon"
+      "title": "Débutant"
     },
     "GAM_B_02_PLAYED": {
-      "title": "Maître"
+      "title": "Amateur"
+    },
+    "GAM_B_03_PLAYED": {
+      "title": "Initié"
+    },
+    "GAM_B_04_PLAYED": {
+      "title": "Enthousiaste"
+    },
+    "GAM_B_05_PLAYED": {
+      "title": "Assidu"
+    },
+    "GAM_B_06_PLAYED": {
+      "title": "Féru"
+    },
+    "GAM_B_07_PLAYED": {
+      "title": "Excès de zèle"
+    },
+    "GAM_B_08_PLAYED": {
+      "title": "Mordu"
+    },
+    "GAM_B_09_PLAYED": {
+      "title": "Amoureux"
+    },
+    "GAM_B_10_PLAYED": {
+      "title": "Passionné"
+    },
+    "GAM_B_11_PLAYED": {
+      "title": "Contaminé"
+    },
+    "GAM_B_12_PLAYED": {
+      "title": "Ensorcelé"
+    },
+    "GAM_B_13_PLAYED": {
+      "title": "Frénétique"
+    },
+    "GAM_B_14_PLAYED": {
+      "title": "Fanatique"
+    },
+    "GAM_B_15_PLAYED": {
+      "title": "Accro"
+    },
+    "GAM_B_16_PLAYED": {
+      "title": "Exalté"
     },
     "BGA_B_OWNED": {
       "descr": {
@@ -88,22 +169,28 @@
       }
     },
     "BGA_B_00_OWNED": {
-      "title": "Amateur"
+      "title": "Premier jeu"
     },
     "BGA_B_01_OWNED": {
-      "title": "Initié"
+      "title": "Première pile"
     },
     "BGA_B_02_OWNED": {
-      "title": "Collectionneur"
+      "title": "Première étagère"
     },
     "BGA_B_03_OWNED": {
-      "title": "Re-vendeur"
+      "title": "Premier Kallax"
     },
     "BGA_B_04_OWNED": {
-      "title": "Gestionnaire d'entrepôt"
+      "title": "Collectionneur"
     },
     "BGA_B_05_OWNED": {
-      "title": "Amazon"
+      "title": "Galériste"
+    },
+    "BGA_B_06_OWNED": {
+      "title": "Conservateur"
+    },
+    "BGA_B_07_OWNED": {
+      "title": "Gestionnaire d'entrepôt"
     },
     "BGA_B_PLAYED": {
       "descr": "Tu as joué à %d jeux différents"
