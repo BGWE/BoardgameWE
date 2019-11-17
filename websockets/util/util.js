@@ -26,7 +26,7 @@ exports.on = (sckt, event, callback, cond_fn) => {
     try {
       const user = exports.getCurrentUser(sckt);
       sckt.logger.info('WS' + (user ? ` (user:${user.id}) ` : ' ') + `'${event}' ` + JSON.stringify(args));
-      const checked = cond_fn ? (await cond_fn(sckt)) : true;
+      const checked = cond_fn ? (await cond_fn(sckt, ...args)) : true;
       if (checked) {
         await callback(...args);
       } else {
