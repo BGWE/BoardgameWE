@@ -330,9 +330,7 @@ Resources:
             - |
               sudo yum -y update
             - |
-              sudo yum install -y certbot npm git
-            - |
-              sudo pip install letsencrypt-nginx
+              sudo yum install -y certbot python2-certbot-nginx npm git
             - |
               sudo npm install -g pm2 n
             - |
