@@ -330,6 +330,10 @@ Resources:
             - |
               sudo yum -y update
             - |
+              sudo yum -y install yum-utils
+            - |
+              yum-config-manager --enable rhui-REGION-rhel-server-extras rhui-REGION-rhel-server-optional
+            - |
               sudo yum install -y certbot python2-certbot-nginx npm git
             - |
               sudo npm install -g pm2 n
