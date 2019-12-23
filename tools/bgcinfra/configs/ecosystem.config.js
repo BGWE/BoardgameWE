@@ -41,21 +41,22 @@ module.exports = {
                 pm2 start npm -- run envstart && \
                 sudo certbot certonly --debug --nginx --non-interactive --agree-tos --domains ${CERTDOMAIN} --email fabrice.servais@gmail.com && \
                 sudo ln -sf /etc/letsencrypt/live/${CERTDOMAIN} /etc/letsencrypt/live/bgccert && \
-                sudo cp /tmp/https_dev.conf /etc/nginx/conf.d/https.conf && \
+                sudo cp /tmp/https.conf /etc/nginx/conf.d/https.conf && \
                 sudo nginx -s reload'
         },
         production : {
             user: 'ec2-user',
             key: '~/.ssh/BGCProd.pem',
-            host : 'apiredirect.boardgamecomponion.com',
-            ref  : 'origin/releases/v3.0',
+            host : 'api-v3.boardgamecomponion.com',
+            ref  : 'master',
             repo : 'https://github.com/BGWE/BoardgameWE.git',
             path : '/home/ec2-user/BoardgameWE',
             'post-deploy' : '\
                 npm install && \
                 cp /home/ec2-user/BoardgameWE/source/tools/bgcinfra/configs/secret_env.sh /home/ec2-user/BoardgameWE/source/.env && \
                 pm2 start npm -- run envstart && \
-                sudo certbot certonly --debug --nginx --non-interactive --agree-tos --domains apiredirect.boardgamecomponion.com --email fabrice.servais@gmail.com && \
+                sudo certbot certonly --debug --nginx --non-interactive --agree-tos --domains api-v3.boardgamecomponion.com --email fabrice.servais@gmail.com && \
+                sudo ln -sf /etc/letsencrypt/live/${CERTDOMAIN} /etc/letsencrypt/live/bgccert && \
                 sudo cp /tmp/https.conf /etc/nginx/conf.d/https.conf && \
                 sudo nginx -s reload'
         }
