@@ -11,29 +11,60 @@ achievements.GAM_B_06_WON.title,Hannibal Barca,Hannibal Barca
 achievements.GAM_B_07_WON.title,Attila the Hun,Attila le Hun
 achievements.GAM_B_08_WON.title,Napoleon Bonaparte,Napoléon Bonaparte
 achievements.GAM_B_09_WON.title,Subutai,Subutai
+achievements.GAM_B_00_LOST.title,Mishap,Accident de parcours
+achievements.GAM_B_01_LOST.title,Luckless,Malchanceux
+achievements.GAM_B_02_LOST.title,Persevering,Persévérant
+achievements.GAM_B_03_LOST.title,Cursed,Maudit
+achievements.GAM_B_04_LOST.title,Sigurd Eysteinsson,Sigurd Eysteinsson
+achievements.GAM_B_05_LOST.title,Violet Jessop,Violet Jessop
+achievements.GAM_B_06_LOST.title,Yang Kyoungjoing,Yang Kyoungjoing
+achievements.GAM_B_07_LOST.title,Tsutomu Yamaguchi,Tsutomu Yamaguchi
+achievements.GAM_B_08_LOST.title,Frane Selak,Frane Selak
+achievements.GAM_B_09_LOST.title,Murphy,Murphy
 achievements.GAM_B_LOST.descr.one,You lost your first game,Tu as perdu ta première partie
 achievements.GAM_B_LOST.descr.other,You lost %d games,Tu as perdu %d parties
-achievements.GAM_B_00_LOST.title,Perseverance I,Persévérant I
-achievements.GAM_B_01_LOST.title,Perseverance II,Persévérant II
-achievements.GAM_B_02_LOST.title,Perseverance III,Persévérant III
 achievements.EVE_B_ATTENDED.descr.one,Attend to your first event,Tu as participé à ton premier événement
 achievements.EVE_B_ATTENDED.descr.other,Attend %d events,Tu as participé à %d événements
-achievements.EVE_B_00_ATTENDED.title,Novice componion,Compognon novice
-achievements.EVE_B_01_ATTENDED.title,Veteran componion,Compognon vétéran
-achievements.EVE_B_02_ATTENDED.title,Componion among componions,Compognon parmi les compognons
+achievements.EVE_B_00_ATTENDED.title,Hermit,Ermite
+achievements.EVE_B_01_ATTENDED.title,Shy in remission,Timide en rémission
+achievements.EVE_B_02_ATTENDED.title,Sociable,Sociable
+achievements.EVE_B_03_ATTENDED.title,Extrovert,Extraverti
+achievements.EVE_B_04_ATTENDED.title,Gregarious,Grégaire
+achievements.EVE_B_05_ATTENDED.title,Accustomed,Habitué
+achievements.EVE_B_06_ATTENDED.title,Worldly,Mondain
+achievements.EVE_B_07_ATTENDED.title,Influencer,Influencer
+achievements.EVE_B_08_ATTENDED.title,Mark Zuckerberg,Mark Zuckerberg
 achievements.GAM_B_PLAYED.descr.one,You played to your first game,Tu as joué à ta première partie
 achievements.GAM_B_PLAYED.descr.other,You played to %d games,Tu as joué à %d parties
-achievements.GAM_B_00_PLAYED.title,Apprentice,Apprenti
-achievements.GAM_B_01_PLAYED.title,Journeyman,Compagnon
-achievements.GAM_B_02_PLAYED.title,Master,Maître
+achievements.GAM_B_00_PLAYED.title,First game,Première partie
+achievements.GAM_B_01_PLAYED.title,Beginner,Débutant
+achievements.GAM_B_02_PLAYED.title,Amateur,Amateur
+achievements.GAM_B_03_PLAYED.title,Initiate,Initié
+achievements.GAM_B_04_PLAYED.title,Enthusiastic,Enthousiaste
+achievements.GAM_B_05_PLAYED.title,Assiduous,Assidu
+achievements.GAM_B_06_PLAYED.title,Keen,Féru
+achievements.GAM_B_07_PLAYED.title,Overzealous,Excès de zèle
+achievements.GAM_B_08_PLAYED.title,Fascinated,Mordu
+achievements.GAM_B_09_PLAYED.title,Enamored,Amoureux
+achievements.GAM_B_10_PLAYED.title,Passionate,Passionné
+achievements.GAM_B_11_PLAYED.title,Infected,Contaminé
+achievements.GAM_B_12_PLAYED.title,Bewitched,Ensorcelé
+achievements.GAM_B_13_PLAYED.title,Frantic,Frénétique
+achievements.GAM_B_14_PLAYED.title,Fanatic,Fanatique
+achievements.GAM_B_15_PLAYED.title,Boardgamaholic,Accro
+achievements.GAM_B_16_PLAYED.title,Exalted,Exalté
 achievements.BGA_B_OWNED.descr.one,Own your first board game,Tu as acquis ton premier jeu
 achievements.BGA_B_OWNED.descr.other,Own %d boardgames,Tu possèdes %d jeux
-achievements.BGA_B_00_OWNED.title,Amateur,Amateur
-achievements.BGA_B_01_OWNED.title,Initiate,Initié
-achievements.BGA_B_02_OWNED.title,Collector,Collectionneur
-achievements.BGA_B_03_OWNED.title,Retailer,Re-vendeur
-achievements.BGA_B_04_OWNED.title,Warehouse manager,Gestionnaire d'entrepôt
-achievements.BGA_B_05_OWNED.title,Amazon,Amazon
+achievements.BGA_B_00_OWNED.title,First board game,Premier jeu
+achievements.BGA_B_01_OWNED.title,First stack,Première pile
+achievements.BGA_B_02_OWNED.title,First shelf,Première étagère
+achievements.BGA_B_03_OWNED.title,First kallax,Premier Kallax
+achievements.BGA_B_04_OWNED.title,Collector,Collectionneur
+achievements.BGA_B_05_OWNED.title,Retailer,Revendeur
+achievements.BGA_B_05_OWNED.title,Gallerist,Galériste
+achievements.BGA_B_06_OWNED.title,Curator,Conservateur
+achievements.BGA_B_07_OWNED.title,Warehouse manager,Gestionnaire d'entrepôt
+achievements.BGA_B_08_OWNED.title,Amazon	Amazon
 achievements.BGA_B_PLAYED.descr,You have played to %d distinct board games,Tu as joué à %d jeux différents
 achievements.BGA_B_00_PLAYED.title,Selective,Sélectif
 achievements.BGA_B_01_PLAYED.title,Curious,Curieux

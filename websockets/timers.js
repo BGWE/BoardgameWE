@@ -23,6 +23,14 @@ exports.attachHandlers = (glob_sckt, auth_sckt) => {
         s.logger.debug(`checking condition for access in room ${timer_room ? timer_room.getRoomName() : "*no room*"} - ${can ? "CAN" : "CANNOT"} access`);
         return can;
       }
+    },
+    access_delete_timer(access_type) {
+      return (s, id_timer) => {
+        let room = new TimerRoom(auth_sckt, id_timer);
+        const can = !!access_type || room.can_access_timer(access_type);
+        s.logger.debug(`checking condition for access in room - ${can ? "CAN" : "CANNOT"} access`);
+        return can;
+      }
     }
   };
 
@@ -108,26 +116,33 @@ exports.attachHandlers = (glob_sckt, auth_sckt) => {
 
   /** Event 'timer_delete' */
   util.on(auth_sckt, 'timer_delete', async function(id_timer) {
-    await db.sequelize.transaction(async function (transaction) {
+    let success = await db.sequelize.transaction(async function (transaction) {
       const timer = await db.GameTimer.findByPk(id_timer, {
         include: [includes.defaultEventIncludeSQ],
-        lock: transaction.LOCK.UPDATE,
         transaction
       });
       const id_user = util.getCurrentUser(auth_sckt).id;
       if (timer === null) {
-        throw new Error("cannot delete timer: timer with id " + id_timer + " not found.");
+        auth_sckt.logger.debug(`user ${id_user} cannot delete timer ${id_timer}: not found.`);
+        util.sendErrorEvent(auth_sckt, `cannot delete timer ${id_timer}: not found.`);
+        return false;
       } else if (timer.id_creator !== id_user && (timer.id_event === null || timer.event.id_creator !== id_user)) {
-        throw new Error("cannot delete timer: only the creator can delete a timer.");
+        auth_sckt.logger.warn(`user ${id_user} cannot delete timer ${id_timer}: not the creator.`);
+        util.sendErrorEvent(auth_sckt, `cannot delete timer: only the creator can delete a timer.`);
+        return false;
       }
-      return timer.destroy({transaction});
+      await timer.destroy({transaction});
+      return true;
     });
-    // emit also to sender if he's not in the deleted timer's room
-    if (timer_room === null || timer_room.id_timer !== id_timer) {
-      auth_sckt.emit(glob_sckt, 'timer_delete', id_timer);
+
+    if (success) { // if timer was successfully deleted
+      // emit also to sender if he's not in the deleted timer's room
+      if (timer_room === null || timer_room.id_timer !== id_timer) {
+        auth_sckt.emit('timer_delete', id_timer);
+      }
+      glob_sckt.to(TimerRoom.buildRoomName(id_timer)).emit('timer_delete');
     }
-    glob_sckt.to(TimerRoom.buildRoomName(id_timer)).emit('timer_delete');
-  }, checks.access_timers(access.ACCESS_ADMIN));
+  }, checks.access_delete_timer(access.ACCESS_ADMIN));
 
   /** Event 'timer_change_player_turn_order' */
   util.on(auth_sckt, 'timer_change_player_turn_order', async function(new_player_turn_order) {
