@@ -3,7 +3,7 @@ module.exports = (sequelize, DataTypes) => {
     let Game = sequelize.define('Game', {
         duration: { // in minutes
             type: DataTypes.INTEGER,
-            validate: {min: 0},
+            validate: { min: 0 },
             allowNull: true
         },
         id_board_game: {
@@ -32,10 +32,10 @@ module.exports = (sequelize, DataTypes) => {
         });
 
         models.Game.hasMany(models.PlayedExpansion, {
-          onDelete: "CASCADE",
-          foreignKey: "id_game",
-          sourceKey: "id",
-          as: "expansions"
+            onDelete: "CASCADE",
+            foreignKey: "id_game",
+            sourceKey: "id",
+            as: "expansions"
         });
 
         models.Game.belongsTo(models.Event, {
