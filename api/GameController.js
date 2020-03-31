@@ -80,6 +80,7 @@ exports.addGameQuery = function(eid, req, res) {
         return db.Game.create({
             id_event: eid || null,
             id_board_game: req.body.id_board_game,
+            started_at: req.body.started_at.utc(),
             duration: req.body.duration || null,
             ranking_method: req.body.ranking_method,
             id_timer: req.body.id_timer || null,
@@ -119,6 +120,7 @@ exports.updateGameQuery = function(gid, req, res) {
     // access checks prevent game to be switched from an event to another
     await db.Game.update({
       id_event: req.body.id_event === null ? null : req.body.id_event || game.id_event,
+      started_at: req.body.started_at ? req.body.started_at.utc() : game.started_at,
       id_board_game: req.body.id_board_game || game.id_board_game,
       duration: req.body.duration || game.duration,
       ranking_method: req.body.ranking_method || game.ranking_method,
