@@ -1216,13 +1216,13 @@ module.exports = function(app) {
      *
      * @apiParam {Number} gid Game identifier.
      *
-     * @apiParam (body) {Number} id_board_game (Optional) Board game identifier
-     * @apiParam (body) {Number} id_event (Optional) An event identifier (an different event than current one if is
+     * @apiParam (body) {Number} [id_board_game] Board game identifier
+     * @apiParam (body) {Number} [id_event] An event identifier (an different event than current one if is
      * @apiParam (body) {String} [started_at] Start datetime of the game (ISO8601)
      * only allowed if current event has no event associated) or null to dissociate the game from its event.
-     * @apiParam (body) {Number} duration (Optional) Duration of the board game, or `null`.
-     * @apiParam (body) {String} ranking_method (Optional) The ranking method for the game. One of: `{WIN_LOSE, POINTS_LOWER_BETTER, POINTS_HIGHER_BETTER}`.
-     * @apiParam (body) {GamePlayer[]} players (Optional) List of players involved with the game. If the list is empty
+     * @apiParam (body) {Number} [duration] Duration of the board game, or `null`.
+     * @apiParam (body) {String} [ranking_method] The ranking method for the game. One of: `{WIN_LOSE, POINTS_LOWER_BETTER, POINTS_HIGHER_BETTER}`.
+     * @apiParam (body) {GamePlayer[]} [players] List of players involved with the game. If the list is empty
      * or missing, the list of players (and their scores) is not updated.
      * @apiParam (body) {Number} players.score Player score
      * @apiParam (body) {String} players.name Player name if not registered on the platform (mutually exclusive with
