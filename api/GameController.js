@@ -112,7 +112,7 @@ exports.updateGameQuery = function(gid, req, res) {
     if (!game) {
       return util.detailErrorResponse(res, 404, "game not found");
     }
-    if (req.body.ranking_method !== game.ranking_method && !req.body.players) {
+    if (req.body.ranking_method && req.body.ranking_method !== game.ranking_method && !req.body.players) {
       return util.detailErrorResponse(res, 400, "'players' list should be provided when 'ranking_method' changes");
     }
 

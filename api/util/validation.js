@@ -154,7 +154,7 @@ exports.getGameValidators = function(is_create) {
         body('duration').optional({nullable: true}).isInt().custom(exports.isPositive),
         exports.modelExists(co(body('id_board_game'), !is_create), db.BoardGame),
         co(body('ranking_method'), !is_create).isIn(["WIN_LOSE", "POINTS_HIGHER_BETTER", "POINTS_LOWER_BETTER"]),
-        body('id_event').optional().isInt().custom(exports.isPositive)
+        body('id_event').optional({nullable: true}).isInt().custom(exports.isPositive)
     ];
 };
 

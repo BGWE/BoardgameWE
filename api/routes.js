@@ -7,7 +7,7 @@ const util = require("./util/util");
 const db = require("./models/index");
 
 module.exports = function(app) {
-    const { body, param, check, query } = require('express-validator/check');
+    const { body, param, query } = require('express-validator/check');
     const { asyncMiddleware } = require('./util/util');
     const validation = require('./util/validation');
     const BoardGameController = require("./BoardGameController");
@@ -1153,7 +1153,7 @@ module.exports = function(app) {
     };
 
     /**
-     * @api {get} /game Create game
+     * @api {post} /game Create game
      * @apiName CreateGame
      * @apiGroup Game
      * @apiDescription Create game (not in an event).
@@ -1196,7 +1196,7 @@ module.exports = function(app) {
      */
 
     /**
-     * @api {get} /game Delete game
+     * @api {delete} /game Delete game
      * @apiName DeleteGame
      * @apiGroup Game
      * @apiDescription Delete a game. Note: if game is not in an event, only the players of the game can use this
@@ -1236,7 +1236,7 @@ module.exports = function(app) {
         .delete(game_access.write, error_wrapper(GameController.deleteGame))
         .put(
            game_access.write,
-           validation.getGameValidators(true),
+           validation.getGameValidators(false),
            validation.validateOrBlock('cannot edit game'),
            error_wrapper(GameController.updateGame)
         );
