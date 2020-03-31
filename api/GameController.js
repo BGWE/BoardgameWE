@@ -78,7 +78,7 @@ const getGamePlayerData = function(game, validated_players) {
 exports.addGameQuery = function(eid, req, res) {
     return db.sequelize.transaction(t => {
         return db.Game.create({
-            id_event: eid,
+            id_event: eid || null,
             id_board_game: req.body.id_board_game,
             duration: req.body.duration || null,
             ranking_method: req.body.ranking_method,
@@ -103,18 +103,12 @@ exports.addGameQuery = function(eid, req, res) {
 };
 
 exports.addGame = function (req, res) {
-    return exports.addGameQuery(null, req, res);
-};
-
-exports.addEventGame = function(req, res) {
-    return exports.addGameQuery(req.params.eid, req, res);
+    return exports.addGameQuery(req.body.id_event, req, res);
 };
 
 exports.updateGameQuery = function(gid, req, res) {
   return db.sequelize.transaction(async t => {
     let game = await db.Game.findByPk(gid, {transaction: t, lock: t.LOCK.UPDATE});
-    console.log(gid);
-    console.log(game);
     if (!game) {
       return util.detailErrorResponse(res, 404, "game not found");
     }
@@ -122,8 +116,9 @@ exports.updateGameQuery = function(gid, req, res) {
       return util.detailErrorResponse(res, 400, "'players' list should be provided when 'ranking_method' changes");
     }
 
-    // For security: cannot change event id of an existing event (could break event access policies)
+    // access checks prevent game to be switched from an event to another
     await db.Game.update({
+      id_event: req.body.id_event === null ? null : req.body.id_event || game.id_event,
       id_board_game: req.body.id_board_game || game.id_board_game,
       duration: req.body.duration || game.duration,
       ranking_method: req.body.ranking_method || game.ranking_method,
@@ -154,7 +149,6 @@ exports.updateGameQuery = function(gid, req, res) {
 };
 
 exports.updateGame = function(req, res) {
-  console.log(req.params);
   return exports.updateGameQuery(req.params.gid, req, res);
 };
 

@@ -16,7 +16,14 @@ exports.ACCESS_ADMIN = "admin";
 class NotFoundError extends Error {
     constructor(message) {
         super();
-        this.message;
+        this.message = message;
+    }
+}
+
+class CannotUpdateGameError extends Error {
+    constructor(message) {
+      super();
+      this.message = message;
     }
 }
 
@@ -110,16 +117,19 @@ exports.can_access_timer = async (access_type, tid_callback, uid_callback) => {
 };
 
 
-
-exports.can_access_game = async (access_type, gid_callback, uid_callback) => {
+exports.can_access_game = async (access_type, gid_callback, uid_callback, new_game) => {
   const gid = gid_callback();
   const uid = uid_callback();
   const game = await db.Game.findByPk(gid);
   if (!game) {
     throw new NotFoundError("game not found");
   }
-  if (game.id_event !== null) { // must fall back to event access policy if game is linked to an event
-    return await exports.can_access_event(access_type, () => game.id_event, () => uid);
+  if (new_game && new_game.id_event && game.id_event && new_game.id_event !== game.id_event) {
+    throw new CannotUpdateGameError("cannot switch a game from an event to another");
+  }
+  if (game.id_event !== null || (new_game && new_game.id_event)) { // must fall back to event access policy if game is linked to an event
+    const id_event = new_game ? new_game.id_event : game.id_event;
+    return await exports.can_access_event(access_type, () => id_event, () => uid);
   }
   const players = await db.GamePlayer.findAll({ where: {id_game: gid, id_user: {[db.Op.ne]: null}}, attributes: ['id_user']});
   const player_ids = new Set(players.map(p => p.id_user));
@@ -133,17 +143,35 @@ exports.get_game_access_callback = (access_type) => {
     const gid_callback = () => parseInt(req.params.gid);
     const uid_callback = () => userutil.getCurrUserId(req);
     try {
-      if (await exports.can_access_game(access_type, gid_callback, uid_callback)) {
+      if (await exports.can_access_game(access_type, gid_callback, uid_callback, req.body)) {
         next();
       } else {
         return util.detailErrorResponse(res, 403, "you don't have the rights for executing this operation against this game ('" + access_type + "').");
       }
     } catch (e) {
-      if (e instanceof NotFoundError) {
-        return util.detailErrorResponse(res, 404, "game not found");
+      if (e instanceof NotFoundError || e instanceof CannotUpdateGameError) {
+        return util.detailErrorResponse(res, (e instanceof NotFoundError) ? 404 : 403, e.message);
       } else {
         throw e;
       }
     }
   });
 };
+
+exports.check_add_game_event_access = util.asyncMiddleware(async (req, res, next) => {
+  if (!req.body.id_event) {
+    next();
+  }
+  const eid_callback = () => parseInt(req.body.id_event);
+  const uid_callback = () => userutil.getCurrUserId(req);
+  const error_message = "cannot add game";
+  try {
+    if (exports.can_access_event(exports.ACCESS_WRITE, eid_callback, uid_callback)) {
+      next();
+    } else {
+      return util.detailErrorResponse(res, 403, error_message + ": the use has no write access on this event");
+    }
+  } catch (e) {
+    return util.detailErrorResponse(res, e instanceof NotFoundError ? 404 : 403, error_message + ": " + e.message);
+  }
+});
