@@ -1,10 +1,10 @@
 let chai = require('chai');
 let assert = chai.assert;
-let util = require('../api/util/util');
+let util = require('../src/api/util/util');
 
 describe('Utilities "api/util" tests:', () => {
   describe('util.js', () => {
-    it('should onvert a list to a string', () => {
+    it('should convert a list to a string', () => {
       assert.equal(util.listToString(["a", "b", "c"]), "a,b,c");
       assert.equal(util.listToString(["a"]), "a");
       assert.equal(util.listToString([]), "");
@@ -26,8 +26,8 @@ describe('Utilities "api/util" tests:', () => {
 
     it('should rank an array of objects', () => {
       const emptyData = [];
-      const emptyRank = util.rank(undefData, o => o.score, true, (o, f, v) => { o[f] = v; });
-      assert.equal(emptyRank, [], "rank() must return an empty array");
+      const emptyRank = util.rank(emptyData, o => o.score, true, (o, f, v) => { o[f] = v; });
+      assert.deepEqual(emptyRank, [], "rank() must return an empty array");
 
       const data = [{ score: 1 }, { score: 2 }];
       const ranked = util.rank(data, o => o.score, true, (o, f, v) => { o[f] = v; });

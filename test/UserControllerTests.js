@@ -4,14 +4,14 @@ let assert = chai.assert;
 let expect = chai.expect;
 let should = chai.should;
 
-let server = require("../server");
+let server = require("../src/server");
 
 const Sequelize = require("sequelize");
-const db = require("../api/models/index");
+const db = require("../src/api/models/index");
 const bcrypt = require("bcryptjs");
 
-let userController = require('../api/UserController');
-const includes = require("../api/util/db_include");
+let userController = require('../src/api/UserController');
+const includes = require("../src/api/util/db_include");
 
 chai.use(chaiHttp);
 
