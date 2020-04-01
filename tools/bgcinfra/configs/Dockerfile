@@ -1,8 +1,18 @@
-FROM node:8
+FROM node:13.12.0
 
-RUN apt-get update && apt-get install dos2unix
-COPY . /home/node/app
 WORKDIR /home/node/app
-RUN dos2unix /home/node/app/tools/migration/migrate.sh
-RUN yarn install ; chmod +x /home/node/app/tools/migration/migrate.sh
-CMD ["sh", "-c", "/home/node/app/tools/migration/migrate.sh && cd api && ../node_modules/.bin/sequelize db:seed:all && cd .. && yarn start"]
+
+COPY package.json /home/node/app
+
+RUN yarn install
+# RUN apt-get update && apt-get install -y dos2unix vim
+
+COPY ./src /home/node/app/src
+COPY ./tools/migration /home/node/app/tools/migration
+COPY ./test /home/node/app/test
+COPY ./.sequelizerc /home/node/app/
+COPY ./.eslintrc.json /home/node/app/
+
+RUN npx apidoc -i src/api/ -o src/doc/
+
+CMD ["sh", "-c", "npx sequelize db:migrate && npx sequelize db:seed:all && yarn start"]

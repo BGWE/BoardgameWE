@@ -1,0 +1,7 @@
+{
+    "extends": "airbnb-base",
+    "ignorePatterns": ["node_modules/"],
+    "env": {
+        "mocha": true
+    }
+}

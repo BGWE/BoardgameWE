@@ -4,11 +4,11 @@ if (process.env.NODE_ENV !== 'production') {
 
 process.env.VERBOSITY = process.env.VERBOSITY || "info";
 
-const db = require("../api/models/index");
+const db = require("../src/api/models/index");
 const winston = require("winston");
-const logging = require("../api/util/logging");
-const {addBoardGameAndExpansions} = require("../api/BoardGameController");
-const {boolOrDefault} = require("../api/util/util");
+const logging = require("../src/api/util/logging");
+const {addBoardGameAndExpansions} = require("../src/api/BoardGameController");
+const {boolOrDefault} = require("../src/api/util/util");
 
 
 const log_transports = [ new winston.transports.Console() ];
