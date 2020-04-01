@@ -2,19 +2,15 @@
 
 module.exports = {
   up: (queryInterface, Sequelize) => {
-    return queryInterface.sequelize.transaction(transaction => {
-      return Promise.all([
-        queryInterface.changeColumn('Events', 'end', {type: Sequelize.DATE}, {transaction}),
-        queryInterface.changeColumn('Events', 'start', {type: Sequelize.DATE}, {transaction})
-      ]);
-    });
+    return Promise.all([
+      queryInterface.changeColumn('Events', 'end', {type: Sequelize.DATE}),
+      queryInterface.changeColumn('Events', 'start', {type: Sequelize.DATE})
+    ]);
   },
   down: (queryInterface, Sequelize) => {
-    return queryInterface.sequelize.transaction(transaction => {
-      return Promise.all([
-        queryInterface.changeColumn('Events', 'end', {type: Sequelize.DATEONLY}, {transaction}),
-        queryInterface.changeColumn('Events', 'start', {type: Sequelize.DATEONLY}, {transaction})
-      ]);
-    });
+    return Promise.all([
+      queryInterface.changeColumn('Events', 'end', {type: Sequelize.DATEONLY}),
+      queryInterface.changeColumn('Events', 'start', {type: Sequelize.DATEONLY})
+    ]);
   }
 };

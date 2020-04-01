@@ -7,7 +7,7 @@ const util = require("./util/util");
 const db = require("./models/index");
 
 module.exports = function(app) {
-    const { body, param, check, query } = require('express-validator/check');
+    const { body, param, query } = require('express-validator/check');
     const { asyncMiddleware } = require('./util/util');
     const validation = require('./util/validation');
     const BoardGameController = require("./BoardGameController");
@@ -719,40 +719,6 @@ module.exports = function(app) {
         .delete(event_access.write, error_wrapper(EventController.deleteProvidedBoardGames));
 
     /**
-     * @api {post} /event/:id/game Add event game
-     * @apiName AddEventGame
-     * @apiGroup Event game
-     * @apiDescription Add a game at the specified event.
-     * Note: only the creator or an attendee can use this endpoint.
-     *
-     * @apiParam {Number} id Event identifier.
-     *
-     * @apiParam (body) {Number} id_board_game Board game identifier
-     * @apiParam (body) {Number} [duration] Duration of the board game, or `null`.
-     * @apiParam (body) {String} ranking_method The ranking method for the game. One of: `{WIN_LOSE, POINTS_LOWER_BETTER, POINTS_HIGHER_BETTER}`.
-     * @apiPAram (body) {Number} [id_timer] Add a timer identifier
-     * @apiParam (body) {Number[]} expansions The identifiers of the board games expansion played with the board game
-     * @apiParam (body) {GamePlayer[]} players List of players involved with the game.
-     * @apiParam (body) {Number} players.score Player score
-     * @apiParam (body) {String} players.name Player name if not registered on the platform (mutually exclusive with
-     * 'user') or `null`.
-     * @apiParam (body) {Number} players.id_user Player user identifier (mutually exclusive with 'name') or `null`.
-     * @apiUse TokenHeaderRequired
-     *
-     * @apiUse FullGameDescriptor
-     * @apiUse DBDatetimeFields
-     */
-    app.route("/event/:eid/game")
-        .post(
-            event_access.write,
-            validation.getGameValidators(true).concat([
-                validation.modelExists(check('eid'), db.Event)
-            ]),
-            validation.validateOrBlock('cannot add game to the event'),
-            error_wrapper(GameController.addEventGame)
-        );
-
-    /**
      * @api {get} /event/:id/games Get event games
      * @apiName GetEventGames
      * @apiGroup Event game
@@ -1187,7 +1153,7 @@ module.exports = function(app) {
     };
 
     /**
-     * @api {get} /game Create game
+     * @api {post} /game Create game
      * @apiName CreateGame
      * @apiGroup Game
      * @apiDescription Create game (not in an event).
@@ -1195,6 +1161,8 @@ module.exports = function(app) {
      * @apiParam {Number} id Game identifier.
      *
      * @apiParam (body) {Number} id_board_game Board game identifier
+     * @apiParam (body) {String} started_at Start datetime of the game (ISO8601)
+     * @apiParam (body) {Number} [id_event] Event identifier
      * @apiParam (body) {Number} [duration] Duration of the board game, or `null`.
      * @apiParam (body) {String} ranking_method The ranking method for the game. One of: `{WIN_LOSE, POINTS_LOWER_BETTER, POINTS_HIGHER_BETTER}`.
      * @apiPAram (body) {Number} [id_timer] Add a timer identifier
@@ -1213,6 +1181,7 @@ module.exports = function(app) {
         .post(
             validation.getGameValidators(true),
             validation.validateOrBlock('cannot add game'),
+            access_checks.check_add_game_event_access,
             error_wrapper(GameController.addGame)
         );
 
@@ -1228,7 +1197,7 @@ module.exports = function(app) {
      */
 
     /**
-     * @api {get} /game Delete game
+     * @api {delete} /game Delete game
      * @apiName DeleteGame
      * @apiGroup Game
      * @apiDescription Delete a game. Note: if game is not in an event, only the players of the game can use this
@@ -1247,10 +1216,13 @@ module.exports = function(app) {
      *
      * @apiParam {Number} gid Game identifier.
      *
-     * @apiParam (body) {Number} id_board_game (Optional) Board game identifier
-     * @apiParam (body) {Number} duration (Optional) Duration of the board game, or `null`.
-     * @apiParam (body) {String} ranking_method (Optional) The ranking method for the game. One of: `{WIN_LOSE, POINTS_LOWER_BETTER, POINTS_HIGHER_BETTER}`.
-     * @apiParam (body) {GamePlayer[]} players (Optional) List of players involved with the game. If the list is empty
+     * @apiParam (body) {Number} [id_board_game] Board game identifier
+     * @apiParam (body) {Number} [id_event] An event identifier (an different event than current one if is
+     * @apiParam (body) {String} [started_at] Start datetime of the game (ISO8601)
+     * only allowed if current event has no event associated) or null to dissociate the game from its event.
+     * @apiParam (body) {Number} [duration] Duration of the board game, or `null`.
+     * @apiParam (body) {String} [ranking_method] The ranking method for the game. One of: `{WIN_LOSE, POINTS_LOWER_BETTER, POINTS_HIGHER_BETTER}`.
+     * @apiParam (body) {GamePlayer[]} [players] List of players involved with the game. If the list is empty
      * or missing, the list of players (and their scores) is not updated.
      * @apiParam (body) {Number} players.score Player score
      * @apiParam (body) {String} players.name Player name if not registered on the platform (mutually exclusive with
@@ -1266,9 +1238,7 @@ module.exports = function(app) {
         .delete(game_access.write, error_wrapper(GameController.deleteGame))
         .put(
            game_access.write,
-           validation.getGameValidators(true).concat([
-             validation.modelExists(param('gid'), db.Game)
-           ]),
+           validation.getGameValidators(false),
            validation.validateOrBlock('cannot edit game'),
            error_wrapper(GameController.updateGame)
         );

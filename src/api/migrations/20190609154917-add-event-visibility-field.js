@@ -10,12 +10,10 @@ module.exports = {
   },
 
   down: (queryInterface) => {
-    return queryInterface.sequelize.transaction(transaction => {
-      return Promise.all([
-        queryInterface.removeColumn("Events", "visibility", {transaction}),
-        queryInterface.sequelize.query("DROP TYPE IF EXISTS \"enum_Events_visibility\" RESTRICT", {transaction})
-      ]);
-    });
+    return Promise.all([
+      queryInterface.removeColumn("Events", "visibility"),
+      queryInterface.sequelize.query("DROP TYPE IF EXISTS \"enum_Events_visibility\" RESTRICT")
+    ]);
   }
 };
 

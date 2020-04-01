@@ -17,6 +17,11 @@ module.exports = (sequelize, DataTypes) => {
             allowNull: false,
             values: ["WIN_LOSE", "POINTS_HIGHER_BETTER", "POINTS_LOWER_BETTER"],
         },
+        started_at: {
+            type: DataTypes.DATE,
+            allowNull: true,
+            defaultValue: null
+        },
         id_timer: {
             type: DataTypes.INTEGER,
             allowNull: true
