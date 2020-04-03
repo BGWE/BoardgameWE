@@ -296,7 +296,7 @@ Resources:
           - - |
               #!/bin/bash -xe
             - |
-              yum install -y aws-cfn-bootstrap
+              yum install -y aws-cfn-bootstrap gcc-c++
             - |
               # Install the files and packages from the metadata
             - '/opt/aws/bin/cfn-init -v '
