@@ -32,3 +32,4 @@ services:
       TEST_PROTOCOL: "{{ TEST_PROTOCOL }}"
     ports:
       - "{{ CONTAINER_APISERVER_HOST_PORT }}:3000"
+      - "{{ CONTAINER_APPMETRICS_HOST_PORT }}:3001"
