@@ -212,7 +212,7 @@ exports.addLibraryGames = function addLibraryGames(req, res) {
     model_class: db.LibraryGame,
     fixed: { id: userutil.getCurrUserId(req), field: 'id_user' },
     other: {
-      field: 'boardGameId',
+      field: 'id_board_game',
       ids: req.body.boardGames,
       includes: [includes.defaultBoardGameIncludeSQ],
     },
@@ -225,7 +225,7 @@ exports.deleteLibraryGames = function deleteLibraryGames(req, res) {
     model_class: db.LibraryGame,
     fixed: { id: userutil.getCurrUserId(req), field: 'id_user' },
     other: {
-      field: 'boardGameId',
+      field: 'id_board_game',
       ids: req.body.boardGames,
       includes: [includes.defaultBoardGameIncludeSQ],
     },
@@ -242,9 +242,9 @@ exports.getUserLibraryGames = function getUserLibraryGames(req, res) {
 };
 
 exports.addBoardGameAndAddToLibrary = function addBoardGameAndAddToLibrary(req, res) {
-  const createFn = (boardGame, req_, res_, transaction) => db.LibraryGame.create({
+  const createFn = (board_game, req_, res_, transaction) => db.LibraryGame.create({
     id_user: userutil.getCurrUserId(req_),
-    boardGameId: boardGame.id,
+    id_board_game: board_game.id,
   }, { ignoreDuplicates: true, transaction, lock: transaction.LOCK.UPDATE })
     .then(() => exports.sendUserLibraryGames(userutil.getCurrUserId(req), req, res, transaction));
 
@@ -263,24 +263,24 @@ exports.getUserStats = function getUserStats(req, res) {
     // get number of attended events
     db.EventAttendee.count({ where: clause }),
     // get size of library
-    db.LibraryGame.count({ where: clause, distinct: true, col: 'boardGameId' }),
+    db.LibraryGame.count({ where: clause, distinct: true, col: 'id_board_game' }),
     // get most played board game and play count
     db.Game.findAll({
-      attributes: ['boardGameId', [db.sequelize.fn('COUNT', 'boardGameId'), 'count']],
+      attributes: ['id_board_game', [db.sequelize.fn('COUNT', 'id_board_game'), 'count']],
       include: [Object.assign(includes.genericIncludeSQ(db.GamePlayer, 'game_players'), {
         where: clause,
         attributes: [],
       })],
-      group: db.sequelize.col('boardGameId'),
+      group: db.sequelize.col('id_board_game'),
       order: [
         ['count', 'DESC'],
       ],
       raw: true,
     }).then((data) => {
       if (data.length === 0) {
-        return { count: 0, boardGame: null };
+        return { count: 0, board_game: null };
       }
-      return db.BoardGame.findByPk(data[0].boardGameId).then((boardGame) => ({ boardGame, count: parseInt(data[0].count, 10) }));
+      return db.BoardGame.findByPk(data[0].id_board_game).then((board_game) => ({ board_game, count: parseInt(data[0].count, 10) }));
     }),
     // get total play time (exclude null duration)
     db.GamePlayer.findAll({
@@ -318,7 +318,7 @@ exports.addToWishToPlayBoardGames = function addToWishToPlayBoardGames(req, res)
     fixed: { id: userutil.getCurrUserId(req), field: 'id_user' },
     other: {
       ids: req.body.boardGames,
-      field: 'boardGameId',
+      field: 'id_board_game',
       includes: [includes.defaultBoardGameIncludeSQ],
     },
     error_message: 'cannot update wish to play list',
@@ -348,7 +348,7 @@ exports.deleteFromWishToPlayList = function deleteFromWishToPlayList(req, res) {
     fixed: { id: userutil.getCurrUserId(req), field: 'id_user' },
     other: {
       ids: req.body.boardGames,
-      field: 'boardGameId',
+      field: 'id_board_game',
       includes: [includes.defaultBoardGameIncludeSQ],
     },
     error_message: 'cannot update wish to play list',
@@ -356,9 +356,9 @@ exports.deleteFromWishToPlayList = function deleteFromWishToPlayList(req, res) {
 };
 
 exports.addBoardGameAndAddToWishToPlay = function addBoardGameAndAddToWishToPlay(req, res) {
-  const createFn = (boardGame, req, res, transaction) => db.WishToPlayBoardGame.create({
+  const createFn = (board_game, req, res, transaction) => db.WishToPlayBoardGame.create({
     id_user: userutil.getCurrUserId(req),
-    boardGameId: boardGame.id,
+    id_board_game: board_game.id,
   }, { ignoreDuplicates: true, transaction, lock: transaction.LOCK.UPDATE }).then(() => exports.sendWishToPlayList(userutil.getCurrUserId(req), req, res, transaction));
   const bggId = parseInt(req.params.id, 10);
   const { source } = req.params;
