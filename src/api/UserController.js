@@ -113,6 +113,7 @@ exports.updateUser = function updateUser(req, res) {
   const userId = userutil.getCurrUserId(req);
   return db.User.findByPk(userId, {})
     .then((user) => {
+      /* istanbul ignore if */
       if (!user) {
         return util.detailErrorResponse(res, 404, 'User not found.');
       }
@@ -152,6 +153,7 @@ exports.forgotPassword = function forgotPassword(req, res) {
     if (!user) {
       return util.detailErrorResponse(res, 404, 'User not found.');
     }
+    /* istanbul ignore next */
     return emailutil.sendResetPasswordEmail(
       user.email,
       config.email_settings.email_address,
@@ -172,12 +174,16 @@ exports.resetPassword = function resetPassword(req, res) {
       return util.detailErrorResponse(res, 404, 'user not found');
     }
     try {
-      userutil.getPayloadFromResetPasswordToken(token, user.password, user.createdAt);
+      let resp = userutil.getPayloadFromResetPasswordToken(token, user.password, user.createdAt);
+      if (!resp) {
+        throw new Error("Decode failed");
+      }
     } catch (error) {
       return util.detailErrorResponse(res, 403, 'failed to process the token');
     }
 
     // Token is ok
+    /* istanbul ignore next */
     return bcrypt.hash(password, 10, (err, hash) => {
       user.password = hash;
       return handleUserResponse(res, user.save());
