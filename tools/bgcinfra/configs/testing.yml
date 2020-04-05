@@ -2,7 +2,7 @@ DB_USER: dbadmin
 DB_PASSWORD: Bgwe1234
 DB_NAME: bgwe_test
 CONTAINER_DB_HOST_PORT: 7654
-JTW_SECRET: bgwe1234
+JWT_SECRET: bgwe1234
 CONTAINER_DB_NAME: bgwe_backend_testdb_1
 CONTAINER_APISERVER_NAME: bgwe_backend_testapiserver_1
 APISERVER_ENV: testing
