@@ -5,11 +5,13 @@ const { expect } = chai;
 
 const Sequelize = require('sequelize');
 const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
 
 const db = require('../src/api/models/index');
 
 const userController = require('../src/api/UserController');
 const includes = require('../src/api/util/db_include');
+
 
 chai.use(chaiHttp);
 
@@ -19,31 +21,35 @@ const { TEST_PORT } = process.env;
 
 const TEST_URL = `${TEST_PROTOCOL}://${TEST_HOST}:${TEST_PORT}`;
 
+const USER1 = {
+  name: 'Peter',
+  surname: 'Parker',
+  email: 'pp@demo.com',
+  password: bcrypt.hashSync('pass123'),
+  admin: true,
+  validated: true,
+  username: 'pparker',
+  createdAt: Sequelize.literal("(now() at time zone 'utc')"),
+  updatedAt: Sequelize.literal("(now() at time zone 'utc')"),
+};
+
+const USER2 = {
+  name: 'John',
+  surname: 'Lennon',
+  email: 'jl@demo.com',
+  password: bcrypt.hashSync('pass123'),
+  admin: false,
+  validated: false,
+  username: 'jlennon',
+  createdAt: Sequelize.literal("(now() at time zone 'utc')"),
+  updatedAt: Sequelize.literal("(now() at time zone 'utc')"),
+};
+
 describe('User Controller Tests:', () => {
   beforeEach(async () => {
     await db.User.sync({ force: true });
-    await db.User.create({
-      name: 'Peter',
-      surname: 'Parker',
-      email: 'pp@demo.com',
-      password: bcrypt.hashSync('pass123'),
-      admin: true,
-      validated: true,
-      username: 'pparker',
-      createdAt: Sequelize.literal("(now() at time zone 'utc')"),
-      updatedAt: Sequelize.literal("(now() at time zone 'utc')"),
-    });
-    await db.User.create({
-      name: 'John',
-      surname: 'Lennon',
-      email: 'jl@demo.com',
-      password: bcrypt.hashSync('pass123'),
-      admin: false,
-      validated: false,
-      username: 'jlennon',
-      createdAt: Sequelize.literal("(now() at time zone 'utc')"),
-      updatedAt: Sequelize.literal("(now() at time zone 'utc')"),
-    });
+    await db.User.create(USER1);
+    await db.User.create(USER2);
   });
 
   describe('Utils functions', () => {
@@ -324,6 +330,53 @@ describe('User Controller Tests:', () => {
         chai.request(TEST_URL)
           .put('/user/1111')
           .set('Authentication', authToken)
+          .end((err, res) => {
+            expect(res).to.have.status(403);
+            done();
+          });
+      });
+    });
+
+    describe('Forgot password', () => {
+      it('should fail if email is not found', (done) => {
+        const payload =  {
+          email: "fakeemail@test.com"
+        };
+        chai.request(TEST_URL)
+          .post('/user/forgot_password')
+          .send(payload)
+          .end((err, res) => {
+            expect(res).to.have.status(404);
+            done();
+          });
+      });
+    });
+
+    describe('Reset password', () => {
+      it('should fail if user is not found', (done) => {
+        const payload =  {
+          token: "token",
+          id: "21345",
+          password: "new_password"
+        };
+        chai.request(TEST_URL)
+          .post('/user/reset_password')
+          .send(payload)
+          .end((err, res) => {
+            expect(res).to.have.status(404);
+            done();
+          });
+      });
+
+      it('should fail if token is invalid', (done) => {
+        const payload =  {
+          token: "token",
+          id: "1",
+          password: "new_password"
+        };
+        chai.request(TEST_URL)
+          .post('/user/reset_password')
+          .send(payload)
           .end((err, res) => {
             expect(res).to.have.status(403);
             done();
