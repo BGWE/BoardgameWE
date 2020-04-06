@@ -7,7 +7,7 @@ const util = require("./util/util");
 const db = require("./models/index");
 
 module.exports = function(app) {
-    const { body, param, query } = require('express-validator/check');
+    const { body, param, query } = require('express-validator');
     const { asyncMiddleware } = require('./util/util');
     const validation = require('./util/validation');
     const BoardGameController = require("./BoardGameController");
