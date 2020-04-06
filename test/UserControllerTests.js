@@ -21,6 +21,19 @@ const { TEST_PORT } = process.env;
 
 const TEST_URL = `${TEST_PROTOCOL}://${TEST_HOST}:${TEST_PORT}`;
 
+TEST_USER_PASSWORD = 'mypass';
+const TEST_USER = {
+  name: 'Sterone',
+  surname: 'Tester',
+  email: 'qa@keeptesting.com',
+  password: bcrypt.hashSync(TEST_USER_PASSWORD),
+  admin: false,
+  validated: true,
+  username: 'testuser',
+  createdAt: Sequelize.literal("(now() at time zone 'utc')"),
+  updatedAt: Sequelize.literal("(now() at time zone 'utc')"),
+};
+
 const USER1 = {
   name: 'Peter',
   surname: 'Parker',
@@ -48,9 +61,17 @@ const USER2 = {
 describe('User Controller Tests:', () => {
   beforeEach(async () => {
     await db.User.sync({ force: true });
+    await db.User.create(TEST_USER); // ID = 1
     await db.User.create(USER1);
     await db.User.create(USER2);
   });
+
+  // afterEach(async () => {
+  //   await db.User.destroy({
+  //     where: {},
+  //     truncate: true
+  //   });
+  // });
 
   describe('Utils functions', () => {
     describe('Remove sensitive data', () => {
@@ -75,8 +96,8 @@ describe('User Controller Tests:', () => {
     describe('Login', () => {
       it('should login successfully', (done) => {
         const payload = {
-          username: 'pparker',
-          password: 'pass123',
+          username: TEST_USER.username,
+          password: TEST_USER_PASSWORD,
         };
         chai.request(TEST_URL)
           .post('/user/login')
@@ -94,7 +115,7 @@ describe('User Controller Tests:', () => {
 
       it('should fail login due to wrong password', (done) => {
         const payload = {
-          username: 'pparker',
+          username: TEST_USER.username,
           password: 'wrongpassword',
         };
         chai.request(TEST_URL)
@@ -138,7 +159,7 @@ describe('User Controller Tests:', () => {
           surname: 'User',
           email: 'testuser@test.com',
           password: 'testpassword',
-          username: 'testuser',
+          username: 'testanotheruser',
         };
 
         chai.request(TEST_URL)
@@ -216,8 +237,8 @@ describe('User Controller Tests:', () => {
 
     before(async () => {
       const payload = {
-        username: 'pparker',
-        password: 'pass123',
+        username: 'testuser',
+        password: TEST_USER_PASSWORD,
       };
       await chai.request(TEST_URL)
         .post('/user/login')
@@ -238,7 +259,7 @@ describe('User Controller Tests:', () => {
             expect(res.body).to.be.a('object');
             expect(res.body).to.have.property('id');
             expect(res.body).to.have.property('username');
-            expect(res.body.username).to.be.equal('pparker');
+            expect(res.body.username).to.be.equal(TEST_USER.username);
             expect(res.body).to.have.property('admin');
             expect(res.body).to.have.property('createdAt');
             expect(res.body).to.have.property('updatedAt');
@@ -257,7 +278,7 @@ describe('User Controller Tests:', () => {
     });
 
     describe('GET User', () => {
-      it('should get current user information', (done) => {
+      it('should get specific user information from id', (done) => {
         chai.request(TEST_URL)
           .get('/user/1')
           .set('Authentication', authToken)
@@ -267,7 +288,7 @@ describe('User Controller Tests:', () => {
             expect(res.body).to.be.a('object');
             expect(res.body).to.have.property('id');
             expect(res.body).to.have.property('username');
-            expect(res.body.username).to.be.equal('pparker');
+            expect(res.body.username).to.be.equal(TEST_USER.username);
             done();
           });
       });
@@ -293,7 +314,7 @@ describe('User Controller Tests:', () => {
     });
 
     describe('Update User (PUT)', () => {
-      it('should get current user information', (done) => {
+      it('should update current user information', (done) => {
         const payload = {
           name: 'Peter2',
           surname: 'Parker2',
@@ -302,6 +323,7 @@ describe('User Controller Tests:', () => {
 
         chai.request(TEST_URL)
           .put('/user/1')
+          .send(payload)
           .set('Authentication', authToken)
           .end((err, res) => {
             expect(err).to.be.null;
@@ -309,10 +331,16 @@ describe('User Controller Tests:', () => {
             expect(res.body).to.be.a('object');
             expect(res.body).to.have.property('id');
             expect(res.body).to.have.property('username');
-            expect(res.body.username).to.be.equal('pparker');
+            expect(res.body.username).to.be.equal(TEST_USER.username);
             expect(res.body).to.have.property('admin');
             expect(res.body).to.have.property('createdAt');
             expect(res.body).to.have.property('updatedAt');
+            expect(res.body).to.have.property('name');
+            expect(res.body.name).to.be.equal(payload.name);
+            expect(res.body).to.have.property('surname');
+            expect(res.body.surname).to.be.equal(payload.surname);
+            expect(res.body).to.have.property('email');
+            expect(res.body.email).to.be.equal(payload.email);
             done();
           });
       });
