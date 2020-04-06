@@ -15,4 +15,4 @@ COPY ./.eslintrc.json /home/node/app/
 
 RUN npx apidoc -i src/api/ -o src/doc/
 
-CMD ["sh", "-c", "npx sequelize db:migrate && npx sequelize db:seed:all && yarn start"]
+CMD ["sh", "-c", "npx sequelize db:migrate && if [ \"$NODE_ENV\" = \"development\" ]; then npx sequelize db:seed:all; fi && yarn start"]
