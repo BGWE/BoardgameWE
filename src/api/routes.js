@@ -1326,6 +1326,7 @@ module.exports = function(app) {
      * @apiDescription (Admin only) Grant access to the application the the given user
      *
      * @apiParam (body) {Number} id_user User identifier.
+     * @apiParam (body) {Boolean} validated True to validate the user.
      *
      * @apiUse TokenHeaderRequired
      */
