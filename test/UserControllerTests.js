@@ -367,8 +367,8 @@ describe('User Controller Tests:', () => {
 
     describe('Forgot password', () => {
       it('should fail if email is not found', (done) => {
-        const payload =  {
-          email: "fakeemail@test.com"
+        const payload = {
+          email: 'fakeemail@test.com',
         };
         chai.request(TEST_URL)
           .post('/user/forgot_password')
@@ -382,10 +382,10 @@ describe('User Controller Tests:', () => {
 
     describe('Reset password', () => {
       it('should fail if user is not found', (done) => {
-        const payload =  {
-          token: "token",
-          id: "21345",
-          password: "new_password"
+        const payload = {
+          token: 'token',
+          id: '21345',
+          password: 'new_password',
         };
         chai.request(TEST_URL)
           .post('/user/reset_password')
@@ -397,10 +397,10 @@ describe('User Controller Tests:', () => {
       });
 
       it('should fail if token is invalid', (done) => {
-        const payload =  {
-          token: "token",
-          id: "1",
-          password: "new_password"
+        const payload = {
+          token: 'token',
+          id: '1',
+          password: 'new_password',
         };
         chai.request(TEST_URL)
           .post('/user/reset_password')
