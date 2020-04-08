@@ -56,6 +56,8 @@ exports.signIn = function signIn(req, res) {
         return util.detailErrorResponse(res, 403, exports.notValidatedErrorMsg);
       }
       return util.successResponse(res, {
+        id: user.id,
+        username: user.username,
         token: jwt.sign(
           tokenPayload,
           config.jwt_secret_key,
@@ -219,11 +221,18 @@ exports.addLibraryGames = function addLibraryGames(req, res) {
     fixed: { id: userutil.getCurrUserId(req), field: 'id_user' },
     other: {
       field: 'id_board_game',
-      ids: req.body.boardGames,
+      ids: req.body.board_games,
       includes: [includes.defaultBoardGameIncludeSQ],
     },
     error_message: 'cannot update library',
-  });
+  }).catch((err) => {
+    console.log(err);
+    if (err.name === 'SequelizeForeignKeyConstraintError' &&
+        err.index === 'LibraryGames_id_board_game_fkey') {
+      return util.detailErrorResponse(res, 404, 'unable to find the board game');
+    }
+    return util.detailErrorResponse(res, 500, 'failed to add the board game to the library');
+  })
 };
 
 exports.deleteLibraryGames = function deleteLibraryGames(req, res) {
@@ -232,7 +241,7 @@ exports.deleteLibraryGames = function deleteLibraryGames(req, res) {
     fixed: { id: userutil.getCurrUserId(req), field: 'id_user' },
     other: {
       field: 'id_board_game',
-      ids: req.body.boardGames,
+      ids: req.body.board_games,
       includes: [includes.defaultBoardGameIncludeSQ],
     },
     error_message: 'cannot update library',
@@ -323,7 +332,7 @@ exports.addToWishToPlayBoardGames = function addToWishToPlayBoardGames(req, res)
     model_class: db.WishToPlayBoardGame,
     fixed: { id: userutil.getCurrUserId(req), field: 'id_user' },
     other: {
-      ids: req.body.boardGames,
+      ids: req.body.board_games,
       field: 'id_board_game',
       includes: [includes.defaultBoardGameIncludeSQ],
     },
@@ -353,7 +362,7 @@ exports.deleteFromWishToPlayList = function deleteFromWishToPlayList(req, res) {
     model_class: db.WishToPlayBoardGame,
     fixed: { id: userutil.getCurrUserId(req), field: 'id_user' },
     other: {
-      ids: req.body.boardGames,
+      ids: req.body.board_games,
       field: 'id_board_game',
       includes: [includes.defaultBoardGameIncludeSQ],
     },
