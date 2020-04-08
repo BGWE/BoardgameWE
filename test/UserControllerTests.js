@@ -3,17 +3,18 @@ const chaiHttp = require('chai-http');
 
 const { expect } = chai;
 
-const Sequelize = require('sequelize');
-const bcrypt = require('bcryptjs');
-const jwt = require('jsonwebtoken');
-
 const db = require('../src/api/models/index');
 
 const userController = require('../src/api/UserController');
 const includes = require('../src/api/util/db_include');
 
+// Data
+var userdata = require('./data/userdata')
+var bgdata   = require('./data/boardgamedata')
 
 chai.use(chaiHttp);
+
+// From environment variables
 
 const { TEST_PROTOCOL } = process.env;
 const { TEST_HOST } = process.env;
@@ -21,57 +22,74 @@ const { TEST_PORT } = process.env;
 
 const TEST_URL = `${TEST_PROTOCOL}://${TEST_HOST}:${TEST_PORT}`;
 
-TEST_USER_PASSWORD = 'mypass';
-const TEST_USER = {
-  name: 'Sterone',
-  surname: 'Tester',
-  email: 'qa@keeptesting.com',
-  password: bcrypt.hashSync(TEST_USER_PASSWORD),
-  admin: false,
-  validated: true,
-  username: 'testuser',
-  createdAt: Sequelize.literal("(now() at time zone 'utc')"),
-  updatedAt: Sequelize.literal("(now() at time zone 'utc')"),
-};
+async function seedUsers() {
+  // await db.User.sync({ force: true });
+  await db.User.bulkCreate([userdata.TEST_USER, userdata.USER1, userdata.USER2]);
+}
 
-const USER1 = {
-  name: 'Peter',
-  surname: 'Parker',
-  email: 'pp@demo.com',
-  password: bcrypt.hashSync('pass123'),
-  admin: true,
-  validated: true,
-  username: 'pparker',
-  createdAt: Sequelize.literal("(now() at time zone 'utc')"),
-  updatedAt: Sequelize.literal("(now() at time zone 'utc')"),
-};
+async function clearUsers() {
+  await db.User.destroy({
+    where: {},
+    truncate: { cascade: true }
+  });
+}
 
-const USER2 = {
-  name: 'John',
-  surname: 'Lennon',
-  email: 'jl@demo.com',
-  password: bcrypt.hashSync('pass123'),
-  admin: false,
-  validated: false,
-  username: 'jlennon',
-  createdAt: Sequelize.literal("(now() at time zone 'utc')"),
-  updatedAt: Sequelize.literal("(now() at time zone 'utc')"),
-};
+async function seedBoardGames() {
+  // await db.BoardGame.sync({ force: true });
+  let bg1 = await db.BoardGame.create(bgdata.BG1);
+  let bg2 = await db.BoardGame.create(bgdata.BG2);
+  return {
+    board_games:[
+      bg1.dataValues,
+      bg2.dataValues
+    ]
+  }
+}
 
-describe('User Controller Tests:', () => {
-  beforeEach(async () => {
-    await db.User.sync({ force: true });
-    await db.User.create(TEST_USER); // ID = 1
-    await db.User.create(USER1);
-    await db.User.create(USER2);
+async function clearBoardGames() {
+  await db.BoardGame.destroy({
+    where: {},
+    truncate: { cascade: true }
+  });
+}
+
+async function clearLibraryGames() {
+  await db.LibraryGame.destroy({
+    where: {},
+    truncate: { cascade: true }
+  });
+}
+
+async function login(username, password) {
+  var authToken = null;
+  var user_id = null;
+  const payload = {
+    username: username,
+    password: password,
+  };
+  await chai.request(TEST_URL)
+    .post('/user/login')
+    .send(payload)
+    .then((res) => {
+      authToken = `JWT ${res.body.token}`;
+      user_id = res.body.id;
+    });
+
+  return {
+    token: authToken,
+    id: user_id,
+  };
+}
+
+context('User Controller Tests:', () => {
+  before(() => {
+    return seedUsers();
   });
 
-  // afterEach(async () => {
-  //   await db.User.destroy({
-  //     where: {},
-  //     truncate: true
-  //   });
-  // });
+  after(async () => {
+    // await clearLibraryGames();
+    await clearUsers();
+  });
 
   describe('Utils functions', () => {
     describe('Remove sensitive data', () => {
@@ -92,12 +110,12 @@ describe('User Controller Tests:', () => {
     });
   });
 
-  describe('Non-authenticated requests', () => {
+  context('Non-authenticated requests', () => {
     describe('Login', () => {
       it('should login successfully', (done) => {
         const payload = {
-          username: TEST_USER.username,
-          password: TEST_USER_PASSWORD,
+          username: userdata.TEST_USER.username,
+          password: userdata.TEST_USER_PASSWORD,
         };
         chai.request(TEST_URL)
           .post('/user/login')
@@ -115,7 +133,7 @@ describe('User Controller Tests:', () => {
 
       it('should fail login due to wrong password', (done) => {
         const payload = {
-          username: TEST_USER.username,
+          username: userdata.TEST_USER.username,
           password: 'wrongpassword',
         };
         chai.request(TEST_URL)
@@ -232,20 +250,14 @@ describe('User Controller Tests:', () => {
     });
   });
 
-  describe('Authenticated requests', () => {
+  context('Authenticated requests', () => {
     let authToken = '';
+    let current_user_id = null;
 
     before(async () => {
-      const payload = {
-        username: 'testuser',
-        password: TEST_USER_PASSWORD,
-      };
-      await chai.request(TEST_URL)
-        .post('/user/login')
-        .send(payload)
-        .then((res) => {
-          authToken = `JWT ${res.body.token}`;
-        });
+      let rsp = await login(userdata.TEST_USER.username, userdata.TEST_USER_PASSWORD);
+      authToken = rsp.token;
+      current_user_id = rsp.id;
     });
 
     describe('GET Current user', () => {
@@ -259,7 +271,11 @@ describe('User Controller Tests:', () => {
             expect(res.body).to.be.a('object');
             expect(res.body).to.have.property('id');
             expect(res.body).to.have.property('username');
-            expect(res.body.username).to.be.equal(TEST_USER.username);
+            expect(res.body.username).to.be.equal(userdata.TEST_USER.username);
+            expect(res.body).to.have.property('name');
+            expect(res.body.name).to.be.equal(userdata.TEST_USER.name);
+            expect(res.body).to.have.property('surname');
+            expect(res.body.surname).to.be.equal(userdata.TEST_USER.surname);
             expect(res.body).to.have.property('admin');
             expect(res.body).to.have.property('createdAt');
             expect(res.body).to.have.property('updatedAt');
@@ -280,7 +296,7 @@ describe('User Controller Tests:', () => {
     describe('GET User', () => {
       it('should get specific user information from id', (done) => {
         chai.request(TEST_URL)
-          .get('/user/1')
+          .get('/user/' + current_user_id)
           .set('Authentication', authToken)
           .end((err, res) => {
             expect(err).to.be.null;
@@ -288,14 +304,14 @@ describe('User Controller Tests:', () => {
             expect(res.body).to.be.a('object');
             expect(res.body).to.have.property('id');
             expect(res.body).to.have.property('username');
-            expect(res.body.username).to.be.equal(TEST_USER.username);
+            expect(res.body.username).to.be.equal(userdata.TEST_USER.username);
             done();
           });
       });
 
       it('should fail when not authenticated', (done) => {
         chai.request(TEST_URL)
-          .get('/user/1')
+          .get('/user/' + current_user_id)
           .end((err, res) => {
             expect(res).to.have.status(401);
             done();
@@ -314,40 +330,17 @@ describe('User Controller Tests:', () => {
     });
 
     describe('Update User (PUT)', () => {
-      it('should update current user information', (done) => {
-        const payload = {
-          name: 'Peter2',
-          surname: 'Parker2',
-          email: 'pp2@demo.com',
-        };
-
-        chai.request(TEST_URL)
-          .put('/user/1')
-          .send(payload)
-          .set('Authentication', authToken)
-          .end((err, res) => {
-            expect(err).to.be.null;
-            expect(res).to.have.status(200);
-            expect(res.body).to.be.a('object');
-            expect(res.body).to.have.property('id');
-            expect(res.body).to.have.property('username');
-            expect(res.body.username).to.be.equal(TEST_USER.username);
-            expect(res.body).to.have.property('admin');
-            expect(res.body).to.have.property('createdAt');
-            expect(res.body).to.have.property('updatedAt');
-            expect(res.body).to.have.property('name');
-            expect(res.body.name).to.be.equal(payload.name);
-            expect(res.body).to.have.property('surname');
-            expect(res.body.surname).to.be.equal(payload.surname);
-            expect(res.body).to.have.property('email');
-            expect(res.body.email).to.be.equal(payload.email);
-            done();
-          });
+      after(async () => {
+        await clearUsers();
+        await seedUsers();
+        rsp = await login(userdata.TEST_USER.username, userdata.TEST_USER_PASSWORD);
+        authToken = rsp.token;
+        current_user_id = rsp.id;
       });
 
       it('should fail when not authenticated', (done) => {
         chai.request(TEST_URL)
-          .put('/user/1')
+          .put('/user/' + current_user_id)
           .end((err, res) => {
             expect(res).to.have.status(401);
             done();
@@ -360,6 +353,37 @@ describe('User Controller Tests:', () => {
           .set('Authentication', authToken)
           .end((err, res) => {
             expect(res).to.have.status(403);
+            done();
+          });
+      });
+
+      it('should update current user information', (done) => {
+        const payload = {
+          name: 'Peter2',
+          surname: 'Parker2',
+          email: 'pp2@demo.com',
+        };
+
+        chai.request(TEST_URL)
+          .put('/user/' + current_user_id)
+          .send(payload)
+          .set('Authentication', authToken)
+          .end((err, res) => {
+            expect(err).to.be.null;
+            expect(res).to.have.status(200);
+            expect(res.body).to.be.a('object');
+            expect(res.body).to.have.property('id');
+            expect(res.body).to.have.property('username');
+            expect(res.body.username).to.be.equal(userdata.TEST_USER.username);
+            expect(res.body).to.have.property('admin');
+            expect(res.body).to.have.property('createdAt');
+            expect(res.body).to.have.property('updatedAt');
+            expect(res.body).to.have.property('name');
+            expect(res.body.name).to.be.equal(payload.name);
+            expect(res.body).to.have.property('surname');
+            expect(res.body.surname).to.be.equal(payload.surname);
+            expect(res.body).to.have.property('email');
+            expect(res.body.email).to.be.equal(payload.email);
             done();
           });
       });
@@ -399,7 +423,7 @@ describe('User Controller Tests:', () => {
       it('should fail if token is invalid', (done) => {
         const payload = {
           token: 'token',
-          id: '1',
+          id: current_user_id,
           password: 'new_password',
         };
         chai.request(TEST_URL)
@@ -407,6 +431,53 @@ describe('User Controller Tests:', () => {
           .send(payload)
           .end((err, res) => {
             expect(res).to.have.status(403);
+            done();
+          });
+      });
+    });
+
+    describe('Add board games in user\'s library', () => {
+      let board_games_id = [];
+      before(async () => {
+        let rsp = await seedBoardGames();
+        board_games_id = rsp.board_games.map(x => x.id);
+      });
+
+      after(async () => {
+        await clearLibraryGames();
+        await clearBoardGames();
+      });
+
+      it('shoud add board games in current user\'s library', (done) => {
+        const payload = {
+          board_games: board_games_id.slice(0, 2)
+        };
+        chai.request(TEST_URL)
+          .post('/user/current/library_games')
+          .set('Authentication', authToken)
+          .send(payload)
+          .end((err, res) => {
+            expect(res).to.have.status(200);
+            expect(err).to.be.null;
+            expect(res.body).to.be.a('array');
+            expect(res.body.length).to.be.equal(2);
+            expect(res.body[0]).to.have.keys(['id_user', 'id_board_game', 'createdAt', 'updatedAt', 'board_game']);
+            expect(res.body[1]).to.have.keys(['id_user', 'id_board_game', 'createdAt', 'updatedAt', 'board_game']);
+            done();
+          });
+      });
+
+      it('shoud fail adding board game in current user\'s library if board game doesn\'t exist', (done) => {
+        const payload = {
+          board_games: [8888]
+        };
+        chai.request(TEST_URL)
+          .post('/user/current/library_games')
+          .set('Authentication', authToken)
+          .send(payload)
+          .end((err, res) => {
+            expect(res).to.have.status(404);
+            expect(err).to.be.null;
             done();
           });
       });
