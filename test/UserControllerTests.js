@@ -537,5 +537,34 @@ context('User Controller Tests:', () => {
         });
       });
     });
+
+    describe('Get board games in user\'s library', () => {
+      let board_games_id = [];
+      before(async () => {
+        let rsp = await seedBoardGames();
+        board_games_id = rsp.board_games.map(x => x.id);
+        await seedLibraryGames(current_user_id, board_games_id.slice(0, 2))
+      });
+
+      after(async () => {
+        await clearLibraryGames();
+        await clearBoardGames();
+      });
+
+      it('shoud add board games in current user\'s library', (done) => {
+        chai.request(TEST_URL)
+          .get('/user/current/library_games')
+          .set('Authentication', authToken)
+          .end((err, res) => {
+            expect(res).to.have.status(200);
+            expect(err).to.be.null;
+            expect(res.body).to.be.a('array');
+            expect(res.body.length).to.be.equal(2);
+            expect(res.body[0]).to.have.keys(['id_user', 'id_board_game', 'createdAt', 'updatedAt', 'board_game']);
+            expect(res.body[1]).to.have.keys(['id_user', 'id_board_game', 'createdAt', 'updatedAt', 'board_game']);
+            done();
+          });
+      });
+    });
   });
 });
