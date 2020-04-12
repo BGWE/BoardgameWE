@@ -11,6 +11,7 @@ const includes = require('../src/api/util/db_include');
 // Data
 var userdata = require('./data/userdata')
 var bgdata   = require('./data/boardgamedata')
+var librarygamedata   = require('./data/librarygamedata')
 
 chai.use(chaiHttp);
 
@@ -51,6 +52,12 @@ async function clearBoardGames() {
     where: {},
     truncate: { cascade: true }
   });
+}
+
+async function seedLibraryGames(user_id, bg_ids) {
+  for (const bg_id of bg_ids) {
+    await db.LibraryGame.create(librarygamedata.ADD_BG(user_id, bg_id))
+  }
 }
 
 async function clearLibraryGames() {
@@ -480,6 +487,54 @@ context('User Controller Tests:', () => {
             expect(err).to.be.null;
             done();
           });
+      });
+    });
+
+    describe('Delete board game in user\'s library', () => {
+      let board_games_id = [];
+      before(async () => {
+        let rsp = await seedBoardGames();
+        board_games_id = rsp.board_games.map(x => x.id);
+        await seedLibraryGames(current_user_id, board_games_id.slice(0, 2))
+      });
+
+      after(async () => {
+        await clearLibraryGames();
+        await clearBoardGames();
+      });
+
+      it('should not delete a board game that is not in a user\'s library', (done) => {
+        const payload = {
+          board_games: [99999]
+        };
+        chai.request(TEST_URL)
+          .delete('/user/current/library_games')
+          .set('Authentication', authToken)
+          .send(payload)
+          .end((err, res) => {
+            expect(res).to.have.status(200);
+            expect(err).to.be.null;
+            expect(res.body).to.be.a('array');
+            expect(res.body.length).to.be.equal(2);
+            done();
+        });
+      });
+
+      it('should delete a board game in a user\'s library', (done) => {
+        const payload = {
+          board_games: board_games_id.slice(0, 1)
+        };
+        chai.request(TEST_URL)
+          .delete('/user/current/library_games')
+          .set('Authentication', authToken)
+          .send(payload)
+          .end((err, res) => {
+            expect(res).to.have.status(200);
+            expect(err).to.be.null;
+            expect(res.body).to.be.a('array');
+            expect(res.body.length).to.be.equal(1);
+            done();
+        });
       });
     });
   });
