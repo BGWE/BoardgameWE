@@ -84,6 +84,7 @@ exports.addGameQuery = function(eid, req, res) {
             duration: req.body.duration || null,
             ranking_method: req.body.ranking_method,
             id_timer: req.body.id_timer || null,
+            comment: req.body.comment || "",
         }, {transaction: t}).then((game) => {
             const player_data = getGamePlayerData(game, req.body.players);
             return Promise.all([
@@ -124,6 +125,7 @@ exports.updateGameQuery = function(gid, req, res) {
       id_board_game: req.body.id_board_game || game.id_board_game,
       duration: req.body.duration || game.duration,
       ranking_method: req.body.ranking_method || game.ranking_method,
+      comment: req.body.comment || game.comment
     }, {
       where: { id: game.id },
       transaction: t, lock: t.LOCK.UPDATE

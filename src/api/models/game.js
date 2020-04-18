@@ -22,6 +22,11 @@ module.exports = (sequelize, DataTypes) => {
             allowNull: true,
             defaultValue: null
         },
+        comment: {
+            type: DataTypes.TEXT,
+            allowNull: false,
+            defaultValue: ""
+        },
         id_timer: {
             type: DataTypes.INTEGER,
             allowNull: true

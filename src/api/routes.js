@@ -1164,6 +1164,7 @@ module.exports = function(app) {
      * @apiParam (body) {String} started_at Start datetime of the game (ISO8601)
      * @apiParam (body) {Number} [id_event] Event identifier
      * @apiParam (body) {Number} [duration] Duration of the board game, or `null`.
+     * @apiParam (body) {String} [comment] Comment related to the game.
      * @apiParam (body) {String} ranking_method The ranking method for the game. One of: `{WIN_LOSE, POINTS_LOWER_BETTER, POINTS_HIGHER_BETTER, RANKING_NO_POINT}`.
      * @apiPAram (body) {Number} [id_timer] Add a timer identifier
      * @apiParam (body) {GamePlayer[]} players List of players involved with the game.
@@ -1221,6 +1222,7 @@ module.exports = function(app) {
      * @apiParam (body) {String} [started_at] Start datetime of the game (ISO8601)
      * only allowed if current event has no event associated) or null to dissociate the game from its event.
      * @apiParam (body) {Number} [duration] Duration of the board game, or `null`.
+     * @apiParam (body) {String} [comment] Comment related to the game.
      * @apiParam (body) {String} [ranking_method] The ranking method for the game. One of: `{WIN_LOSE, POINTS_LOWER_BETTER, POINTS_HIGHER_BETTER, RANKING_NO_POINT}`.
      * @apiParam (body) {GamePlayer[]} [players] List of players involved with the game. If the list is empty
      * or missing, the list of players (and their scores) is not updated.
