@@ -64,12 +64,15 @@ doc/
 .vscode
 
 # dev env
-docker/docker-compose.yml
-docker/postgres-data
 tools/bgcinfra/bgcvenv/*
 .disable.ebextensions/*
 
 tools/bgcinfra/bgcvenv/*
+tools/bgcinfra/docker-compose.yml
+
+secrets.tar
+dbcreds.txt
+*.http
 
 .idea
 .DS_Store

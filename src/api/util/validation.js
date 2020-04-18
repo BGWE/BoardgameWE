@@ -1,5 +1,5 @@
 const moment = require("moment");
-const { query, body, validationResult } = require('express-validator/check');
+const { query, body, validationResult } = require('express-validator');
 const db = require('../models/index');
 const util = require('./util');
 

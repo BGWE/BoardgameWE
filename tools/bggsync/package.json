@@ -1,0 +1,15 @@
+{
+  "name": "bggsync",
+  "version": "1.0.0",
+  "description": "",
+  "main": "bggsync.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "commander": "^3.0.1"
+  }
+}

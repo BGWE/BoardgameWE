@@ -1,5 +1,5 @@
 #!/bin/sh
-OPTIND=1 
+OPTIND=1
 
 ENV_NAME="bgcvenv"
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
@@ -64,7 +64,7 @@ fi
 
 
 if [ $wait_apiserver = true ]
-then   
+then
     echo "Waiting on API server... "
     status_code=$(curl --write-out %{http_code} --silent --head --fail http://${host})
     until [ $status_code -eq '401' ] ; do
@@ -73,6 +73,6 @@ then
         status_code=$(curl --write-out %{http_code} --silent --head --fail http://${host})
     done
     printf '\n'
-    echo "API server is up."
+    echo "API server is up ✅"
 fi
 

@@ -7,7 +7,7 @@ const util = require("./util/util");
 const db = require("./models/index");
 
 module.exports = function(app) {
-    const { body, param, query } = require('express-validator/check');
+    const { body, param, query } = require('express-validator');
     const { asyncMiddleware } = require('./util/util');
     const validation = require('./util/validation');
     const BoardGameController = require("./BoardGameController");
@@ -1326,6 +1326,7 @@ module.exports = function(app) {
      * @apiDescription (Admin only) Grant access to the application the the given user
      *
      * @apiParam (body) {Number} id_user User identifier.
+     * @apiParam (body) {Boolean} validated True to validate the user.
      *
      * @apiUse TokenHeaderRequired
      */

@@ -23,7 +23,7 @@ phases:
       # - command
   post_build:
     commands:
-      - ./node_modules/apidoc/bin/apidoc -i api/ -o doc/
+      - ./src/node_modules/apidoc/bin/apidoc -i api/ -o doc/
       # - command
 artifacts:
   files:
