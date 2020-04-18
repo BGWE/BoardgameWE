@@ -93,10 +93,12 @@ exports.isGTE = function(v) {
     return value => value >= v;
 };
 
-exports.checkScore = ranking_method_field => {
+exports.checkScore = (ranking_method_field, players_field) => {
     return (value, { req, location }) => {
         const ranking_method = req[location][ranking_method_field];
-        const invalid = (ranking_method === "WIN_LOSE" && (value !== 0 && value !== 1));
+        const players = req[location][players_field];
+        const invalid = (ranking_method === db.Game.RANKING_WIN_LOSE && (value !== 0 && value !== 1))
+                          || (ranking_method === db.Game.RANKING_NO_POINT && (value <= 0 || value > players.length));
         if (invalid) {
             throw new Error("Invalid score '" + value + "' for ranking method '" + ranking_method + "'");
         }
@@ -143,7 +145,7 @@ exports.model = function(model) {
 exports.getGameValidators = function(is_create) {
     return [
         co(body('players'), !is_create).isArray().not().isEmpty(),
-        body('players.*.score').isNumeric().custom(exports.checkScore("ranking_method")),
+        body('players.*.score').isNumeric().custom(exports.checkScore("ranking_method", "players")),
         body('players.*.id_user')
             .custom(exports.mutuallyExclusive("name"))
             .optional({nullable: true}).isNumeric().custom(exports.model(db.User)),
@@ -156,7 +158,7 @@ exports.getGameValidators = function(is_create) {
         co(body('expansions'), !is_create).isArray().custom(exports.areExpansions('id_board_game')),
         body('duration').optional({nullable: true}).isInt().custom(exports.isPositive),
         exports.modelExists(co(body('id_board_game'), !is_create), db.BoardGame),
-        co(body('ranking_method'), !is_create).isIn(["WIN_LOSE", "POINTS_HIGHER_BETTER", "POINTS_LOWER_BETTER"]),
+        co(body('ranking_method'), !is_create).isIn(db.Game.RANKING_METHODS),
         body('id_event').optional({nullable: true}).isInt().custom(exports.isPositive)
     ];
 };

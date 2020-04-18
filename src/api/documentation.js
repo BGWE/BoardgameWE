@@ -138,10 +138,11 @@
  * @apiDefine FullGameDescriptor
  *
  * @apiSuccess {Number} id Game identifier
+ * @apiSuccess {String} started_at Start time of the game (ISO8601, UTC)
  * @apiSuccess {String} duration Game duration, or `null`.
  * @apiSuccess {String} id_board_game Played board game identifier
  * @apiSuccess {String} id_event Event identifier, or `null`.
- * @apiSuccess {String} ranking_method The ranking method for the game. One of: `{WIN_LOSE, POINTS_LOWER_BETTER, POINTS_HIGHER_BETTER}`.
+ * @apiSuccess {String} ranking_method The ranking method for the game. One of: `{WIN_LOSE, POINTS_LOWER_BETTER, POINTS_HIGHER_BETTER, RANKING_NO_POINT}`.
  * @apiSuccess {Number} id_timer Timer identifier, or `null`.
  * @apiSuccess {BoardGame} board_game Board game data (see "Add board game" request for structure).
  * @apiSuccess {BoardGame[]} expansions Expansions of the selected board game that were played with the board game.
