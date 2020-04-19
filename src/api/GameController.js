@@ -129,7 +129,8 @@ exports.updateGame = function(req, res) {
 exports.rankForGame = function(game) {
     return util.rank(
         game.game_players,
-        (player) => player.score, game.ranking_method === "POINTS_LOWER_BETTER",
+        (player) => player.score,
+        game.ranking_method === db.Game.RANKING_NO_POINT || game.ranking_method === db.Game.RANKING_LOWER_BETTER,
         (o, f, v) => { o.dataValues[f] = v; }  // write in dataValues not to lose values on the way
     );
 };
