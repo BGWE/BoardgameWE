@@ -15,12 +15,17 @@ module.exports = (sequelize, DataTypes) => {
         ranking_method: {
             type: DataTypes.ENUM,
             allowNull: false,
-            values: ["WIN_LOSE", "POINTS_HIGHER_BETTER", "POINTS_LOWER_BETTER"],
+            values: ["WIN_LOSE", "POINTS_HIGHER_BETTER", "POINTS_LOWER_BETTER", "RANKING_NO_POINT"],
         },
         started_at: {
             type: DataTypes.DATE,
             allowNull: true,
             defaultValue: null
+        },
+        comment: {
+            type: DataTypes.TEXT,
+            allowNull: false,
+            defaultValue: ""
         },
         id_timer: {
             type: DataTypes.INTEGER,
@@ -67,5 +72,14 @@ module.exports = (sequelize, DataTypes) => {
     Game.RANKING_LOWER_BETTER = "POINTS_LOWER_BETTER";
     Game.RANKING_HIGHER_BETTER = "POINTS_HIGHER_BETTER";
     Game.RANKING_WIN_LOSE = "WIN_LOSE";
+    Game.RANKING_NO_POINT = "RANKING_NO_POINT";
+
+    Game.RANKING_METHODS = [
+        Game.RANKING_LOWER_BETTER,
+        Game.RANKING_HIGHER_BETTER,
+        Game.RANKING_WIN_LOSE,
+        Game.RANKING_NO_POINT
+    ];
+
     return Game;
 };

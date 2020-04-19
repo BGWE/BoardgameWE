@@ -9,36 +9,6 @@ exports.gameFullIncludesSQ = [
     includes.genericIncludeSQ(db.PlayedExpansion, "expansions", [includes.getBoardGameIncludeSQ("board_game")])
 ];
 
-/**
- * Validate ranks from the list
- */
-exports.validateRanks = (ranking_method, ranks) => {
-    if (ranking_method === "WIN_LOSE") {
-        for (let i = 0; i < ranks.length; ++i) {
-            if (ranks[i] !== 0 && ranks[i] !== 1) {
-                return {valid: false, error: "Invalid rank '" + ranks[i] + "'"};
-            }
-        }
-    } else if (ranking_method !== "POINTS_LOWER_BETTER"
-        && ranking_method !== "POINTS_HIGHER_BETTER") {
-        return {valid: false, error: "Invalid ranking method '" + ranking_method + "'"};
-    }
-    return {valid: true};
-};
-
-/**
- * Check whether players are correct
- */
-exports.validateGamePlayers = (players) => {
-    for (let i = 0; i < players.length; ++i) {
-        if (!(players[i].hasOwnProperty("user") && players[i].user > 0)  // TODO validate user ids by checking in db
-                && !(players[i].hasOwnProperty("name") && players[i].name.length > 0)) {
-            return {valid: false, error: "Invalid player. Missing or invalid fields 'name' or 'user'."};
-        }
-    }
-    return {valid: true};
-};
-
 exports.formatGameRanks = function(game) {
     game.dataValues.players = exports.rankForGame(game);
     game.dataValues.game_players = undefined; // to keep the more intuitive "players" label in json
@@ -84,6 +54,7 @@ exports.addGameQuery = function(eid, req, res) {
             duration: req.body.duration || null,
             ranking_method: req.body.ranking_method,
             id_timer: req.body.id_timer || null,
+            comment: req.body.comment || "",
         }, {transaction: t}).then((game) => {
             const player_data = getGamePlayerData(game, req.body.players);
             return Promise.all([
@@ -124,6 +95,7 @@ exports.updateGameQuery = function(gid, req, res) {
       id_board_game: req.body.id_board_game || game.id_board_game,
       duration: req.body.duration || game.duration,
       ranking_method: req.body.ranking_method || game.ranking_method,
+      comment: req.body.comment || game.comment
     }, {
       where: { id: game.id },
       transaction: t, lock: t.LOCK.UPDATE
@@ -157,7 +129,8 @@ exports.updateGame = function(req, res) {
 exports.rankForGame = function(game) {
     return util.rank(
         game.game_players,
-        (player) => player.score, game.ranking_method === "POINTS_LOWER_BETTER",
+        (player) => player.score,
+        game.ranking_method === db.Game.RANKING_NO_POINT || game.ranking_method === db.Game.RANKING_LOWER_BETTER,
         (o, f, v) => { o.dataValues[f] = v; }  // write in dataValues not to lose values on the way
     );
 };

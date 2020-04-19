@@ -4,9 +4,9 @@ module.exports = {
   up: (queryInterface, Sequelize) => {
     let now = Sequelize.literal("(now() at time zone 'utc')");
     return queryInterface.bulkInsert('Games', [
-        {id_board_game: 1, id_event: 1, ranking_method: 'POINTS_HIGHER_BETTER', duration: 120, createdAt: now, updatedAt: now},
-        {id_board_game: 1, id_event: 1, ranking_method: 'POINTS_HIGHER_BETTER', duration: 180, createdAt: now, updatedAt: now},
-        {id_board_game: 2, id_event: 1, ranking_method: 'WIN_LOSE', duration: 60, createdAt: now, updatedAt: now}
+        {id_board_game: 1, id_event: 1, ranking_method: 'POINTS_HIGHER_BETTER', duration: 120, createdAt: now, updatedAt: now, started_at: "2020-04-10T20:20:20"},
+        {id_board_game: 1, id_event: 1, ranking_method: 'POINTS_HIGHER_BETTER', duration: 180, createdAt: now, updatedAt: now, started_at: "2020-04-10T20:20:20"},
+        {id_board_game: 2, id_event: 1, ranking_method: 'WIN_LOSE', duration: 60, createdAt: now, updatedAt: now, started_at: "2020-04-10T20:20:20"}
     ]).then(inserted => {
         return queryInterface.bulkInsert("GamePlayers", [
             {id_game: 1, id_user: 1, score: 100, name: null, createdAt: now, updatedAt: now},

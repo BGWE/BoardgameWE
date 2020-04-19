@@ -23,7 +23,8 @@ const extractPlayerDescriptor = (gamePlayer) => {
  * This score number can be used as sorting criterion to rank according to the ranking method.
  */
 const getPlayerRankableScoreFn = function(game) {
-    return game.ranking_method === "POINTS_LOWER_BETTER" ? (p => -p.score) : (p => p.score);
+    return game.ranking_method === db.Game.RANKING_LOWER_BETTER
+            || game.ranking_method === db.Game.RANKING_NO_POINT ? (p => -p.score) : (p => p.score);
 };
 
 exports.availableRankings = [
@@ -60,7 +61,7 @@ exports.playersScoreToBinary = function(games, bestScoreFn) {
 
 exports.getVictories = function (games) {
     return exports.playersScoreToBinary(games, (game, scores) => {
-        if (game.ranking_method === "WIN_LOSE") {
+        if (game.ranking_method === db.Game.RANKING_WIN_LOSE) {
             return 1;
         } else {
             return Math.max.apply(null, scores);
@@ -70,7 +71,7 @@ exports.getVictories = function (games) {
 
 exports.getIsLast = function (games) {
     return exports.playersScoreToBinary(games, (game, scores) => {
-        if (game.ranking_method === "WIN_LOSE") {
+        if (game.ranking_method === db.Game.RANKING_WIN_LOSE) {
             return 0;
         } else {
             return Math.min.apply(null, scores);
@@ -147,14 +148,19 @@ exports.getGCBGBRankings = function (games) {
         if (game.duration === null) { // skip games with
             continue;
         }
-        const game_ranks = util.rank(game.game_players, player => player.score, game.ranking_method === "POINTS_LOWER_BETTER");
+        const game_ranks = util.rank(
+            game.game_players,
+            player => player.score,
+            game.ranking_method === db.Game.RANKING_LOWER_BETTER
+                || game.ranking_method === db.Game.RANKING_NO_POINT
+        );
         const n_groups = AGGREGATE.count_unique(game_ranks.map(gr => gr.rank));
         for (let playerIndex = 0; playerIndex < game_ranks.length; ++playerIndex) {
             const currPlayer = game_ranks[playerIndex];
             const rank_obj = game_ranks[playerIndex];
             const identifier = currPlayer.name || currPlayer.user.id;
             let array = (identifier in gamesList ? gamesList[identifier] : []);
-            array.push(exports.getGCBGBForPlayer(rank_obj, game.duration, n_groups, game.ranking_method === "WIN_LOSE"));
+            array.push(exports.getGCBGBForPlayer(rank_obj, game.duration, n_groups, game.ranking_method === db.Game.RANKING_WIN_LOSE));
             gamesList[identifier] = array;
             playersData[identifier] = extractPlayerDescriptor(currPlayer);
         }

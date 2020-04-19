@@ -56,8 +56,6 @@ exports.signIn = function signIn(req, res) {
         return util.detailErrorResponse(res, 403, exports.notValidatedErrorMsg);
       }
       return util.successResponse(res, {
-        id: user.id,
-        username: user.username,
         token: jwt.sign(
           tokenPayload,
           config.jwt_secret_key,

@@ -70,7 +70,7 @@ const victory_cond = (game, scores, ref_score) => {
     return ref_score === Math.min(...scores);
   } else if (db.Game.RANKING_HIGHER_BETTER) {
     return ref_score === Math.max(...scores);
-  } else if (db.Game.RANKING_WIN_LOSE) {
+  } else if (db.Game.RANKING_WIN_LOSE || db.Game.RANKING_NO_POINT) {
     return ref_score === 1;
   }
 };
