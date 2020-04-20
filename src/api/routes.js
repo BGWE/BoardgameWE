@@ -181,7 +181,7 @@ module.exports = function(app) {
      * @apiUse TokenHeaderRequired
      *
      * @apiParam {Number} id User identifier
-     * @apiSuccess {Game[]} games List of the games played by the specified user (see "Add event game" for Game
+     * @apiSuccess {Game[]} games List of the games played by the specified user (see "Add game" for Game
      * structure). Note: the returned data is a list (not an actual object).
      */
     app.route("/user/:uid/games")
@@ -214,11 +214,15 @@ module.exports = function(app) {
      * @apiParam {Number} id User identifier
      *
      * @apiSuccess {Activity[]} activities List of activities. Note: the returned data is a list (not an actual object).
-     * @apiSuccess {String} activities.type Type of activities among: `{'user/join_event', 'user/play_game', 'user/library_add'}`.
+     * @apiSuccess {String} activities.type Type of activities among: `{'user/join_event', 'user/play_game',
+     * 'user/library_add'}`.
      * @apiSuccess {String} activities.datetime When the activity occurred (iso8601, UTC)
-     * @apiSuccess {BoardGame} activities.board_game (only for `user/play_game` and `user/library_add` activities) Board game data
+     * @apiSuccess {BoardGame} activities.board_game (only for `user/library_add` activity) Board game data
      * (see "Add board game" request for structure).
-     * @apiSuccess {Event} activities.event (only for `user/join_event` activity) Event data (see "Add event game" for Game structure).
+     * @apiSuccess {Event} activities.event (only for `user/join_event` activity) Event data (see "Add event" for Event
+     * structure).
+     * @apiSuccess {Game} activities.game (only for `user/play_game` activity) Game data (see "Add game" for Game
+     * structure).
      */
     app.route("/user/:uid/activities")
         .get(user_access.read, error_wrapper(UserController.getUserActivities));
@@ -653,7 +657,7 @@ module.exports = function(app) {
      * @apiSuccess {String} activities.datetime When the activity occurred (iso8601, UTC)
      * @apiSuccess {BoardGame} activities.board_game (only for `event/add_game` activities) Board game data (see
      * "Add board game" request for structure).
-     * @apiSuccess {Game} activities.game (only for `event/play_game` activities) Game data (see "Add event game" for
+     * @apiSuccess {Game} activities.game (only for `event/play_game` activities) Game data (see "Add game" for
      * Game structure)
      * @apiSuccess {User} activities.user (only for `event/user_join` and `event/add_game` activity) Event data (see
      * 'Get current user' request for user structure).
@@ -729,7 +733,7 @@ module.exports = function(app) {
      * @apiUse TokenHeaderRequired
      * @apiUse PaginationParameters
      *
-     * @apiSuccess {Game[]} games List of the games of the event (see "Add event game" for Game structure). Note: the
+     * @apiSuccess {Game[]} games List of the games of the event (see "Add game" for Game structure). Note: the
      * returned data is a list (not an actual object).
      */
     app.route("/event/:eid/games")
@@ -751,7 +755,7 @@ module.exports = function(app) {
      *
      * @apiUse TokenHeaderRequired
      *
-     * @apiSuccess {Game[]} games List of the games of the event (see "Add event game" for Game structure). Note: the
+     * @apiSuccess {Game[]} games List of the games of the event (see "Add game" for Game structure). Note: the
      * returned data is a list (not an actual object).
      */
     app.route("/event/:eid/games/latest")
