@@ -1338,4 +1338,25 @@ module.exports = function(app) {
      */
     app.route("/admin/user")
         .put(error_wrapper(AdminController.updateUserStatus));
+
+  /**
+   * @api {get} /suggest/game_players Get suggested game players
+   * @apiName GetSuggestedGamePlayers
+   * @apiGroup Suggest
+   * @apiDescription Fetch a list of game players suggested for the current user
+   * @apiParam (query) {Number} [id_event] Event id, to suggest players in the context of an event
+   * @apiParam (query) {Number} [max_players=3] The maximum number of players to suggest
+   *
+   * @apiSuccess {User[]} users List of users suggested as players. Note: the returned data is a list
+   * (not an actual object)
+   */
+  app.route("/suggest/game_players")
+      .get(
+          [
+            query('id_event').optional().isInt().custom(validation.model(db.Event)),
+            query('max_players').optional().isInt()
+          ],
+          validation.validateOrBlock("cannot get list of suggested players"),
+          error_wrapper(GameController.getSuggestedPlayers)
+      );
 };

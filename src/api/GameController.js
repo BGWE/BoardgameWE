@@ -2,6 +2,7 @@ const db = require("./models/index");
 const util = require("./util/util");
 const includes = require("./util/db_include");
 const m2m = require("./util/m2m_helpers");
+const userutil = require("./util/user");
 
 exports.gameFullIncludesSQ = [
     includes.defaultBoardGameIncludeSQ,
@@ -189,4 +190,25 @@ exports.getRecentEventGames = function(req, res) {
         order: [["createdAt", "DESC"]],
         limit: req.query.count || 10
     });
+};
+
+exports.getSuggestedPlayers = function(req, res) {
+  const max_players = req.query.max_players === undefined || 3;
+  const id_user = userutil.getCurrUserId(req);
+  let incl = {
+    order: [["started_at", "DESC"]],
+    ... includes.genericIncludeSQ(db.Game, "game", exports.gameFullIncludesSQ)
+  };
+  if (req.query.id_event) { // filter events if necessary
+    incl = { where: {id_event: req.query.id_event}, ... incl };
+  }
+  return db.GamePlayer.findAll({ where: { id_user }, include: [incl] }).then(played => {
+    let games = played.map(p => p.game);
+    // currently: sends players that were part of current player's last game
+    let players = [];
+    if (games.length > 0) {
+      players = games[0].game_players.filter(p => p.id_user !== id_user && p.user).map(p => p.user).slice(0, max_players)
+    }
+    return util.successResponse(res, players);
+  });
 };
