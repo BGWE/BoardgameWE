@@ -20,7 +20,8 @@ exports.makeActivity = (type, data) => {
     if (type === exports.ACTIVITY_USER_EVENT_JOIN) {
         return Object.assign(activity, {event: data.dataValues.event});
     } else if (type === exports.ACTIVITY_USER_GAME_PLAY) {
-        return Object.assign(activity, {board_game: data.game.dataValues.board_game});
+        const GameController = require("../GameController");
+        return Object.assign(activity, {game: GameController.formatGameRanks(data.game)});
     } else if (type === exports.ACTIVITY_USER_LIBRARY_ADD) {
         return Object.assign(activity, {board_game: data.dataValues.board_game});
     } else if (type === exports.ACTIVITY_EVENT_USER_JOIN) {
@@ -80,13 +81,11 @@ exports.getUserActivitiesRequestPromise = (type, id_user, max) => {
             order: [[db.sequelize.col("datetime"), "DESC"]], limit: max
         });
     } else if (type === exports.ACTIVITY_USER_GAME_PLAY) {
+        const GameController = require("../GameController");
         return db.GamePlayer.findAll({
             where: {id_user: id_user},
             attributes: [["createdAt", "datetime"], "id_game"],
-            include: [
-                includes.genericIncludeSQ(db.Game, 'game', [
-                includes.genericIncludeSQ(db.BoardGame, 'board_game')
-            ])],
+            include: [includes.genericIncludeSQ(db.Game, 'game', GameController.gameFullIncludesSQ)],
             order: [[db.sequelize.col("datetime"), "DESC"]], limit: max
         });
     } else if (type === exports.ACTIVITY_USER_LIBRARY_ADD) {
