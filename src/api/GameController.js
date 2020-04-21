@@ -192,22 +192,33 @@ exports.getRecentEventGames = function(req, res) {
     });
 };
 
-exports.getSuggestedPlayers = function(req, res) {
-  const max_players = req.query.max_players === undefined || 3;
+exports.getSuggestedPlayers = function (req, res) {
+  const max_players = req.query.max_players || 3;
   const id_user = userutil.getCurrUserId(req);
   let incl = {
-    order: [["started_at", "DESC"]],
-    ... includes.genericIncludeSQ(db.Game, "game", exports.gameFullIncludesSQ)
+    ...includes.genericIncludeSQ(db.Game, "game", exports.gameFullIncludesSQ),
   };
   if (req.query.id_event) { // filter events if necessary
-    incl = { where: {id_event: req.query.id_event}, ... incl };
+    incl = { where: { id_event: req.query.id_event }, ...incl };
   }
-  return db.GamePlayer.findAll({ where: { id_user }, include: [incl] }).then(played => {
+  return db.GamePlayer.findAll({
+    where: { id_user },
+    include: {
+      required: true,
+      ...incl
+    },
+    order: [
+      [{
+        model: db.Game,
+        as: "game"
+      }, "started_at", "DESC"]
+    ],
+  }).then(played => {
     let games = played.map(p => p.game);
     // currently: sends players that were part of current player's last game
     let players = [];
     if (games.length > 0) {
-      players = games[0].game_players.filter(p => p.id_user !== id_user && p.user).map(p => p.user).slice(0, max_players)
+      players = games[0].game_players.filter(p => (p.id_user !== id_user) && p.user).map(p => p.user).slice(0, max_players)
     }
     return util.successResponse(res, players);
   });
