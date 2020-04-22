@@ -30,12 +30,12 @@ module.exports = {
         development: {
             user: 'ec2-user',
             key: '~/.ssh/BGCDev.pem',
-            host : 'api-stg.boardgamecomponion.com',
+            host : 'api-dev.boardgamecomponion.com',
             ref  : 'origin/develop',
             repo : 'https://github.com/BGWE/BoardgameWE.git',
             path : '/home/ec2-user/BoardgameWE',
             'post-deploy' : '\
-                export CERTDOMAIN=api-stg.boardgamecomponion.com && \
+                export CERTDOMAIN=api-dev.boardgamecomponion.com && \
                 npm install && \
                 cp /home/ec2-user/BoardgameWE/source/tools/bgcinfra/configs/develop_env.sh /home/ec2-user/BoardgameWE/source/.env && \
                 pm2 start npm -- run envstart && \
