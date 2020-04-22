@@ -195,30 +195,34 @@ exports.getRecentEventGames = function(req, res) {
 exports.getSuggestedPlayers = function (req, res) {
   const max_players = req.query.max_players || 3;
   const id_user = userutil.getCurrUserId(req);
-  let incl = {
-    ...includes.genericIncludeSQ(db.Game, "game", exports.gameFullIncludesSQ),
+  let include = {
+    required: true,
+    model: db.Game,
+    as: "game",
+    include: [{
+      required: true,
+      model: db.GamePlayer,
+      as: "game_players",
+      // existing user but not the current
+      where: {[db.Op.and]: [{id_user: {[db.Op.ne]: id_user}}, {name: null}]},
+      include: [includes.getShallowUserIncludeSQ("user")]
+    }]
   };
   if (req.query.id_event) { // filter events if necessary
-    incl = { where: { id_event: req.query.id_event }, ...incl };
+    include = { where: { id_event: req.query.id_event }, ... include };
   }
   return db.GamePlayer.findAll({
     where: { id_user },
-    include: {
-      required: true,
-      ...incl
-    },
-    order: [
-      [{
-        model: db.Game,
-        as: "game"
-      }, "started_at", "DESC"]
-    ],
+    include: { required: true, ... include },
+    // sort to have most recent game as first entry
+    order: [[{ model: db.Game, as: "game" }, "started_at", "DESC"]],
   }).then(played => {
+    // games played by the current user
     let games = played.map(p => p.game);
     // currently: sends players that were part of current player's last game
     let players = [];
     if (games.length > 0) {
-      players = games[0].game_players.filter(p => (p.id_user !== id_user) && p.user).map(p => p.user).slice(0, max_players)
+      players = games[0].game_players.map(p => p.user).slice(0, max_players);
     }
     return util.successResponse(res, players);
   });
