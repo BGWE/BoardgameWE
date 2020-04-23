@@ -137,26 +137,32 @@ exports.rankForGame = function(game) {
 };
 
 exports.sendAllGamesFiltered = function (filtering, res, options) {
-    if (!options) {
-        options = {};
-    }
-    return util.sendModel(res, db.Game.findAll(Object.assign(options, {
-        where: filtering,
-        include: exports.gameFullIncludesSQ
-    })), games => {
+    return util.sendModel(res, db.Game.findAll({
+      ... options,
+      where: filtering,
+      include: exports.gameFullIncludesSQ
+    }), games => {
         return games.map(exports.formatPlayedExpansions).map(exports.formatGameRanks);
     });
 };
 
-exports.getGames = function (req, res) {
-    // no filtering
-    return exports.sendAllGamesFiltered(undefined, res);
-};
-
 exports.getUserGames = function(req, res) {
-    const uid = parseInt(req.params.uid);
-    const player_query = db.selectFieldQuery("GamePlayers", "id_game", {id_user: uid});
-    return exports.sendAllGamesFiltered({id: {[db.Op.in]: db.sequelize.literal('(' + player_query + ')')}}, res);
+  const curr_uid = userutil.getCurrUserId(req);
+  const uid = parseInt(req.params.uid);
+  // only pick games that were played between current and requested player
+  // TODO add public event games
+  const req_player_games = db.selectFieldQuery("GamePlayers", "id_game", { id_user: uid });
+  let filtering = { id: {[db.Op.in]: db.sequelize.literal('(' + req_player_games + ')')}};
+  if (curr_uid !== uid) {
+    const curr_player_games = db.selectFieldQuery("GamePlayers", "id_game", { id_user: curr_uid });
+    filtering = {
+      [db.Op.and]: [
+        filtering,
+        { id: {[db.Op.in]: db.sequelize.literal('(' + curr_player_games + ')')}},
+      ]
+    };
+  }
+  return exports.sendAllGamesFiltered(filtering, res);
 };
 
 exports.getGame = function (req, res) {
