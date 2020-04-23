@@ -364,7 +364,7 @@ Resources:
                     }
 
                     upstream appmetrics {
-                        server 127.0.0.1:3001/appmetrics-dash;
+                        server 127.0.0.1:3001;
                     }
 
                     server {

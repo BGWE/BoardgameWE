@@ -1354,7 +1354,7 @@ module.exports = function(app) {
       .get(
           [
             query('id_event').optional().isInt().custom(validation.model(db.Event)),
-            query('max_players').optional().isInt()
+            query('max_players').optional().isInt({gt: 0})
           ],
           validation.validateOrBlock("cannot get list of suggested players"),
           error_wrapper(GameController.getSuggestedPlayers)
