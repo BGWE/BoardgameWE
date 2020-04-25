@@ -3,6 +3,7 @@ const util = require("./util/util");
 const includes = require("./util/db_include");
 const m2m = require("./util/m2m_helpers");
 const userutil = require("./util/user");
+const lodash = require("lodash");
 
 exports.gameFullIncludesSQ = [
     includes.defaultBoardGameIncludeSQ,
@@ -136,33 +137,52 @@ exports.rankForGame = function(game) {
     );
 };
 
+
+exports.formatFetchedGames = (games) => {
+  return games.map(exports.formatPlayedExpansions).map(exports.formatGameRanks);
+};
+
+/**
+ * Return all game object formatted with expansions and ranks.
+ * @param filtering An object that can be used as a sequelize where clause. If options is provided, filtering
+ * is appended to its where clause, or added as where clause if there is none
+ * @param res Response object
+ * @param options (optional) The findAll query options objects.
+ * @returns {*}
+ */
 exports.sendAllGamesFiltered = function (filtering, res, options) {
-    return util.sendModel(res, db.Game.findAll({
-      ... options,
+  let final_options;
+  if (!options) {
+    final_options = {
       where: filtering,
       include: exports.gameFullIncludesSQ
-    }), games => {
-        return games.map(exports.formatPlayedExpansions).map(exports.formatGameRanks);
-    });
+    };
+  } else {
+    final_options = lodash.clone(options);
+    final_options.where = {... options.where, ... filtering};
+  }
+  return util.sendModel(res, db.Game.findAll(final_options), games => {
+    return exports.formatFetchedGames(games);
+  });
 };
 
 exports.getUserGames = function(req, res) {
   const curr_uid = userutil.getCurrUserId(req);
   const uid = parseInt(req.params.uid);
-  // only pick games that were played between current and requested player
-  // TODO add public event games
-  const req_player_games = db.selectFieldQuery("GamePlayers", "id_game", { id_user: uid });
-  let filtering = { id: {[db.Op.in]: db.sequelize.literal('(' + req_player_games + ')')}};
-  if (curr_uid !== uid) {
-    const curr_player_games = db.selectFieldQuery("GamePlayers", "id_game", { id_user: curr_uid });
-    filtering = {
-      [db.Op.and]: [
-        filtering,
-        { id: {[db.Op.in]: db.sequelize.literal('(' + curr_player_games + ')')}},
-      ]
-    };
+  // only pick games that were played between current and requested player;
+  let where = { id: {[db.Op.in]: db.sequelize.literal('(' + db.selectFieldQuery("GamePlayers", "id_game", { id_user: uid }) + ')')} };
+  if (uid === curr_uid) {
+    return exports.sendAllGamesFiltered(where, res);
   }
-  return exports.sendAllGamesFiltered(filtering, res);
+  // TODO check if need optimization
+  const public_event_select = db.selectFieldQuery("Events", "id_event", { visibility: db.Event.VISIBILITY_PUBLIC });
+  const curr_user_select = db.selectFieldQuery("GamePlayers", "id_game", { id_user: curr_uid});
+  where = db.Sequelize.or(
+    db.Sequelize.and(where, { id_event: null }),
+    db.Sequelize.and(where, { id_event: {[db.Op.in]: db.sequelize.literal('(' + public_event_select + ')')} }),
+    db.Sequelize.and(where, { id: {[db.Op.in]: db.sequelize.literal('(' + curr_user_select + ')')} })
+  );
+  return exports.sendAllGamesFiltered(where, res);
 };
 
 exports.getGame = function (req, res) {
