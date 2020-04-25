@@ -181,6 +181,7 @@ module.exports = function(app) {
      * @apiUse TokenHeaderRequired
      *
      * @apiParam {Number} id User identifier
+     * @apiUse PaginationParameters
      * @apiSuccess {Game[]} games List of the games played by the specified user (see "Add game" for Game
      * structure). Note: the returned data is a list (not an actual object).
      */
@@ -751,7 +752,7 @@ module.exports = function(app) {
      * @apiDescription Get the most recent games of the specified event.
      *
      * @apiParam {Number} id Event identifier.
-     * @apiParam (query) {Number} count The number of games to return.
+     * @apiParam (query) {Number} [count=10] The number of games to return
      *
      * @apiUse TokenHeaderRequired
      *

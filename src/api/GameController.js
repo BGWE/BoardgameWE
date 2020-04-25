@@ -144,18 +144,20 @@ exports.formatFetchedGames = (games) => {
 
 /**
  * Return all game object formatted with expansions and ranks.
+ * @param req Request object
+ * @param res Response object
  * @param filtering An object that can be used as a sequelize where clause. If options is provided, filtering
  * is appended to its where clause, or added as where clause if there is none
- * @param res Response object
  * @param options (optional) The findAll query options objects.
  * @returns {*}
  */
-exports.sendAllGamesFiltered = function (filtering, res, options) {
+exports.sendAllGamesFiltered = function (req, res, filtering, options) {
   let final_options;
   if (!options) {
     final_options = {
       where: filtering,
-      include: exports.gameFullIncludesSQ
+      include: exports.gameFullIncludesSQ,
+      ... util.getPaginationParams(req, [["started_at", "DESC"]]),
     };
   } else {
     final_options = lodash.clone(options);
@@ -172,7 +174,7 @@ exports.getUserGames = function(req, res) {
   // only pick games that were played between current and requested player;
   let where = { id: {[db.Op.in]: db.sequelize.literal('(' + db.selectFieldQuery("GamePlayers", "id_game", { id_user: uid }) + ')')} };
   if (uid === curr_uid) {
-    return exports.sendAllGamesFiltered(where, res);
+    return exports.sendAllGamesFiltered(req, res, where);
   }
   // TODO check if need optimization
   const public_event_select = db.selectFieldQuery("Events", "id_event", { visibility: db.Event.VISIBILITY_PUBLIC });
@@ -182,7 +184,7 @@ exports.getUserGames = function(req, res) {
     db.Sequelize.and(where, { id_event: {[db.Op.in]: db.sequelize.literal('(' + public_event_select + ')')} }),
     db.Sequelize.and(where, { id: {[db.Op.in]: db.sequelize.literal('(' + curr_user_select + ')')} })
   );
-  return exports.sendAllGamesFiltered(where, res);
+  return exports.sendAllGamesFiltered(req, res, where);
 };
 
 exports.getGame = function (req, res) {
@@ -203,19 +205,14 @@ exports.deleteGame = function (req, res) {
 };
 
 exports.getEventGames = function(req, res) {
-    return exports.sendAllGamesFiltered(
-        { id_event: parseInt(req.params.eid) }, res,
-        util.getPaginationParams(req, [["createdAt", "DESC"]])
-    );
+  return exports.sendAllGamesFiltered(req, res, { id_event: parseInt(req.params.eid) });
 };
 
 exports.getRecentEventGames = function(req, res) {
-    return exports.sendAllGamesFiltered({
-        id_event: parseInt(req.params.eid)
-    }, res, {
-        order: [["createdAt", "DESC"]],
-        limit: req.query.count || 10
-    });
+  // disable pagination for this query
+  req.query.max_items = req.query.count || 10;
+  req.query.start = undefined;
+  return exports.sendAllGamesFiltered(req, res, { id_event: parseInt(req.params.eid) });
 };
 
 exports.getSuggestedPlayers = function (req, res) {
