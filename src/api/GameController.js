@@ -4,6 +4,7 @@ const includes = require("./util/db_include");
 const m2m = require("./util/m2m_helpers");
 const userutil = require("./util/user");
 const lodash = require("lodash");
+const moment = require("moment");
 
 exports.gameFullIncludesSQ = [
     includes.defaultBoardGameIncludeSQ,
@@ -215,11 +216,25 @@ exports.getRecentEventGames = function(req, res) {
   return exports.sendAllGamesFiltered(req, res, { id_event: parseInt(req.params.eid) });
 };
 
-exports.getSuggestedPlayers = function (req, res) {
-  if (req.query.type === "most_played") {
-    return exports.getSuggestedPlayersMostPlayed(req, res);
-  } else { // most recent by default
-    return exports.getSuggestedPlayersMostRecent(req, res);
+exports.getSuggestedPlayers = async function (req, res) {
+  // if not specified infer suggestion type from last game of current user
+  // if this game started less than 12 hours ago, use most_recent as a suggestion
+  if (!req.query.type) {
+    let game = await db.Game.findOne({
+      order: [[db.sequelize.col("started_at"), "DESC"]],
+      include: [{
+        ...includes.genericIncludeSQ(db.GamePlayer, "game_players"),
+        where: {id_user: userutil.getCurrUserId(req)}
+      }]
+    });
+    req.query.type = moment(game.started_at).isAfter(moment().subtract(12, 'hours')) ? 'most_recent' : 'most_played';
+  }
+  switch (req.query.type) {
+    case 'most_recent':
+      return exports.getSuggestedPlayersMostRecent(req, res);
+    case 'most_played':
+    default:
+      return exports.getSuggestedPlayersMostPlayed(req, res);
   }
 };
 
@@ -253,11 +268,15 @@ exports.getSuggestedPlayersMostRecent = function(req, res) {
     // sort to have most recent game as first entry
     order: [[{ model: db.Game, as: "game" }, "started_at", "DESC"]],
   }).then(played => {
-    // games played by the current user
     let games = played.map(p => p.game);
     let players = [];
-    if (games.length > 0) {
-      players = games[0].slice(0, max_players).game_players.map(p => p.user);
+    for (let curr = 0; curr < games.length && players.length < max_players; ++curr) {
+      const added_players = new Set(players.map(u => u.id));
+      const new_player_batch = games[curr].game_players
+          .filter(p => !added_players.has(p.id_user))
+          .map(p => p.user)
+          .slice(0, max_players - players.length);
+      players = players.concat(new_player_batch);
     }
     return util.successResponse(res, players);
   });
