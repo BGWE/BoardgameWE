@@ -216,7 +216,16 @@ exports.getRecentEventGames = function(req, res) {
 };
 
 exports.getSuggestedPlayers = function (req, res) {
+  if (req.query.type === "most_played") {
+    return exports.getSuggestedPlayersMostPlayed(req, res);
+  } else { // most recent by default
+    return exports.getSuggestedPlayersMostRecent(req, res);
+  }
+};
+
+exports.getSuggestedPlayersMostRecent = function(req, res) {
   const max_players = req.query.max_players || 3;
+  const excluded_players = req.query.excluded_players || [];
   const id_user = userutil.getCurrUserId(req);
   let include = {
     required: true,
@@ -227,7 +236,11 @@ exports.getSuggestedPlayers = function (req, res) {
       model: db.GamePlayer,
       as: "game_players",
       // existing user but not the current
-      where: {[db.Op.and]: [{id_user: {[db.Op.ne]: id_user}}, {name: null}]},
+      where: db.sequelize.and(
+        {name: null},
+        {id_user: {[db.Op.ne]: id_user}},
+        {id_user: {[db.Op.notIn]: excluded_players}}
+      ),
       include: [includes.getShallowUserIncludeSQ("user")]
     }]
   };
@@ -242,11 +255,50 @@ exports.getSuggestedPlayers = function (req, res) {
   }).then(played => {
     // games played by the current user
     let games = played.map(p => p.game);
-    // currently: sends players that were part of current player's last game
     let players = [];
     if (games.length > 0) {
-      players = games[0].game_players.map(p => p.user).slice(0, max_players);
+      players = games[0].slice(0, max_players).game_players.map(p => p.user);
     }
+    return util.successResponse(res, players);
+  });
+};
+
+exports.getSuggestedPlayersMostPlayed = function(req, res) {
+  const curr_uid = userutil.getCurrUserId(req);
+  const excluded_players = req.query.excluded_players || [];
+  const select_user_games = db.selectFieldQuery("GamePlayers", "id_game", { id_user: curr_uid });
+  let where_clause = db.sequelize.and(
+      {id_user: {[db.Op.ne]: null}},
+      {id_user: {[db.Op.ne]: curr_uid}},
+      {id_user: {[db.Op.notIn]: excluded_players}},
+      {id_game: {[db.Op.in]: db.sequelize.literal('(' + select_user_games + ')')} }
+  );
+  if (req.query.id_event) {
+    const select_event_games = db.selectFieldQuery("Games", "id_game", { id_event: req.query.id_event });
+    where_clause = db.sequelize.and(
+        where_clause,
+        {id_game: {[db.Op.in]: db.sequelize.literal('(' + select_event_games + ')')}}
+    );
+  }
+  return db.GamePlayer.findAll({
+    group: [
+      "id_user",
+      db.sequelize.col('"user"."id"'),
+      db.sequelize.col('"user"."name"'),
+      db.sequelize.col('"user"."surname"'),
+      db.sequelize.col('"user"."username"')
+    ],
+    attributes: ["id_user", [db.sequelize.fn("count", db.sequelize.col("id_game")), "number_games"]],
+    where: where_clause,
+    include: [includes.getShallowUserIncludeSQ("user")],
+    // sort to have most recent game as first entry
+    order: [
+      [db.sequelize.literal("number_games"), "DESC"],
+    ],
+    //raw: true
+  }).then(users => {
+    const max_players = req.query.max_players || 3;
+    let players = users.slice(0, max_players).map(p => p.user);
     return util.successResponse(res, players);
   });
 };

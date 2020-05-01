@@ -1347,17 +1347,23 @@ module.exports = function(app) {
    * @apiDescription Fetch a list of game players suggested for the current user
    * @apiParam (query) {Number} [id_event] Event id, to suggest players in the context of an event
    * @apiParam (query) {Number} [max_players=3] The maximum number of players to suggest
+   * @apiParam (query) {Number[]} [excluded_players] List of user identifiers to exclude from the suggestions
+   * @apiParam (query) {String} [type=most_recent] Specify the type of suggestion to perform. For users who have
+   * played the most games with the current user, type should be set to `most_played`. For users who have
+   * played the most recently with the current user, type should be set to `most_recent` (default).
    *
    * @apiSuccess {User[]} users List of users suggested as players. Note: the returned data is a list
    * (not an actual object)
    */
   app.route("/suggest/game_players")
       .get(
-          [
-            query('id_event').optional().isInt().custom(validation.model(db.Event)),
-            query('max_players').optional().isInt({gt: 0})
-          ],
-          validation.validateOrBlock("cannot get list of suggested players"),
-          error_wrapper(GameController.getSuggestedPlayers)
+        [
+          query('id_event').optional().isInt().custom(validation.model(db.Event)),
+          query('max_players').optional().isInt({gt: 0}),
+          query('excluded_players').optional().isArray(),
+          query('type').optional().custom(validation.valuesIn(['most_played', 'most_recent']))
+        ],
+        validation.validateOrBlock("cannot get list of suggested players"),
+        error_wrapper(GameController.getSuggestedPlayers)
       );
 };
