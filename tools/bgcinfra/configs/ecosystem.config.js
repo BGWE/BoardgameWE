@@ -41,7 +41,6 @@ module.exports = {
                 npm install && \
                 npx i18n-csv2json-cli --from /home/ec2-user/BoardgameWE/source/src/api/locales/translations.csv --to /home/ec2-user/BoardgameWE/source/src/api/locales/json --format && \
                 cp /home/ec2-user/BoardgameWE/source/tools/bgcinfra/configs/develop_env.sh /home/ec2-user/BoardgameWE/source/.env && \
-                cp /home/ec2-user/BoardgameWE/current/tools/bgcinfra/configs/develop_env.sh /home/ec2-user/BoardgameWE/current/.env && \
                 bash /home/ec2-user/BoardgameWE/source/tools/migration/migrate.sh && \
                 pm2 start npm -- run envstart && \
                 sudo certbot certonly --debug --nginx --non-interactive --agree-tos --domains ${CERTDOMAIN} --email fabrice.servais@gmail.com && \
@@ -55,16 +54,16 @@ module.exports = {
             ref: 'master',
             repo: 'https://github.com/BGWE/BoardgameWE.git',
             path: '/home/ec2-user/BoardgameWE',
-            'post-deploy': '\
-            export CERTDOMAIN=api-v3.boardgamecomponion.com && \
+            'post-deploy': "\
+                export CERTDOMAIN=api-v3.boardgamecomponion.com && \
                 npm install && \
+                npx i18n-csv2json-cli --from /home/ec2-user/BoardgameWE/source/src/api/locales/translations.csv --to /home/ec2-user/BoardgameWE/source/src/api/locales/json --format && \
                 cp /home/ec2-user/BoardgameWE/source/tools/bgcinfra/configs/secret_env.sh /home/ec2-user/BoardgameWE/source/.env && \
-                source /home/ec2-user/BoardgameWE/source/.env; npx sequelize db:migrate; \
+                bash /home/ec2-user/BoardgameWE/source/tools/migration/migrate.sh && \
                 pm2 start npm -- run envstart && \
                 sudo certbot certonly --debug --nginx --non-interactive --agree-tos --domains ${CERTDOMAIN} --email fabrice.servais@gmail.com && \
                 sudo ln -sf /etc/letsencrypt/live/${CERTDOMAIN} /etc/letsencrypt/live/bgccert && \
-                sudo cp /tmp/https.conf /etc/nginx/conf.d/https.conf && \
-                sudo nginx -s reload'
+                sudo bash /home/ec2-user/BoardgameWE/source/tools/scripts/deploy_https_nginx.sh"
         }
     }
 };
