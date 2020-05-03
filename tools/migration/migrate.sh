@@ -1,3 +1,3 @@
 #!/bin/sh
 . .env
-./node_modules/apidoc/bin/apidoc -i api/ -o doc/ && sleep 15 && cd ./api && ../node_modules/.bin/sequelize db:migrate
+npx apidoc -i src/api/ -o -i src/doc/; sleep 5; npx sequelize db:migrate
