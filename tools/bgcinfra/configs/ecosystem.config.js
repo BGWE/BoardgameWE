@@ -65,7 +65,7 @@ module.exports = {
                 sudo cp /etc/letsencrypt/live/bgccert/privkey.pem ~/certs && sudo chown ec2-user ~/certs/privkey.pem && \
                 sudo cp /etc/letsencrypt/live/bgccert/cert.pem ~/certs && sudo chown ec2-user ~/certs/cert.pem && \
                 sudo cp /etc/letsencrypt/live/bgccert/chain.pem ~/certs && sudo chown ec2-user ~/certs/chain.pem && \
-                wget https://s3.amazonaws.com/rds-downloads/rds-ca-2019-root.pem -P ~/certs && \
+                wget https://s3.amazonaws.com/rds-downloads/rds-combined-ca-bundle.pem -P ~/certs && \
                 bash /home/ec2-user/BoardgameWE/source/tools/migration/migrate.sh && \
                 pm2 start npm -- run envstart && \
                 sudo bash /home/ec2-user/BoardgameWE/source/tools/scripts/deploy_https_nginx.sh"

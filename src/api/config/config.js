@@ -26,7 +26,7 @@ if (process.env.USE_SSL) {
       ssl: {
         key: fs.readFileSync('/home/ec2-user/certs/privkey.pem', 'utf-8'),
         cert: fs.readFileSync('/home/ec2-user/certs/cert.pem', 'utf-8'),
-        ca: fs.readFileSync('/home/ec2-user/certs/rds-ca-2019-root.pem', 'utf-8'),
+        ca: fs.readFileSync('/home/ec2-user/certs/rds-combined-ca-bundle.pem', 'utf-8'),
       }
     };
 }
