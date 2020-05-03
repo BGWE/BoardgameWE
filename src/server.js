@@ -30,7 +30,7 @@ app.use('/doc', express.static(__dirname + '/doc'));
  *----------------------*/
 i18n.configure({
   locales: ['en', 'fr'],
-  directory: './api/locales/json',
+  directory: __dirname + '/api/locales/json',
   extension: '.i18n.json',
   defaultLocale: 'en',
   register: global,
