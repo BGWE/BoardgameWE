@@ -39,6 +39,7 @@ module.exports = {
             'post-deploy': "\
                 export CERTDOMAIN=api-dev.boardgamecomponion.com && \
                 npm install && \
+                npx i18n-csv2json-cli --from /home/ec2-user/BoardgameWE/source/src/api/locales/translations.csv --to /home/ec2-user/BoardgameWE/source/src/api/locales/json --format~ && \
                 cp /home/ec2-user/BoardgameWE/source/tools/bgcinfra/configs/develop_env.sh /home/ec2-user/BoardgameWE/source/.env && \
                 cp /home/ec2-user/BoardgameWE/current/tools/bgcinfra/configs/develop_env.sh /home/ec2-user/BoardgameWE/current/.env && \
                 bash /home/ec2-user/BoardgameWE/source/tools/migration/migrate.sh && \
