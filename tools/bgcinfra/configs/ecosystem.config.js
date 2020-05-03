@@ -40,6 +40,7 @@ module.exports = {
                 export CERTDOMAIN=api-dev.boardgamecomponion.com && \
                 npm install && \
                 cp /home/ec2-user/BoardgameWE/source/tools/bgcinfra/configs/develop_env.sh /home/ec2-user/BoardgameWE/source/.env && \
+                cp /home/ec2-user/BoardgameWE/current/tools/bgcinfra/configs/develop_env.sh /home/ec2-user/BoardgameWE/current/.env && \
                 bash /home/ec2-user/BoardgameWE/source/tools/migration/migrate.sh && \
                 pm2 start npm -- run envstart && \
                 sudo certbot certonly --debug --nginx --non-interactive --agree-tos --domains ${CERTDOMAIN} --email fabrice.servais@gmail.com && \
