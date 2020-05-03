@@ -18,22 +18,25 @@ exports.makeActivities = (type, data) => {
 exports.makeActivity = (type, data) => {
     let activity = {datetime: data.dataValues.datetime, type: type};
     if (type === exports.ACTIVITY_USER_EVENT_JOIN) {
-        return Object.assign(activity, {event: data.dataValues.event});
+        return { event: data.dataValues.event, ... activity };
     } else if (type === exports.ACTIVITY_USER_GAME_PLAY) {
         const GameController = require("../GameController");
-        return Object.assign(activity, {game: GameController.formatGameRanks(data.game)});
+        let final = { game: GameController.formatGameRanks(data), ... activity };
+        final.game.dataValues.datetime = undefined; // remove datetime field from game object
+        return final;
     } else if (type === exports.ACTIVITY_USER_LIBRARY_ADD) {
-        return Object.assign(activity, {board_game: data.dataValues.board_game});
+        return { board_game: data.dataValues.board_game, ... activity };
     } else if (type === exports.ACTIVITY_EVENT_USER_JOIN) {
-        return Object.assign(activity, {user: data.dataValues.user});
+        return { user: data.dataValues.user, ... activity };
     } else if (type === exports.ACTIVITY_EVENT_GAME_PROVIDED) {
-        return Object.assign(activity, {
-            board_game: data.dataValues.provided_board_game,
-            user: data.dataValues.provider
-        });
+        return {
+          board_game: data.dataValues.provided_board_game,
+          user: data.dataValues.provider,
+          ...activity
+        };
     } else if (type === exports.ACTIVITY_EVENT_GAME_PLAY) {
         const GameController = require("../GameController");
-        return Object.assign(activity, {game: GameController.formatGameRanks(data)});
+        return { game: GameController.formatGameRanks(data), ... activity };
     } else {
         throw new Error("unknown activity type '" + type + "'");
     }
@@ -82,11 +85,13 @@ exports.getUserActivitiesRequestPromise = (type, id_user, max) => {
         });
     } else if (type === exports.ACTIVITY_USER_GAME_PLAY) {
         const GameController = require("../GameController");
-        return db.GamePlayer.findAll({
-            where: {id_user: id_user},
-            attributes: [["createdAt", "datetime"], "id_game"],
-            include: [includes.genericIncludeSQ(db.Game, 'game', GameController.gameFullIncludesSQ)],
-            order: [[db.sequelize.col("datetime"), "DESC"]], limit: max
+        const select_games = db.selectFieldQuery("GamePlayers", "id_game", {id_user});
+        return db.Game.findAll({
+          where: { id: {[db.Op.in]: db.sequelize.literal('(' + select_games + ')')} },
+          include: GameController.gameFullIncludesSQ,
+          attributes: {include: [["createdAt", "datetime"]]},
+          order: [["createdAt", "DESC"]],
+          limit: max
         });
     } else if (type === exports.ACTIVITY_USER_LIBRARY_ADD) {
         return db.LibraryGame.findAll({
