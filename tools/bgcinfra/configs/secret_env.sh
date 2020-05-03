@@ -1,4 +1,5 @@
 #!/bin/bash
+export CERTDOMAIN=api-v3.boardgamecomponion.com
 export NODE_ENV=production
 export DB_HOSTNAME=bgc-db-instance.cbzmmlktqvhn.eu-west-1.rds.amazonaws.com
 export DB_NAME=bgcomponion

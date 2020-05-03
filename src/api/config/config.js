@@ -1,5 +1,6 @@
 let winston = require('winston');
 let logging = require('../util/logging');
+var fs = require('fs');
 
 let db_logger = winston.loggers.add("db", {
   transports: [ new winston.transports.Console() ],
@@ -21,7 +22,13 @@ let database = {
 };
 
 if (process.env.USE_SSL) {
-    database.dialectOptions = {ssl: true};
+    database.dialectOptions = {
+      ssl: {
+        key: fs.readFileSync('/etc/letsencrypt/live/bgccert/privkey.pem', 'utf-8'),
+        cert: fs.readFileSync('/etc/letsencrypt/live/bgccert/cert.pem', 'utf-8'),
+        ca: fs.readFileSync('/etc/letsencrypt/live/bgccert/chain.pem', 'utf-8'),
+      }
+    };
 }
 
 // for sequelize to return bigint as int and not string
