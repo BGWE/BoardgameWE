@@ -40,9 +40,11 @@ module.exports = {
                 export CERTDOMAIN=api-dev.boardgamecomponion.com && \
                 npm install && \
                 cp /home/ec2-user/BoardgameWE/source/tools/bgcinfra/configs/develop_env.sh /home/ec2-user/BoardgameWE/source/.env && \
+                echo "Sourcing env..." && \
                 source /home/ec2-user/BoardgameWE/source/.env && \
-                echo "Hostname: $DB_HOSTNAME" ; \
-                npx sequelize db:migrate; \
+                echo "Test hostname..." && \
+                echo "Hostname: $DB_HOSTNAME" && \
+                npx sequelize db:migrate && \
                 pm2 start npm -- run envstart && \
                 sudo certbot certonly --debug --nginx --non-interactive --agree-tos --domains ${CERTDOMAIN} --email fabrice.servais@gmail.com && \
                 sudo ln -sf /etc/letsencrypt/live/${CERTDOMAIN} /etc/letsencrypt/live/bgccert && \
