@@ -45,8 +45,7 @@ module.exports = {
                 pm2 start npm -- run envstart && \
                 sudo certbot certonly --debug --nginx --non-interactive --agree-tos --domains ${CERTDOMAIN} --email fabrice.servais@gmail.com && \
                 sudo ln -sf /etc/letsencrypt/live/${CERTDOMAIN} /etc/letsencrypt/live/bgccert && \
-                sudo cp /tmp/https.conf /etc/nginx/conf.d/https.conf && \
-                sudo nginx -s reload"
+                sudo bash /home/ec2-user/BoardgameWE/source/tools/scripts/deploy_https_nginx.sh"
         },
         production: {
             user: 'ec2-user',
