@@ -36,17 +36,18 @@ module.exports = {
             ref: 'origin/develop',
             repo: 'https://github.com/BGWE/BoardgameWE.git',
             path: '/home/ec2-user/BoardgameWE',
-            'post-deploy': '\
+            'post-deploy': "\
                 export CERTDOMAIN=api-dev.boardgamecomponion.com && \
                 npm install && \
                 cp /home/ec2-user/BoardgameWE/source/tools/bgcinfra/configs/develop_env.sh /home/ec2-user/BoardgameWE/source/.env && \
                 source /home/ec2-user/BoardgameWE/source/.env && \
+                echo 'hostname: $DB_HOSTNAME'; \
                 npx sequelize db:migrate && \
                 pm2 start npm -- run envstart && \
                 sudo certbot certonly --debug --nginx --non-interactive --agree-tos --domains ${CERTDOMAIN} --email fabrice.servais@gmail.com && \
                 sudo ln -sf /etc/letsencrypt/live/${CERTDOMAIN} /etc/letsencrypt/live/bgccert && \
                 sudo cp /tmp/https.conf /etc/nginx/conf.d/https.conf && \
-                sudo nginx -s reload'
+                sudo nginx -s reload"
         },
         production: {
             user: 'ec2-user',
