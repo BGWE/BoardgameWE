@@ -62,7 +62,6 @@ module.exports = {
                 sudo certbot certonly --debug --nginx --non-interactive --agree-tos --domains ${CERTDOMAIN} --email fabrice.servais@gmail.com && \
                 sudo ln -sf /etc/letsencrypt/live/${CERTDOMAIN} /etc/letsencrypt/live/bgccert && \
                 mkdir /home/ec2-user/certs && \
-                sudo cp /etc/letsencrypt/live/${CERTDOMAIN}/* /home/ec2-user/certs &&\
                 bash /home/ec2-user/BoardgameWE/source/tools/migration/migrate.sh && \
                 pm2 start npm -- run envstart && \
                 sudo bash /home/ec2-user/BoardgameWE/source/tools/scripts/deploy_https_nginx.sh"
