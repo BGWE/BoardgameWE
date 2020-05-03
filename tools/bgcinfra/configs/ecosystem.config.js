@@ -61,6 +61,10 @@ module.exports = {
                 cp /home/ec2-user/BoardgameWE/source/tools/bgcinfra/configs/secret_env.sh /home/ec2-user/BoardgameWE/source/.env && \
                 sudo certbot certonly --debug --nginx --non-interactive --agree-tos --domains ${CERTDOMAIN} --email fabrice.servais@gmail.com && \
                 sudo ln -sf /etc/letsencrypt/live/${CERTDOMAIN} /etc/letsencrypt/live/bgccert && \
+                rm -rf ~/certs && mkdir ~/certs && \
+                sudo cp /etc/letsencrypt/live/bgccert/privkey.pem ~/certs && sudo chown ec2-user ~/certs/privkey.pem && \
+                sudo cp /etc/letsencrypt/live/bgccert/cert.pem ~/certs && sudo chown ec2-user ~/certs/cert.pem && \
+                sudo cp /etc/letsencrypt/live/bgccert/chain.pem ~/certs && sudo chown ec2-user ~/certs/chain.pem && \
                 bash /home/ec2-user/BoardgameWE/source/tools/migration/migrate.sh && \
                 pm2 start npm -- run envstart && \
                 sudo bash /home/ec2-user/BoardgameWE/source/tools/scripts/deploy_https_nginx.sh"
