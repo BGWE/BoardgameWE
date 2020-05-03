@@ -59,10 +59,10 @@ module.exports = {
                 npm install && \
                 npx i18n-csv2json-cli --from /home/ec2-user/BoardgameWE/source/src/api/locales/translations.csv --to /home/ec2-user/BoardgameWE/source/src/api/locales/json --format && \
                 cp /home/ec2-user/BoardgameWE/source/tools/bgcinfra/configs/secret_env.sh /home/ec2-user/BoardgameWE/source/.env && \
+                sudo certbot certonly --debug --nginx --non-interactive --agree-tos --domains ${CERTDOMAIN} --email fabrice.servais@gmail.com && \
                 sudo ln -sf /etc/letsencrypt/live/${CERTDOMAIN} /etc/letsencrypt/live/bgccert && \
                 mkdir /home/ec2-user/certs && \
                 sudo cp /etc/letsencrypt/live/${CERTDOMAIN}/* /home/ec2-user/certs &&\
-                sudo certbot certonly --debug --nginx --non-interactive --agree-tos --domains ${CERTDOMAIN} --email fabrice.servais@gmail.com && \
                 bash /home/ec2-user/BoardgameWE/source/tools/migration/migrate.sh && \
                 pm2 start npm -- run envstart && \
                 sudo bash /home/ec2-user/BoardgameWE/source/tools/scripts/deploy_https_nginx.sh"
