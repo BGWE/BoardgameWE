@@ -18,7 +18,6 @@ install:
 - npm install -g pm2
 
 script:
-- ls -al $TRAVIS_BUILD_DIR
 - bash ./tools/bgcinfra/configs/deploy.sh
 - ls -al ~/.ssh
 
