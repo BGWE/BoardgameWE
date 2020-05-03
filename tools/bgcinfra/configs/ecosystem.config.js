@@ -62,9 +62,6 @@ module.exports = {
                 sudo certbot certonly --debug --nginx --non-interactive --agree-tos --domains ${CERTDOMAIN} --email fabrice.servais@gmail.com && \
                 sudo ln -sf /etc/letsencrypt/live/${CERTDOMAIN} /etc/letsencrypt/live/bgccert && \
                 rm -rf ~/certs && mkdir ~/certs && \
-                sudo cp /etc/letsencrypt/live/bgccert/privkey.pem ~/certs && sudo chown ec2-user ~/certs/privkey.pem && \
-                sudo cp /etc/letsencrypt/live/bgccert/cert.pem ~/certs && sudo chown ec2-user ~/certs/cert.pem && \
-                sudo cp /etc/letsencrypt/live/bgccert/chain.pem ~/certs && sudo chown ec2-user ~/certs/chain.pem && \
                 wget https://s3.amazonaws.com/rds-downloads/rds-ca-2019-root.pem -P ~/certs && \
                 bash /home/ec2-user/BoardgameWE/source/tools/migration/migrate.sh && \
                 pm2 start npm -- run envstart && \
