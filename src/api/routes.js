@@ -1141,13 +1141,19 @@ module.exports = function(app) {
      * @apiGroup Board game
      * @apiDescription Get all the board games of the application.
      * @apiUse PaginationParameters
-     * @apiParam {String} format=expansions One of `{expansions, plain}`
+     * @apiParam {String} [search] A query string for searching board games (minimum string length 3)
+     * @apiParam {String} [content=base] One of `{'base', 'all'}`. Whether or not to list expansions (`base` for
+     * base board games only, `all` for listing expansions as well).
      * @apiUse TokenHeaderRequired
      */
     app.route("/board_games")
         .get(
-            validation.getPaginationValidators(),
-            validation.validateOrBlock("invalid pagination parameters"),
+            [
+               query("content").optional().isString().isIn(['all', 'base']),
+               query("search").optional().isString().isLength({min: 3}),
+               ... validation.getPaginationValidators()
+            ],
+            validation.validateOrBlock("invalid filter parameters for GetBoardGames"),
             error_wrapper(BoardGameController.getBoardGames)
         );
 

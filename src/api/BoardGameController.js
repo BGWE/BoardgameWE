@@ -109,13 +109,24 @@ exports.addBoardGame = function(req, res) {
     // load info from board game geek
   return db.sequelize.transaction(transaction => {
     return exports.addBoardGameAndExpansions(req.body.bgg_id, transaction).then(id => {
-      return util.sendModelOrError(res, db.BoardGame.findByPk(id, {transaction, include: exports.boardGameIncludes}));
+      return util.sendModel(res, db.BoardGame.findByPk(id, {transaction, include: exports.boardGameIncludes}));
     });
   });
 };
 
+// base
 exports.getBoardGames = function(req, res) {
-    return util.sendModel(res, db.BoardGame.findAll());
+  let filter = {
+    ... util.getPaginationParams(req, ["name"])
+  };
+  if (!req.query.content || req.query.content === "base") {
+    const select_exp = db.selectFieldQuery("BoardGameExpansions", [db.sequelize.fn("DISTINCT", db.sequelize.col("id_expansion")), 'id']);
+    filter.where = { id: {[db.Op.notIn]: db.sequelize.literal("(" + select_exp + ")")} };
+  }
+  if (req.query.search) {
+    filter.where = { name: {[db.Op.iLike]: "%" + req.query.search + "%"}, ...filter.where };
+  }
+  return util.sendModel(res, db.BoardGame.findAll(filter));
 };
 
 // TODO use validation to check those fields
