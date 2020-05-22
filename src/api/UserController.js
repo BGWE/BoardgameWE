@@ -87,7 +87,7 @@ exports.register = function register(req, res) {
         password: hash,
         username: req.body.username,
         admin: false, // by default not admin
-        validated: null, // by default not accepted nor refused
+        validated: true, // accepted by default
       }, { transaction }).then(
         (user_) => util.successResponse(res, exports.removeSensitive(user_)),
       );
