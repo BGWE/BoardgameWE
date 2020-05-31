@@ -38,7 +38,17 @@ db.Op = Sequelize.Op;
  * @returns {*}
  */
 db.selectFieldQuery = function(table, attribute, where) {
-  return db.sequelize.dialect.QueryGenerator.selectQuery(table, { attributes: [attribute], where }).slice(0, -1);
+  return db.selectQuery(table, { attributes: [attribute], where });
+};
+
+/**
+ * Simplifies the call to the query generator for building a select query
+ * @param table The table name
+ * @param options The select options
+ * @returns {*}
+ */
+db.selectQuery = function(table, options) {
+  return db.sequelize.dialect.QueryGenerator.selectQuery(table, { ... options }).slice(0, -1);
 };
 
 /**

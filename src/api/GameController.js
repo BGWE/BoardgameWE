@@ -177,13 +177,24 @@ exports.getUserGames = function(req, res) {
   if (uid === curr_uid) {
     return exports.sendAllGamesFiltered(req, res, where);
   }
-  // TODO check if need optimization
+  // build query to get events that both users have attended
+  const count_attendees_select = db.selectQuery("EventAttendees", {
+    attributes: ["id_event", [db.sequelize.fn("count", db.sequelize.col("id_user")), "cnt"]],
+    where: { id_user: [curr_uid, uid] },
+    group: "id_event"
+  });
+  const both_attendees_select = "select id_event from (" + count_attendees_select + ") as \"attending\" where cnt >= 2";
+  console.log(count_attendees_select);
+  console.log(both_attendees_select);
   const public_event_select = db.selectFieldQuery("Events", "id_event", { visibility: db.Event.VISIBILITY_PUBLIC });
-  const curr_user_select = db.selectFieldQuery("GamePlayers", "id_game", { id_user: curr_uid});
-  where = db.Sequelize.or(
-    db.Sequelize.and(where, { id_event: null }),
-    db.Sequelize.and(where, { id_event: {[db.Op.in]: db.sequelize.literal('(' + public_event_select + ')')} }),
-    db.Sequelize.and(where, { id: {[db.Op.in]: db.sequelize.literal('(' + curr_user_select + ')')} })
+  // TODO check if need optimization
+  where = db.Sequelize.and(
+    where,
+    db.Sequelize.or(
+      { id_event: null },
+      { id_event: {[db.Op.in]: db.sequelize.literal('(' + public_event_select + ')')} },
+      { id_event: {[db.Op.in]: db.sequelize.literal('(' + both_attendees_select + ')')} }
+    )
   );
   return exports.sendAllGamesFiltered(req, res, where);
 };
