@@ -261,7 +261,7 @@ exports.addBoardGameAndAddToLibrary = function addBoardGameAndAddToLibrary(req, 
   }, { ignoreDuplicates: true, transaction, lock: transaction.LOCK.UPDATE })
     .then(() => exports.sendUserLibraryGames(userutil.getCurrUserId(req), req, res, transaction));
 
-  const bggId = parseInt(req.params.id, 20);
+  const bggId = parseInt(req.params.id);
   const { source } = req.params;
   return db.sequelize.transaction(
     (t) => BoardGameController.executeIfBoardGameExists(bggId, source, req, res, createFn, t),
