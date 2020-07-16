@@ -556,7 +556,7 @@ Parameters:
       The subdomain of the dns entry. For example, hello -> hello.mydomain.com,
       hello is the subdomain.
     Type: String
-    Default: api-v3
+    Default: api-migration
 Mappings:
   AWSInstanceType2Arch:
     t1.micro:

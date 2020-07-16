@@ -50,12 +50,12 @@ module.exports = {
         production: {
             user: 'ec2-user',
             key: '~/.ssh/BGCProd.pem',
-            host: 'api-v3.boardgamecomponion.com',
-            ref: 'master',
+            host: 'api-migration.boardgamecomponion.com',
+            ref: 'migration',
             repo: 'https://github.com/BGWE/BoardgameWE.git',
             path: '/home/ec2-user/BoardgameWE',
             'post-deploy': "\
-                export CERTDOMAIN=api-v3.boardgamecomponion.com && \
+                export CERTDOMAIN=api-migration.boardgamecomponion.com && \
                 npm install && \
                 npx i18n-csv2json-cli --from /home/ec2-user/BoardgameWE/source/src/api/locales/translations.csv --to /home/ec2-user/BoardgameWE/source/src/api/locales/json --format && \
                 cp /home/ec2-user/BoardgameWE/source/tools/bgcinfra/configs/secret_env.sh /home/ec2-user/BoardgameWE/source/.env && \
