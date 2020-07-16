@@ -20,7 +20,7 @@ module.exports = {
         },
         env_production: {
             NODE_ENV: 'production',
-            DB_HOSTNAME: 'bgc-db-instance.cbzmmlktqvhn.eu-west-1.rds.amazonaws.com',
+            DB_HOSTNAME: 'bgc-db-instance.cdwqehzl1wpl.eu-west-1.rds.amazonaws.com',
             DB_NAME: 'bgcomponion',
             DB_USERNAME: 'dbadmin',
             USE_SSL: 'true',
