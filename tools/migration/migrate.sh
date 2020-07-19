@@ -1,7 +1,7 @@
 #!/bin/sh
 export CERTDOMAIN=api-v3.boardgamecomponion.com
 export NODE_ENV=production
-export DB_HOSTNAME=bgc-db-instance.cbzmmlktqvhn.eu-west-1.rds.amazonaws.com
+export DB_HOSTNAME=bgc-db-instance.cdwqehzl1wpl.eu-west-1.rds.amazonaws.com
 export DB_NAME=bgcomponion
 export DB_USERNAME=dbadmin
 export USE_SSL=true
