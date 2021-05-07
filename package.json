@@ -43,7 +43,7 @@
     "i18n": "^0.8.3",
     "i18n-express": "^1.1.3",
     "jsonwebtoken": "^8.5.1",
-    "lodash": "^4.17.15",
+    "lodash": "^4.17.21",
     "moment": "^2.24.0",
     "moment-timezone": "^0.5.26",
     "pg": "^8.0.0",
