@@ -36,7 +36,7 @@
     "dotenv": "^8.2.0",
     "eslint-config-airbnb-base": "^14.1.0",
     "eslint-plugin-import": "^2.20.1",
-    "express": "^4.17.1",
+    "express": "^4.17.3",
     "express-query-boolean": "^2.0.0",
     "express-validator": "^6.4.0",
     "express-winston": "^4.0.3",
